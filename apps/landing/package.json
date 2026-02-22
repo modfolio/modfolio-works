@@ -1,0 +1,13 @@
+{
+  "name": "landing",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "astro": "^5.4.0",
+    "@astrojs/cloudflare": "^12.5.0"
+  }
+}

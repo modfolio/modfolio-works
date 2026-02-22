@@ -1,0 +1,10 @@
+{
+  "name": "modfolio-works",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "packageManager": "bun@1.2.4",
+  "scripts": {
+    "build": "cd apps/landing && bun run build",
+    "dev": "cd apps/landing && bun run dev"
+  }
+}
