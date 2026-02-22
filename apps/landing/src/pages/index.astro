@@ -1,6 +1,46 @@
 ---
 ---
-<html lang="en">
-<head><meta charset="utf-8" /><title>Modfolio Works</title></head>
-<body><h1>Modfolio Works</h1><p>Education</p></body>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Modfolio Works</title>
+  <meta name="description" content="교육 그룹" />
+  <link rel="stylesheet" href="https://use.typekit.net/auk2qdl.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <style>
+    :root {
+      --bg: #0A0A0F; --surface: #13131A; --text: #EDE8F0; --text2: #A09AAC;
+      --a1: #8EC8E0; --a2: #8AE0CC; --border: rgba(255,255,255,0.05);
+      --modfolio-magic-heading: "goldenbook", "Noto Serif KR", serif;
+      --modfolio-poetic-quote: "mrs-eaves-roman", "Noto Serif KR", serif;
+      --modfolio-storybook-body: "adobe-caslon-pro", "Noto Serif KR", serif;
+      --modfolio-warm-tech: "brandon-grotesque", "Pretendard", sans-serif;
+      --modfolio-clear-data: "proxima-nova", "Pretendard", sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:var(--modfolio-storybook-body); background:var(--bg); color:var(--text); min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; overflow:hidden; }
+    .hero { position:relative; z-index:1; padding:2rem; }
+    .hero h1 { font-family:var(--modfolio-magic-heading); font-size:clamp(2.5rem,8vw,5rem); font-weight:700; background:linear-gradient(135deg,var(--a1),var(--a2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:1rem; letter-spacing:-0.02em; }
+    .hero p.tagline { font-family:var(--modfolio-poetic-quote); font-size:clamp(1rem,3vw,1.5rem); font-style:italic; margin-bottom:0.5rem; }
+    .hero p.desc { font-size:clamp(0.875rem,2vw,1.125rem); color:var(--text2); max-width:40ch; margin:0 auto; line-height:1.6; }
+    .badge { display:inline-block; margin-top:2rem; padding:0.5rem 1.5rem; border:1px solid var(--border); border-radius:999px; font-family:var(--modfolio-clear-data); font-size:0.75rem; color:var(--text2); background:var(--surface); }
+    .glow { position:fixed; width:600px; height:600px; border-radius:50%; filter:blur(120px); opacity:0.08; pointer-events:none; }
+    .glow-1 { background:var(--a1); top:-200px; right:-200px; }
+    .glow-2 { background:var(--a2); bottom:-200px; left:-200px; }
+  </style>
+</head>
+<body>
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
+  <main class="hero">
+    <h1>Modfolio Works</h1>
+    <p class="tagline">Education</p>
+    <p class="desc">교육 그룹</p>
+    <span class="badge">works.modfolio.io — Coming Soon</span>
+  </main>
+</body>
 </html>
