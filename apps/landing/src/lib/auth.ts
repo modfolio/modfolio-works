@@ -42,9 +42,7 @@ export function buildAuthorizeUrl(params: {
 	redirectUri: string;
 	nonce: string;
 }): string {
-	const url = new URL(`${CONNECT_URL}/sso/authorize`);
-	url.searchParams.set("response_type", "code");
-	url.searchParams.set("client_id", CLIENT_ID);
+	const url = new URL(`https://login.modfolio.io/${CLIENT_ID}`);
 	url.searchParams.set("redirect_uri", params.redirectUri);
 	url.searchParams.set("state", params.state);
 	url.searchParams.set("code_challenge", params.codeChallenge);
