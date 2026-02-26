@@ -1,7 +1,3 @@
-import type { APIRoute } from "astro";
-import { SESSION_COOKIE } from "../../lib/auth";
+import { auth } from "../../lib/connect";
 
-export const GET: APIRoute = async ({ cookies, redirect }) => {
-	cookies.delete(SESSION_COOKIE, { path: "/" });
-	return redirect("/", 302);
-};
+export const GET = auth.logoutHandler;
