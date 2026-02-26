@@ -9,8 +9,8 @@
       "name": "landing",
       "dependencies": {
         "@astrojs/cloudflare": "^12.5.0",
+        "@modfolio/connect-sdk": "^0.1.0",
         "astro": "^5.4.0",
-        "jose": "^6.1.3",
       },
     },
   },
@@ -166,6 +166,8 @@
     "@jridgewell/sourcemap-codec": ["@jridgewell/sourcemap-codec@1.5.5", "", {}, "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og=="],
 
     "@jridgewell/trace-mapping": ["@jridgewell/trace-mapping@0.3.9", "", { "dependencies": { "@jridgewell/resolve-uri": "^3.0.3", "@jridgewell/sourcemap-codec": "^1.4.10" } }, "sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ=="],
+
+    "@modfolio/connect-sdk": ["@modfolio/connect-sdk@0.1.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/0.1.0/273b92d87e0e978cae2dd532b003f617aba0dd5f", { "dependencies": { "jose": "^6.1.3" } }, "sha512-DOGY9QswrsnLof+RvpWJdWwBc2nYqp8FUrZRGSLeBR+tcToEkoxwE56ltUPdEN6kuYPBwr7awygE3OiWS/So1Q=="],
 
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
