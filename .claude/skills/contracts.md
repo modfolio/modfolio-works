@@ -1,3 +1,9 @@
+---
+description: Zod 이벤트 스키마 가이드 + breaking change 분석
+effort: max
+model: opus
+---
+
 # Skill: 이벤트 계약
 
 앱 간 데이터 교환을 위한 Zod 스키마 이벤트 계약 가이드.
