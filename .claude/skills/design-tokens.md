@@ -1,3 +1,8 @@
+---
+description: 3-tier 디자인 토큰 구조 + 탐색 프로토콜
+effort: medium
+---
+
 # Design Tokens — 3-Tier Architecture
 
 > House of Brands 원칙에 따라 각 앱의 **값**은 다르지만 **구조와 명명 규칙**은 동일.
