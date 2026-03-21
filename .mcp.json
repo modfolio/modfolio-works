@@ -1,0 +1,38 @@
+{
+  "mcpServers": {
+    "context7": {
+      "type": "stdio",
+      "command": "bunx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      }
+    },
+    "cloudflare": {
+      "type": "http",
+      "url": "https://mcp.cloudflare.com/mcp"
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"]
+    },
+    "neon": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@neondatabase/mcp-server-neon"],
+      "env": {
+        "NEON_API_KEY": "${NEON_API_KEY}"
+      }
+    },
+    "svelte": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@sveltejs/mcp"]
+    }
+  }
+}
