@@ -103,10 +103,114 @@
 
 CF Pages 규칙: `pages_build_output_dir` + `nodejs_compat` + wrangler.jsonc. 상세: `/deploy` skill.
 
-## SSO 요약
+## SSO 연동 가이드 (v5.1.0, 2026-03-17)
 
-모든 앱의 인증은 **modfolio-connect**를 통한다. OIDC Authorization Code Flow + PKCE S256.
-상세: `.claude/skills/sso-integrate.md` 참조.
+모든 앱의 인증은 **modfolio-connect**를 통한다.
+
+### URL 구조
+
+| 서비스 | URL | 역할 |
+|--------|-----|------|
+| Login UI | `https://login.modfolio.io` | OIDC 엔진 + 로그인/가입 화면 |
+| Dashboard | `https://account.modfolio.io` | 유저 프로필/보안/조직 관리 |
+| Landing | `https://connect.modfolio.io` | SaaS 랜딩 페이지 |
+| OIDC Discovery | `https://login.modfolio.io/.well-known/openid-configuration` | 자동 설정 |
+
+### 인증 플로우 (SDK가 자동 처리)
+
+```
+[1] 유저가 앱의 보호된 페이지 접근
+      ↓
+[2] SDK 미들웨어: 세션 쿠키 확인 → 없으면 prompt=none 시도 (silent SSO)
+      ↓ (실패 시)
+[3] login.modfolio.io/{clientId}로 리다이렉트 (PKCE S256)
+      ↓
+[4] 유저 로그인 (비밀번호/소셜/패스키/Magic Link)
+      ↓
+[5] 앱의 /auth/callback으로 리다이렉트 (authorization code)
+      ↓
+[6] SDK: code → /sso/token POST → access_token + refresh_token 발급
+      ↓
+[7] 세션 쿠키 설정 → 앱 진입
+```
+
+### SDK 설치 + 기본 연동
+
+```bash
+# .npmrc (GitHub Packages 인증)
+echo "@modfolio:registry=https://npm.pkg.github.com" > .npmrc
+
+# SDK 설치 (반드시 v5.1.0 이상)
+bun add @modfolio/connect-sdk@^5.1.0
+```
+
+#### 프레임워크별 어댑터
+
+| 프레임워크 | import | 함수 |
+|-----------|--------|------|
+| SvelteKit | `@modfolio/connect-sdk/sveltekit` | `createSvelteKitAuth(options)` |
+| Astro | `@modfolio/connect-sdk/astro` | `createAstroAuth(options)` |
+| SolidStart | `@modfolio/connect-sdk/solidstart` | `createSolidStartAuth(options)` |
+| Qwik | `@modfolio/connect-sdk/qwik` | `createQwikAuth(options)` |
+| Nuxt | `@modfolio/connect-sdk` | core 함수 직접 사용 |
+| CAEP 수신 | `@modfolio/connect-sdk/ssf` | `createSSFReceiver(options)` |
+
+#### SvelteKit 예시 (3개 파일)
+
+```typescript
+// src/lib/server/auth.ts
+import { createSvelteKitAuth } from "@modfolio/connect-sdk/sveltekit";
+export const auth = createSvelteKitAuth({
+  clientId: "앱의-client-id",   // 예: "naviaca", "gistcore", "worthee"
+  // connectUrl, loginUrl, issuer → 기본값 자동 (변경 불필요)
+  // refreshTimeout: 3000       → 기본 3초 (변경 불필요)
+});
+
+// src/hooks.server.ts
+import { auth } from "$lib/server/auth";
+export const handle = auth.handle;
+
+// src/routes/auth/login/+server.ts   → export const GET = auth.loginHandler;
+// src/routes/auth/callback/+server.ts → export const GET = auth.callbackHandler;
+// src/routes/auth/logout/+server.ts  → export const GET = auth.logoutHandler;
+```
+
+#### ConnectUser 타입 (JWT에서 추출)
+
+```typescript
+interface ConnectUser {
+  id: string;           // UUID
+  email: string;
+  name: string;
+  roles: string[];
+  avatar?: string;
+  orgs?: Array<{ id: string; slug: string; role: string }>;
+  permissions?: string[];
+  amr?: string[];       // pwd, otp, mfa, fed:kakao 등
+  tenantId?: string;
+  tenantDomain?: string;
+}
+```
+
+### v4 → v5 마이그레이션 주의
+
+**Breaking Change 1개만**: `tokens.token` → `tokens.access_token`
+```diff
+- const jwt = tokens.token;         // v4: deprecated 폴백 (v5에서 제거)
++ const jwt = tokens.access_token;  // v5: 유일한 필드
+```
+
+### CF Pages 환경변수
+
+SDK를 처음 도입하는 앱의 CF Pages에 `NPM_TOKEN` 필요:
+```bash
+# ~/.npmrc에서 GitHub Packages 토큰 읽기
+TOKEN=$(grep "npm.pkg.github.com/:_authToken=" ~/.npmrc | cut -d= -f2)
+# CF Pages에 설정
+npx wrangler pages secret put NPM_TOKEN --project-name={cf-project-name}
+```
+
+상세: `knowledge/projects/modfolio-connect.md` 또는 `.claude/skills/sso-integrate.md` 참조.
 
 ## Workflow: Dialogue-Driven Development
 
