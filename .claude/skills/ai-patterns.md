@@ -1,3 +1,8 @@
+---
+description: AI 모델 라우터 + fallback + 프롬프트 캐싱
+effort: medium
+---
+
 # AI Patterns — Model Router + Fallback Chain
 
 > modfolio (LangGraph)와 gistcore (OpenRouter)에서 검증된 AI 통합 패턴.
