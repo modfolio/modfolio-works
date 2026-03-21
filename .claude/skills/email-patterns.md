@@ -1,3 +1,9 @@
+---
+description: Resend 이메일 (fire-and-forget, 템플릿)
+effort: low
+model: sonnet
+---
+
 # Email Patterns — Resend Integration
 
 > modfolio-pay와 modfolio-press에서 검증된 이메일 통합 패턴.
