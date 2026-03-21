@@ -1,3 +1,8 @@
+---
+description: 스프링 물리 모션 + 접근성 + Matter.js/Rapier.js
+effort: medium
+---
+
 # Motion Patterns — 스프링 물리 + 접근성
 
 > 생태계 전체의 모션/애니메이션 가이드. CSS ease-in-out 대신 물리 기반 모션 추구.
