@@ -1,3 +1,9 @@
+---
+description: 개발 저널 기록
+effort: low
+model: sonnet
+---
+
 # Skill: /journal — 개발 저널 기록
 
 개발 중 판단, 실수, 발견, 시행착오, 외부 레퍼런스를 기록하는 가이드.
