@@ -1,3 +1,8 @@
+---
+description: Adobe Fonts + Pretendard + CLS 방지 + 유동 타이포
+effort: medium
+---
+
 # Typography — Adobe Fonts + Pretendard
 
 > 생태계 전체의 타이포그래피 통합 가이드. 8개 이상 앱에서 사용.
