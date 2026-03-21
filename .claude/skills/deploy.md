@@ -1,3 +1,8 @@
+---
+description: CF Pages 배포 가이드
+effort: medium
+---
+
 # Skill: 배포
 
 CF Pages 네이티브 GitHub 연동 기반 배포 전략.
