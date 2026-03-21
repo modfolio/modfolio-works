@@ -1,6 +1,6 @@
 # Modfolio Claude Code Bible
 
-> 2026-03-22 기준. 모든 Modfolio 프로젝트에서 Claude Code를 사용할 때 참조하는 단일 레퍼런스.
+> 2026-03-22 기준 v2. 모든 Modfolio 프로젝트에서 Claude Code를 사용할 때 참조하는 단일 레퍼런스.
 > 이 문서는 git에 커밋되며, 글로벌 설정(`~/.claude/`)이 없는 환경에서도 참조 가능.
 
 ---
@@ -12,7 +12,13 @@
 ├── CLAUDE.md                 ← 생태계 공통 원칙 (불변 원칙, 디자인, 작업)
 ├── settings.json             ← 공통 hooks + permissions
 │   ├── Stop hook (agent)     ← 매 턴 종료 시 품질 자동 검증
-│   └── PostCompact hook      ← 컴팩션 후 컨텍스트 복원
+│   ├── PostCompact hook      ← 컴팩션 후 컨텍스트 복원
+│   ├── SessionStart hook     ← 세션 시작 시 Auto Memory + TaskList + LEARNINGS.md 참조
+│   ├── StopFailure hook      ← API 에러 로깅
+│   ├── statusline            ← 컨텍스트 크기 + 메모리 파일 수 표시
+│   ├── alwaysThinkingEnabled ← extended thinking 항상 활성
+│   ├── cleanupPeriodDays: 365 ← 세션 기록 1년 보관
+│   └── showThinkingSummaries ← thinking 요약 표시
 └── rules/                    ← 파일 패턴별 자동 적용 규칙
     ├── ui-components.md      ← *.svelte, *.tsx, *.astro, *.css
     └── accessibility.md      ← *.svelte, *.tsx, *.astro
@@ -109,30 +115,35 @@
 
 ## 5. 스킬 목록
 
-| 스킬 | 용도 |
-|------|------|
-| `/plan` | 기획 품질 기준 (Plan Mode 참조) |
-| `/design-tokens` | 3-tier 토큰 구조 + 탐색 프로토콜 |
-| `/typography` | Adobe Fonts + clamp + CLS 방지 |
-| `/motion-patterns` | 스프링 물리 + svelte/motion + 접근성 |
-| `/ui-quality-gate` | UI 자가 검증 체크리스트 |
-| `/sso-integrate` | Connect SDK SSO 연동 |
-| `/contracts` | Zod 이벤트 스키마 |
-| `/deploy` | CF Pages 배포 |
-| `/journal` | 개발 저널 |
-| `/ai-patterns` | AI 모델 라우터 + fallback |
-| `/drizzle-patterns` | Drizzle ORM 규칙 |
-| `/email-patterns` | Resend 이메일 |
+| 스킬 | 용도 | effort / 모델 |
+|------|------|---------------|
+| `/plan` | 기획 품질 기준 (Plan Mode 참조) | max / Opus |
+| `/design-tokens` | 3-tier 토큰 구조 + 탐색 프로토콜 | medium / Opus |
+| `/typography` | Adobe Fonts + clamp + CLS 방지 | medium / Opus |
+| `/motion-patterns` | 스프링 물리 + svelte/motion + 접근성 | medium / Opus |
+| `/ui-quality-gate` | UI 자가 검증 체크리스트 | max / Opus |
+| `/sso-integrate` | Connect SDK SSO 연동 | max / Opus |
+| `/contracts` | Zod 이벤트 스키마 | max / Opus |
+| `/deploy` | CF Pages 배포 | medium / Opus |
+| `/journal` | 개발 저널 | low / Opus |
+| `/ai-patterns` | AI 모델 라우터 + fallback | medium / Opus |
+| `/drizzle-patterns` | Drizzle ORM 규칙 | medium / Opus |
+| `/email-patterns` | Resend 이메일 | low / Opus |
+| `/multi-review` | 3-에이전트 병렬 리뷰 (§13 참조) | max / Opus |
 
 ---
 
 ## 6. 에이전트
 
-| 에이전트 | 역할 |
-|---------|------|
-| `code-reviewer` | 코드 품질 + 디자인 일관성 리뷰 (Tier 1 위반, 하드코딩, 접근성) |
-| `knowledge-searcher` | 지식베이스 검색/요약 |
-| `ecosystem-auditor` | ecosystem.json vs 실제 상태 검증 (universe 전용) |
+| 에이전트 | 역할 | 모델 |
+|---------|------|------|
+| `code-reviewer` | 코드 품질 + 디자인 일관성 리뷰 (Tier 1 위반, 하드코딩, 접근성) | Sonnet |
+| `knowledge-searcher` | 지식베이스 검색/요약 | Haiku |
+| `ecosystem-auditor` | ecosystem.json vs 실제 상태 검증 (universe 전용) | Haiku |
+| `design-critic` | 디자인 토큰/레이아웃/모션 리뷰 | Sonnet |
+| `accessibility-auditor` | WCAG AA/접근성 검증 | Sonnet |
+| `architecture-sentinel` | 불변 원칙/생태계 규칙 검증 | Sonnet |
+| `visual-qa` | 시각적 품질 검증 (스크린샷 기반) | Sonnet |
 
 ---
 
@@ -140,9 +151,12 @@
 
 | 서버 | 용도 |
 |------|------|
-| Context7 | 라이브러리 최신 문서 조회 |
+| Context7 | 라이브러리 최신 문서 조회 (모든 프레임워크 커버) |
 | GitHub | GitHub Copilot MCP |
 | Cloudflare | CF Workers, D1, KV, R2, Pages API |
+| Playwright | 브라우저 자동화, self-QA, 테스트 생성 |
+| Neon | DB 쿼리, 브랜치 관리, 마이그레이션 |
+| Svelte | SvelteKit autofixer + 문서 (Context7 보완) |
 
 ---
 
@@ -166,18 +180,32 @@
 
 ---
 
-## 9. 생태계 동기화
+## 9. 생태계 동기화 (양방향)
+
+### universe → 자식 (전파)
 
 ```bash
-bun run sync-knowledge          # CLAUDE.md + skills + agents → 22개 프로젝트
-bun run sync-knowledge:dry      # 변경 미리보기
-bun run sync-knowledge -- naviaca  # 특정 프로젝트만
+bun run sync-knowledge              # 전체 전파
+bun run sync-knowledge -- --dry-run # 미리보기
+bun run sync-knowledge -- naviaca   # 특정 프로젝트만
 ```
 
 전파 대상:
 - **CLAUDE.md**: 생태계 컨텍스트 섹션 (ECOSYSTEM_START/END)
 - **스킬 12종**: design-tokens, typography, motion-patterns, ui-quality-gate, plan, contracts, deploy, journal, sso-integrate, ai-patterns, drizzle-patterns, email-patterns
 - **에이전트 2종**: code-reviewer, knowledge-searcher
+- **공통 파일**: claude-code-bible.md, .mcp.json
+
+### 자식 → universe (수집)
+
+```bash
+bun run scripts/collect-knowledge.ts              # dry-run (기본)
+bun run scripts/collect-knowledge.ts --apply       # 로컬 파일 업데이트
+bun run scripts/collect-knowledge.ts naviaca       # 특정 프로젝트만
+```
+
+자식 CLAUDE.md의 프로젝트 고유 지식 → `knowledge/projects/{repo}.md`에 수집.
+Auto Memory는 머신 로컬이므로 전파 대상 아님 (각 프로젝트에서 자동 관리).
 
 ---
 
@@ -189,6 +217,13 @@ bun run sync-knowledge -- naviaca  # 특정 프로젝트만
 4. 프로젝트의 `.npmrc`에 GitHub Packages 레지스트리 설정 확인
 5. `bun run quality:all` 통과 확인
 6. bun 1.3.11+ 확인 (`bun --version`)
+7. `alwaysThinkingEnabled: true` 확인
+8. `cleanupPeriodDays: 365` 확인
+9. `statusLine` 설정 확인
+10. `permissions.deny` 보안 항목 추가 확인 (*.pem, *.key, *.env, printenv)
+11. `LEARNINGS.md` 프로젝트 루트에 존재 확인
+12. effort frontmatter 확인 (스킬 파일에 effort 설정 여부)
+13. `--bare -p` CI/CD 참고
 
 ---
 
@@ -199,3 +234,99 @@ bun run sync-knowledge -- naviaca  # 특정 프로젝트만
 - `@ts-ignore`로 타입 에러 무시 → 타입을 고쳐야 함
 - CLAUDE.md에 동적 상태(현재 작업 진행률 등)를 적는 것 → Auto Memory나 TaskList 사용
 - `bun run quality:all` 안 돌리고 커밋 → PreToolUse 훅이 차단함
+- deprecated `/output-style` 사용 → `/config` 사용
+- Agent Teams 파일 충돌 주의 (실험적 기능)
+- `enableAllProjectMcpServers: true` 남용 주의 (신뢰할 수 없는 MCP 서버)
+- effort 미설정 시 기본 medium — 핵심 스킬은 max로 명시
+- LEARNINGS.md를 Auto Memory와 혼동 (별개 시스템)
+- `/compact` 안 하고 세션 길게 끌기 → Context Rot 발생
+
+---
+
+## 12. Compound Learning Loop
+
+프로젝트 루트의 `LEARNINGS.md`에 세션 발견사항을 축적. Auto Memory와 별도의 git 커밋 공유 파일.
+
+### 구조
+- **Raw Observations**: 세션에서 발견 즉시 기록 (`[날짜] [프로젝트] 내용`)
+- **Consolidated Principles**: 50개 이상 축적 시 반복 패턴을 원칙으로 승격
+
+### 주의
+- LEARNINGS.md는 Claude Code 공식 기능이 아닌 커스텀 컨벤션
+- 자동 로드되지 않음 — SessionStart 훅이 존재 여부를 안내
+- Auto Memory (머신 로컬, 자동 지속)와 역할 구분 유지
+
+---
+
+## 13. Multi-Agent Review
+
+`/multi-review`로 3개 전문 에이전트를 병렬 실행:
+
+| 에이전트 | 전문 영역 | 모델 |
+|---------|----------|------|
+| design-critic | 디자인 토큰/레이아웃/모션 | Sonnet |
+| accessibility-auditor | WCAG AA/접근성 | Sonnet |
+| architecture-sentinel | 불변 원칙/생태계 규칙 | Sonnet |
+
+### 결과 처리
+- ALL PASS → 진행
+- ANY FAIL → 이슈 수정 후 재실행
+- 2회 연속 FAIL (같은 패턴) → Auto Memory에 기록
+
+---
+
+## 14. Session Recovery
+
+### Disaster Recovery
+- **증상**: Claude가 컨텍스트 상실, 규칙 무시, 기초적 실수 반복
+- **확인**: `/context`로 토큰 상태 확인
+- **복구**: 세션 포기 → `/clear` 또는 새 터미널 → SessionStart/PostCompact 훅이 상태 복원
+- **예방**: 70k 토큰에서 `/compact`, statusline 모니터링
+
+### Interrupt Recovery
+- `Esc` → 현재 응답 중단 (프롬프트 보존)
+- `Esc` + `↑` → 이전 프롬프트 복원 (새 세션 불필요)
+
+---
+
+## 15. Cost Routing
+
+### Effort 레벨 (스킬 frontmatter)
+| effort | 설명 | 대상 스킬 |
+|--------|------|----------|
+| max | Opus 4.6 최대 깊이 사고 | plan, ui-quality-gate, contracts, sso-integrate, multi-review |
+| medium | 균형 (기본) | design-tokens, typography, motion-patterns, deploy, ai-patterns, drizzle-patterns |
+| low | 빠른 응답 | journal, email-patterns |
+
+### 모델 분류 (에이전트 frontmatter)
+- **Opus**: 메인 세션 (기본)
+- **Sonnet**: 리뷰 에이전트 (code-reviewer, design-critic, accessibility-auditor, architecture-sentinel, visual-qa)
+- **Haiku**: 검색/감사 에이전트 (knowledge-searcher, ecosystem-auditor)
+
+---
+
+## 16. /loop 모니터링
+
+```bash
+/loop 5m bun run quality:all       # 개발 중 품질 모니터링
+/loop 10m bun run health-check     # 배포 후 헬스체크
+/loop 30m /ui-quality-gate         # 디자인 토큰 준수 모니터링
+```
+
+---
+
+## 17. Effectiveness Metrics
+
+5개 KPI (월간 추적):
+1. **디자인 토큰 위반 수** (Stop 훅) → 목표: 0
+2. **LEARNINGS.md 반복 위반 재발률** → 목표: 0 (같은 실수 반복 없음)
+3. **`/compact` 빈도** → 목표: 세션당 1-2회
+4. **Multi-review FAIL rate** → First Pass Rate 추적
+5. **Visual QA 결함 발견율** → 패턴 → LEARNINGS.md
+
+가장 중요한 단일 지표: "같은 교훈 반복 횟수" = 0이어야 함
+
+### 분기 리뷰
+- LEARNINGS.md Consolidated Principles 검토
+- Bible 업데이트 필요 여부 판단
+- 효과 없는 규칙 제거, 효과 있는 패턴 승격
