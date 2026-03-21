@@ -1,3 +1,8 @@
+---
+description: Drizzle ORM 규칙 (prefix, helpers, migrations)
+effort: medium
+---
+
 # Drizzle ORM — 생태계 규칙
 
 > 5개 이상 앱에서 사용하는 Drizzle ORM 공통 패턴.
