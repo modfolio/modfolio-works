@@ -1,3 +1,9 @@
+---
+description: 기획 품질 기준 (Plan Mode 참조). 제품 설계 수준 상세도
+effort: max
+model: opus
+---
+
 # Plan Quality Standards
 
 > Plan Mode(Shift+Tab)나 기획 작업 시 참조하는 기준.
