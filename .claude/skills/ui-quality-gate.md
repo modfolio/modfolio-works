@@ -1,3 +1,9 @@
+---
+description: UI 자가 검증 체크리스트 + 정규화 관문
+effort: max
+model: opus
+---
+
 # UI Quality Gate — 자가 검증 체크리스트
 
 > UI 코드 생성/수정 후 자가 검증. `/ui-quality-gate`로 호출하거나
