@@ -4,11 +4,15 @@
 	"scripts": {
 		"dev": "astro dev",
 		"build": "astro build",
-		"preview": "astro preview"
+		"preview": "astro preview",
+		"typecheck": "astro check"
 	},
 	"dependencies": {
-		"@astrojs/cloudflare": "^12.5.0",
-		"astro": "^5.4.0",
-		"@modfolio/connect-sdk": "^0.1.0"
+		"@astrojs/cloudflare": "^12.6.0",
+		"@modfolio/connect-sdk": "^5.1.0",
+		"astro": "^5.17.0"
+	},
+	"devDependencies": {
+		"@astrojs/check": "^0.9.8"
 	}
 }

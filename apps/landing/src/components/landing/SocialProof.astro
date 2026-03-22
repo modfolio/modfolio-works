@@ -1,0 +1,93 @@
+---
+---
+
+<section class="proof" aria-label="신뢰 지표" data-reveal>
+	<p class="proof-label">Modfolio 생태계의 일부</p>
+	<div class="proof-stats">
+		<div class="proof-stat">
+			<span class="proof-stat__number">3</span>
+			<span class="proof-stat__label">교육 앱</span>
+		</div>
+		<div class="proof-divider" aria-hidden="true"></div>
+		<div class="proof-stat">
+			<span class="proof-stat__number">1</span>
+			<span class="proof-stat__label">통합 로그인</span>
+		</div>
+		<div class="proof-divider" aria-hidden="true"></div>
+		<div class="proof-stat">
+			<span class="proof-stat__number">Edge</span>
+			<span class="proof-stat__label">글로벌 배포</span>
+		</div>
+	</div>
+	<p class="proof-note">Modfolio Connect SSO로 안전하게 보호됩니다</p>
+</section>
+
+<style>
+	@layer components {
+		.proof {
+			padding: var(--space-16) var(--space-6);
+			background: var(--color-surface-1);
+			border-top: 1px solid var(--color-border-subtle);
+			border-bottom: 1px solid var(--color-border-subtle);
+			text-align: center;
+		}
+
+		.proof-label {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			color: var(--color-text-3);
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			margin-bottom: var(--space-8);
+		}
+
+		.proof-stats {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: var(--space-8);
+			flex-wrap: wrap;
+			margin-bottom: var(--space-8);
+		}
+
+		.proof-stat {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-1);
+		}
+
+		.proof-stat__number {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h1);
+			font-weight: 700;
+			color: var(--color-text-1);
+			line-height: 1;
+		}
+
+		.proof-stat__label {
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+		}
+
+		.proof-divider {
+			width: 1px;
+			height: var(--space-10);
+			background: var(--color-border-default);
+		}
+
+		.proof-note {
+			font-size: var(--font-size-caption);
+			color: var(--color-text-3);
+		}
+
+		@media (max-width: 480px) {
+			.proof-divider {
+				display: none;
+			}
+
+			.proof-stats {
+				gap: var(--space-6);
+			}
+		}
+	}
+</style>

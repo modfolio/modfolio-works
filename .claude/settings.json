@@ -1,0 +1,42 @@
+{
+	"permissions": {
+		"allow": [
+			"Bash(bun run check:*)",
+			"Bash(bun run check)",
+			"Bash(bun run typecheck)",
+			"Bash(bun run dev)",
+			"Bash(bun run dev:*)",
+			"Bash(bun run build)",
+			"Bash(bun run test:*)",
+			"Bash(bun run lint)",
+			"Bash(bun run lint:*)",
+			"Bash(bun run format)",
+			"Bash(bun run format:*)",
+			"Bash(bun run quality:*)"
+		]
+	},
+	"hooks": {
+		"PostToolUse": [
+			{
+				"matcher": "Edit|Write",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run check 2>&1 | tail -5"
+					}
+				]
+			}
+		],
+		"PreToolUse": [
+			{
+				"matcher": "Bash",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "echo $TOOL_INPUT | grep -q 'git commit' && bun run check && bun run typecheck || true"
+					}
+				]
+			}
+		]
+	}
+}

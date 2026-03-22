@@ -1,0 +1,157 @@
+---
+import type { WorksApp } from "../../lib/apps";
+
+interface Props {
+	apps: WorksApp[];
+}
+
+const { apps } = Astro.props;
+---
+
+<section class="showcase" id="apps" aria-label="교육 앱">
+	<h2 class="showcase-heading">세 가지 교육, 하나의 플랫폼</h2>
+	<div class="showcase-grid">
+		{apps.map((app, i) => (
+			<article
+				class:list={["showcase-card", { "showcase-card--offset": i === 1 }]}
+				data-reveal
+			>
+				<div class="showcase-card__accent" style={`background: ${app.accentVar}`} />
+				<div class="showcase-card__body">
+					<h3 class="showcase-card__name">{app.name}</h3>
+					<p class="showcase-card__tagline">{app.tagline}</p>
+					<p class="showcase-card__desc">{app.description}</p>
+					<div class="showcase-card__footer">
+						<span class="showcase-card__domain">{app.domain}</span>
+						<span class:list={[
+							"showcase-card__status",
+							app.status === "active" ? "showcase-card__status--active" : "showcase-card__status--landing"
+						]}>
+							{app.status === "active" ? "Active" : "Coming Soon"}
+						</span>
+					</div>
+				</div>
+			</article>
+		))}
+	</div>
+</section>
+
+<style>
+	@layer components {
+		.showcase {
+			padding: var(--space-24) var(--space-6);
+			max-width: 1080px;
+			margin: 0 auto;
+		}
+
+		.showcase-heading {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 700;
+			text-align: center;
+			margin-bottom: var(--space-16);
+			color: var(--color-text-1);
+		}
+
+		.showcase-grid {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: var(--space-6);
+		}
+
+		@media (min-width: 768px) {
+			.showcase-grid {
+				grid-template-columns: repeat(3, 1fr);
+				gap: var(--space-6);
+				align-items: start;
+			}
+
+			.showcase-card--offset {
+				transform: translateY(var(--space-8));
+			}
+		}
+
+		.showcase-card {
+			position: relative;
+			display: flex;
+			background: var(--color-surface-card);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-lg);
+			overflow: hidden;
+			transition:
+				transform var(--dur-base) var(--ease-out),
+				border-color var(--dur-fast) var(--ease-out),
+				box-shadow var(--dur-fast) var(--ease-out);
+		}
+
+		.showcase-card:hover {
+			border-color: var(--color-border-hover);
+			box-shadow: var(--shadow-md);
+		}
+
+		.showcase-card__accent {
+			flex-shrink: 0;
+			width: 3px;
+		}
+
+		.showcase-card__body {
+			padding: var(--space-6);
+			flex: 1;
+		}
+
+		.showcase-card__name {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 700;
+			margin-bottom: var(--space-2);
+			color: var(--color-text-1);
+		}
+
+		.showcase-card__tagline {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 500;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-3);
+		}
+
+		.showcase-card__desc {
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+			line-height: 1.65;
+			max-width: 45ch;
+			margin-bottom: var(--space-6);
+		}
+
+		.showcase-card__footer {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.showcase-card__domain {
+			font-size: var(--font-size-caption);
+			color: var(--color-text-3);
+			font-family: var(--font-ui);
+		}
+
+		.showcase-card__status {
+			font-size: var(--font-size-caption);
+			font-family: var(--font-ui);
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			padding: var(--space-1) var(--space-3);
+			border-radius: var(--radius-full);
+		}
+
+		.showcase-card__status--active {
+			background: oklch(0.72 0.12 155 / 0.12);
+			color: var(--color-success);
+		}
+
+		.showcase-card__status--landing {
+			background: oklch(0.80 0.08 65 / 0.12);
+			color: var(--color-accent-fortiscribe);
+		}
+	}
+</style>

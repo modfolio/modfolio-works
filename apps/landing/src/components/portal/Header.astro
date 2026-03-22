@@ -1,0 +1,117 @@
+---
+interface Props {
+	userName: string;
+}
+
+const { userName } = Astro.props;
+---
+
+<header class="portal-header">
+	<div class="portal-header__left">
+		<span class="portal-header__brand">Works</span>
+		<span class="portal-header__greeting">
+			안녕하세요, <strong>{userName}</strong>님
+		</span>
+	</div>
+	<div class="portal-header__right">
+		<a
+			href="https://account.modfolio.io"
+			class="portal-header__account"
+			target="_blank"
+			rel="noopener"
+		>
+			<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+				<circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.5" />
+				<path d="M2 14c0-3.3 2.7-5 6-5s6 1.7 6 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+			</svg>
+			<span class="portal-header__account-label">계정</span>
+		</a>
+		<a href="/auth/logout" class="portal-header__logout">로그아웃</a>
+	</div>
+</header>
+
+<style>
+	@layer components {
+		.portal-header {
+			position: sticky;
+			top: 0;
+			z-index: 10;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: var(--space-4) var(--space-6);
+			background: oklch(0.06 0.01 275 / 0.85);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			border-bottom: 1px solid var(--color-border-subtle);
+		}
+
+		.portal-header__left {
+			display: flex;
+			align-items: center;
+			gap: var(--space-4);
+		}
+
+		.portal-header__brand {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 700;
+			color: var(--color-text-1);
+		}
+
+		.portal-header__greeting {
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+		}
+
+		.portal-header__greeting strong {
+			color: var(--color-text-1);
+			font-weight: 500;
+		}
+
+		.portal-header__right {
+			display: flex;
+			align-items: center;
+			gap: var(--space-4);
+		}
+
+		.portal-header__account {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.portal-header__account:hover {
+			color: var(--color-text-1);
+		}
+
+		.portal-header__account-label {
+			display: none;
+		}
+
+		@media (min-width: 640px) {
+			.portal-header__account-label {
+				display: inline;
+			}
+		}
+
+		.portal-header__logout {
+			padding: var(--space-2) var(--space-3);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-sm);
+			font-size: var(--font-size-caption);
+			color: var(--color-text-2);
+			transition:
+				border-color var(--dur-fast) var(--ease-out),
+				color var(--dur-fast) var(--ease-out);
+		}
+
+		.portal-header__logout:hover {
+			border-color: var(--color-border-hover);
+			color: var(--color-text-1);
+		}
+	}
+</style>

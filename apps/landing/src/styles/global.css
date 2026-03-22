@@ -1,0 +1,76 @@
+@layer base {
+	body {
+		font-family: var(--font-ui);
+		font-size: var(--font-size-body);
+		background: var(--color-surface-0);
+		color: var(--color-text-1);
+	}
+
+	/* Focus Visible */
+	:focus-visible {
+		outline: 2px solid var(--color-interactive-primary);
+		outline-offset: 2px;
+	}
+
+	/* Selection */
+	::selection {
+		background: oklch(0.82 0.12 80 / 0.25);
+		color: var(--color-text-1);
+	}
+
+	/* Reduced Motion — override duration tokens instead of !important */
+	@media (prefers-reduced-motion: reduce) {
+		:root {
+			--dur-fast: 0.01ms;
+			--dur-base: 0.01ms;
+			--dur-slow: 0.01ms;
+			--dur-breath: 0.01ms;
+			scroll-behavior: auto;
+		}
+	}
+
+	/* Scrollbar */
+	::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	::-webkit-scrollbar-track {
+		background: var(--color-surface-0);
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: var(--color-border-default);
+		border-radius: var(--radius-full);
+	}
+
+	/* Skip to Content */
+	.skip-to-content {
+		position: absolute;
+		top: calc(-1 * var(--space-12));
+		left: var(--space-4);
+		z-index: 999;
+		padding: var(--space-2) var(--space-4);
+		background: var(--color-interactive-primary);
+		color: var(--color-surface-0);
+		font-family: var(--font-ui);
+		font-weight: 600;
+		border-radius: var(--radius-sm);
+	}
+
+	.skip-to-content:focus {
+		top: var(--space-4);
+	}
+
+	/* Screen Reader Only */
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+}

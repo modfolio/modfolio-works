@@ -308,3 +308,54 @@ npx wrangler pages secret put NPM_TOKEN --project-name={cf-project-name}
 - **다음**: 디자인 고도화, 하위 앱 상태 연동 (health check)
 
 <!-- ECOSYSTEM_END -->
+
+
+---
+
+# Modfolio Works
+
+## 이 레포의 역할
+
+Modfolio Works 자회사 그룹. 교육/학습 도메인 앱 그룹 관리.
+
+## Tech Stack
+
+- **Runtime**: Bun
+- **Language**: TypeScript (strict mode)
+- **Lint/Format**: Biome v2
+- **Deployment**: Cloudflare Pages
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `bun run check` | Biome lint + format 검사 |
+| `bun run check:fix` | Biome 자동 수정 |
+| `bun run typecheck` | TypeScript strict mode 검사 |
+
+## Quality Gate (필수)
+
+모든 작업 완료 후 반드시 실행:
+
+```bash
+bun run check && bun run typecheck
+```
+
+통과하지 않으면 commit 불가.
+
+## Rules: 2계층 구조
+
+### Tier 1: 불변 원칙 (절대 위반 불가)
+
+1. **생태계 3대 원칙**: House of Brands / Zero Physical Sharing / 100% CF Edge Native
+2. **오류 정공법**: `@ts-ignore`, `biome-ignore`, 예외 처리 우회 금지
+3. **Git 안전**: `--force`, `--no-verify` 금지, 시크릿 커밋 금지
+
+### Tier 2: 운영 규칙 (판단 가능, 기록 필수)
+
+1. Plan의 **목적(intent)**에 충실
+2. 실행 중 발견한 더 나은 패턴/구조/도구 적용 가능
+
+## 참조
+
+- 생태계 관제탑: `modfolio-universe` (GitHub: modfolio/modfolio-universe)
