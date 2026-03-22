@@ -1,9 +1,8 @@
 ---
 import Base from "../layouts/Base.astro";
 import Hero from "../components/landing/Hero.astro";
-import AppShowcase from "../components/landing/AppShowcase.astro";
+import AppHighlight from "../components/landing/AppHighlight.astro";
 import SocialProof from "../components/landing/SocialProof.astro";
-import FAQ from "../components/landing/FAQ.astro";
 import CTA from "../components/landing/CTA.astro";
 import Footer from "../components/landing/Footer.astro";
 import { apps } from "../lib/apps";
@@ -16,15 +15,15 @@ import "../styles/global.css";
 <Base title="Modfolio Works — 교육의 미래를 연결합니다">
 	<main id="main">
 		<Hero />
-		<AppShowcase apps={apps} />
+		<AppHighlight apps={apps} />
 		<SocialProof />
-		<FAQ />
 		<CTA />
 	</main>
 	<Footer />
 </Base>
 
 <script>
+	/* ── Reveal Observer ── */
 	const reveals = document.querySelectorAll("[data-reveal]");
 
 	if (reveals.length > 0) {
@@ -49,6 +48,18 @@ import "../styles/global.css";
 			observer.observe(el);
 		}
 	}
+
+	/* ── Parallax ── */
+	window.addEventListener(
+		"scroll",
+		() => {
+			document.documentElement.style.setProperty(
+				"--scroll-y",
+				window.scrollY.toString(),
+			);
+		},
+		{ passive: true },
+	);
 </script>
 
 <style is:global>

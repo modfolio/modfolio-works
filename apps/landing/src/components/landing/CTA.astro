@@ -1,60 +1,53 @@
 ---
 ---
 
-<section class="cta-section" aria-label="시작하기">
-	<div class="cta-card" data-reveal>
-		<h2 class="cta-heading">교육의 미래를 지금 시작하세요</h2>
-		<p class="cta-sub">Modfolio Connect 계정으로 1분 안에 시작</p>
-		<a href="https://edu.modfolio.io" class="cta-button">
+<section class="cta-band" aria-label="시작하기">
+	<div class="cta-band__inner" data-reveal>
+		<h2 class="cta-band__heading">교육의 미래를 지금 시작하세요</h2>
+		<p class="cta-band__sub">Modfolio Connect 계정으로 1분 안에 시작</p>
+		<a href="https://edu.modfolio.io" class="cta-band__btn">
 			시작하기
-			<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-				<path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-			</svg>
 		</a>
 	</div>
 </section>
 
 <style>
 	@layer components {
-		.cta-section {
-			padding: var(--space-24) var(--space-6);
+		.cta-band {
+			background: var(--p-teal-500);
+			padding: var(--space-24) var(--mu-padding-x);
 		}
 
-		.cta-card {
-			max-width: 960px;
+		.cta-band__inner {
+			max-width: var(--mu-max-width);
 			margin: 0 auto;
-			padding: var(--space-16) var(--space-8);
-			background: linear-gradient(
-				135deg,
-				var(--p-teal-50),
-				var(--p-teal-100)
-			);
-			border-radius: var(--radius-xl);
 			text-align: center;
 		}
 
-		.cta-heading {
+		.cta-band__heading {
 			font-family: var(--font-display);
 			font-size: var(--font-size-h1);
 			font-weight: 700;
+			color: var(--color-surface-0);
 			line-height: 1.2;
-			color: var(--p-teal-900);
 			margin-bottom: var(--space-4);
 		}
 
-		.cta-sub {
-			font-size: var(--font-size-small);
-			color: var(--p-teal-700);
+		.cta-band__sub {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-surface-0);
+			opacity: 0.8;
 			margin-bottom: var(--space-8);
 		}
 
-		.cta-button {
+		.cta-band__btn {
 			display: inline-flex;
 			align-items: center;
-			gap: var(--space-2);
-			padding: var(--space-4) var(--space-8);
-			background: var(--color-interactive-primary);
-			color: var(--color-surface-0);
+			justify-content: center;
+			padding: var(--space-3) var(--space-6);
+			background: var(--color-surface-0);
+			color: var(--color-interactive-primary);
 			font-family: var(--font-ui);
 			font-size: var(--font-size-body);
 			font-weight: 600;
@@ -64,9 +57,9 @@
 				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
-		.cta-button:hover {
+		.cta-band__btn:hover {
 			transform: translateY(-2px);
-			box-shadow: var(--shadow-glow);
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 		}
 	}
 </style>

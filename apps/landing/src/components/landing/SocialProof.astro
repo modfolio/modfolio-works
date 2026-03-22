@@ -1,90 +1,148 @@
 ---
+const stats = [
+	{ value: 3, label: "교육 앱", isNumber: true },
+	{ value: 1, label: "통합 로그인", isNumber: true },
+	{ value: "Edge", label: "글로벌 배포", isNumber: false },
+];
 ---
 
-<section class="proof" aria-label="신뢰 지표" data-reveal>
-	<p class="proof-label">Modfolio 생태계</p>
-	<div class="proof-stats">
-		<div class="proof-stat">
-			<span class="proof-stat__number">3</span>
-			<span class="proof-stat__label">교육 앱</span>
+<section class="social-proof" aria-label="생태계 통계" data-reveal>
+	<div class="social-proof__inner">
+		<p class="social-proof__label">Modfolio 생태계</p>
+		<div class="social-proof__stats">
+			{stats.map((stat, i) => (
+				<>
+					{i > 0 && <div class="social-proof__divider" aria-hidden="true" />}
+					<div class="social-proof__stat">
+						<span
+							class="social-proof__value"
+							data-count-target={stat.isNumber ? String(stat.value) : undefined}
+						>
+							{stat.isNumber ? "0" : stat.value}
+						</span>
+						<span class="social-proof__stat-label">{stat.label}</span>
+					</div>
+				</>
+			))}
 		</div>
-		<div class="proof-divider" aria-hidden="true"></div>
-		<div class="proof-stat">
-			<span class="proof-stat__number">1</span>
-			<span class="proof-stat__label">통합 로그인</span>
-		</div>
-		<div class="proof-divider" aria-hidden="true"></div>
-		<div class="proof-stat">
-			<span class="proof-stat__number">Edge</span>
-			<span class="proof-stat__label">글로벌 배포</span>
-		</div>
+		<p class="social-proof__note">
+			Modfolio Connect SSO로 안전하게 보호됩니다
+		</p>
 	</div>
-	<p class="proof-note">Modfolio Connect SSO로 안전하게 보호됩니다</p>
 </section>
+
+<script>
+	const counters = document.querySelectorAll<HTMLElement>("[data-count-target]");
+
+	if (counters.length > 0) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						const el = entry.target as HTMLElement;
+						const target = Number(el.dataset.countTarget);
+						const duration = 1500;
+						const start = performance.now();
+
+						const animate = (now: number) => {
+							const elapsed = now - start;
+							const progress = Math.min(elapsed / duration, 1);
+							const eased = 1 - (1 - progress) ** 3;
+							const current = Math.round(eased * target);
+							el.textContent = String(current);
+
+							if (progress < 1) {
+								requestAnimationFrame(animate);
+							}
+						};
+
+						requestAnimationFrame(animate);
+						observer.unobserve(el);
+					}
+				}
+			},
+			{ threshold: 0.3 },
+		);
+
+		for (const el of counters) {
+			observer.observe(el);
+		}
+	}
+</script>
 
 <style>
 	@layer components {
-		.proof {
-			padding: var(--space-16) var(--space-6);
+		.social-proof {
 			background: var(--color-surface-0);
+			padding: var(--space-24) var(--mu-padding-x);
+		}
+
+		.social-proof__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
 			text-align: center;
 		}
 
-		.proof-label {
+		.social-proof__label {
 			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			color: var(--color-text-3);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
 			text-transform: uppercase;
 			letter-spacing: 0.1em;
-			margin-bottom: var(--space-8);
+			color: var(--color-text-3);
+			margin-bottom: var(--space-12);
 		}
 
-		.proof-stats {
+		.social-proof__stats {
 			display: flex;
 			align-items: center;
 			justify-content: center;
-			gap: var(--space-8);
+			gap: var(--space-12);
 			flex-wrap: wrap;
-			margin-bottom: var(--space-8);
+			margin-bottom: var(--space-10);
 		}
 
-		.proof-stat {
+		.social-proof__stat {
 			display: flex;
 			flex-direction: column;
-			gap: var(--space-1);
+			align-items: center;
+			gap: var(--space-2);
 		}
 
-		.proof-stat__number {
+		.social-proof__value {
 			font-family: var(--font-display);
-			font-size: var(--font-size-h1);
+			font-size: var(--font-size-display);
 			font-weight: 700;
 			color: var(--color-interactive-primary);
 			line-height: 1;
 		}
 
-		.proof-stat__label {
+		.social-proof__stat-label {
+			font-family: var(--font-ui);
 			font-size: var(--font-size-small);
 			color: var(--color-text-2);
 		}
 
-		.proof-divider {
+		.social-proof__divider {
 			width: 1px;
-			height: var(--space-10);
+			height: var(--space-12);
 			background: var(--color-border-subtle);
+			flex-shrink: 0;
 		}
 
-		.proof-note {
-			font-size: var(--font-size-caption);
+		.social-proof__note {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
 			color: var(--color-text-3);
 		}
 
-		@media (max-width: 480px) {
-			.proof-divider {
-				display: none;
+		@media (max-width: 640px) {
+			.social-proof__stats {
+				gap: var(--space-8);
 			}
 
-			.proof-stats {
-				gap: var(--space-6);
+			.social-proof__divider {
+				display: none;
 			}
 		}
 	}

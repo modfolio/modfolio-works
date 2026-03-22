@@ -1,0 +1,317 @@
+---
+import Base from "../layouts/Base.astro";
+import Footer from "../components/landing/Footer.astro";
+import { apps } from "../lib/apps";
+
+import "../styles/reset.css";
+import "../styles/tokens.css";
+import "../styles/global.css";
+---
+
+<Base title="교육 앱 — Modfolio Works">
+	<main id="main">
+		<section class="apps-hero">
+			<div class="apps-hero__inner">
+				<p class="apps-hero__label">Modfolio Works</p>
+				<h1 class="apps-hero__title">교육 앱</h1>
+				<p class="apps-hero__desc">
+					학원 운영, AI 스피킹, 작문 첨삭 — 교육에 필요한 모든 것을 하나의 계정으로.
+				</p>
+			</div>
+		</section>
+
+		{apps.map((app, i) => (
+			<section
+				id={app.id}
+				class:list={["app-section", i % 2 === 0 ? "app-section--light" : "app-section--snow"]}
+			>
+				<div class="app-section__inner" data-reveal>
+					<div class="app-section__info">
+						<div
+							class="app-section__icon"
+							style={`background: ${app.accentVar}`}
+						>
+							<span class="app-section__initial">
+								{app.name.charAt(0)}
+							</span>
+						</div>
+						<h2 class="app-section__name">{app.name}</h2>
+						<p class="app-section__tagline">{app.tagline}</p>
+						<p class="app-section__outcome">{app.outcome}</p>
+						<span class="app-section__domain">{app.domain}</span>
+					</div>
+					<div class="app-section__detail">
+						<p class="app-section__desc">{app.description}</p>
+						<div class="app-section__meta">
+							<span class:list={[
+								"app-section__status",
+								app.status === "active" ? "app-section__status--active" : "app-section__status--landing",
+							]}>
+								{app.status === "active" ? "운영 중" : "출시 준비 중"}
+							</span>
+						</div>
+						<a
+							href={app.url}
+							class="app-section__cta"
+							style={`background: ${app.accentVar}`}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							앱 방문하기 &rarr;
+						</a>
+					</div>
+				</div>
+			</section>
+		))}
+	</main>
+	<Footer />
+</Base>
+
+<script>
+	const reveals = document.querySelectorAll("[data-reveal]");
+
+	if (reveals.length > 0) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						const delay =
+							(entry.target as HTMLElement).dataset.revealDelay || "0";
+						(entry.target as HTMLElement).style.transitionDelay =
+							`${delay}ms`;
+						entry.target.classList.add("revealed");
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+		);
+
+		for (const el of reveals) {
+			el.classList.add("reveal-pending");
+			observer.observe(el);
+		}
+	}
+</script>
+
+<style is:global>
+	@layer utilities {
+		.reveal-pending {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+
+		.revealed {
+			opacity: 1;
+			transform: translateY(0);
+			transition:
+				opacity var(--dur-slow) var(--ease-out),
+				transform var(--dur-slow) var(--ease-out);
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.reveal-pending {
+				opacity: 1;
+				transform: none;
+			}
+		}
+	}
+</style>
+
+<style>
+	@layer components {
+		/* Hero */
+		.apps-hero {
+			padding: var(--space-24) var(--mu-padding-x) var(--space-16);
+			background: linear-gradient(
+				180deg,
+				var(--color-surface-0) 0%,
+				var(--p-teal-50) 100%
+			);
+			text-align: center;
+		}
+
+		.apps-hero__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.apps-hero__label {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: var(--color-text-3);
+			margin-bottom: var(--space-4);
+		}
+
+		.apps-hero__title {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h1);
+			font-weight: 700;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-4);
+		}
+
+		.apps-hero__desc {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-2);
+			max-width: 50ch;
+			margin: 0 auto;
+			line-height: 1.7;
+		}
+
+		/* App Sections */
+		.app-section {
+			min-height: 50vh;
+			display: flex;
+			align-items: center;
+			padding: var(--space-24) var(--mu-padding-x);
+		}
+
+		.app-section--light {
+			background: var(--color-surface-0);
+		}
+
+		.app-section--snow {
+			background: var(--color-surface-1);
+		}
+
+		.app-section__inner {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: var(--space-16);
+			align-items: center;
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+			width: 100%;
+		}
+
+		@media (max-width: 768px) {
+			.app-section__inner {
+				grid-template-columns: 1fr;
+				gap: var(--space-8);
+			}
+		}
+
+		.app-section__info {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-3);
+		}
+
+		.app-section__icon {
+			display: grid;
+			place-items: center;
+			width: 80px;
+			height: 80px;
+			border-radius: var(--radius-full);
+			margin-bottom: var(--space-2);
+		}
+
+		.app-section__initial {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 700;
+			color: var(--color-surface-0);
+			line-height: 1;
+		}
+
+		.app-section__name {
+			font-family: var(--font-display);
+			font-size: var(--font-size-display);
+			font-weight: 700;
+			color: var(--color-text-1);
+			line-height: 1.1;
+		}
+
+		.app-section__tagline {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 400;
+			color: var(--color-text-2);
+		}
+
+		.app-section__outcome {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			color: var(--color-text-3);
+			font-style: italic;
+		}
+
+		.app-section__domain {
+			display: inline-block;
+			width: fit-content;
+			padding: var(--space-1) var(--space-3);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 500;
+			color: var(--color-text-3);
+			background: var(--color-surface-raised);
+			border-radius: var(--radius-full);
+		}
+
+		/* Detail side */
+		.app-section__detail {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-6);
+		}
+
+		.app-section__desc {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-2);
+			line-height: 1.8;
+		}
+
+		.app-section__meta {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+		}
+
+		.app-section__status {
+			display: inline-flex;
+			align-items: center;
+			padding: var(--space-1) var(--space-3);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
+			border-radius: var(--radius-full);
+		}
+
+		.app-section__status--active {
+			background: var(--color-interactive-muted);
+			color: var(--color-interactive-primary);
+		}
+
+		.app-section__status--landing {
+			background: var(--color-surface-raised);
+			color: var(--color-text-3);
+		}
+
+		.app-section__cta {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			width: fit-content;
+			padding: var(--space-3) var(--space-6);
+			color: var(--color-surface-0);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 600;
+			border-radius: var(--radius-md);
+			transition:
+				transform var(--dur-fast) var(--ease-out),
+				box-shadow var(--dur-fast) var(--ease-out);
+		}
+
+		.app-section__cta:hover {
+			transform: translateY(-2px);
+			box-shadow: var(--shadow-md);
+		}
+	}
+</style>

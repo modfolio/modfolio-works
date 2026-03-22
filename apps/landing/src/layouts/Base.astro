@@ -1,4 +1,6 @@
 ---
+import Nav from "../components/Nav.astro";
+
 interface Props {
 	title: string;
 	description?: string;
@@ -65,6 +67,17 @@ const canonicalUrl = new URL(Astro.url.pathname, "https://works.modfolio.io");
 		</ul>
 	</nav>
 
+	<Nav />
+	<div class="nav-spacer" aria-hidden="true"></div>
+
 	<slot />
 </body>
 </html>
+
+<style>
+	@layer components {
+		.nav-spacer {
+			height: var(--nav-h);
+		}
+	}
+</style>

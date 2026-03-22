@@ -1,0 +1,372 @@
+---
+const navItems = [
+	{ label: "앱", href: "/apps" },
+	{ label: "소개", href: "/about" },
+	{ label: "FAQ", href: "/faq" },
+];
+const currentPath = Astro.url.pathname;
+---
+
+<header id="works-nav" class="nav">
+	<div class="nav-inner">
+		<a href="/" class="nav-logo" aria-label="Modfolio Works 홈">
+			<span class="nav-logo__text">Works</span>
+		</a>
+
+		<nav class="nav-links" aria-label="주요 탐색">
+			{navItems.map((item) => (
+				<a
+					href={item.href}
+					class:list={[
+						"nav-link",
+						(currentPath === item.href || currentPath.startsWith(item.href + "/")) && "nav-link--active",
+					]}
+					aria-current={currentPath === item.href ? "page" : undefined}
+				>
+					{item.label}
+				</a>
+			))}
+		</nav>
+
+		<div class="nav-actions">
+			<a href="https://edu.modfolio.io" class="nav-cta">시작하기</a>
+			<button
+				id="works-nav-toggle"
+				class="nav-hamburger"
+				type="button"
+				aria-label="메뉴 열기"
+				aria-expanded="false"
+			>
+				<span class="nav-hamburger__line"></span>
+				<span class="nav-hamburger__line"></span>
+				<span class="nav-hamburger__line"></span>
+			</button>
+		</div>
+	</div>
+
+	<div id="works-nav-drawer" class="nav-drawer">
+		<nav class="nav-drawer__inner" aria-label="모바일 탐색">
+			{navItems.map((item) => (
+				<a
+					href={item.href}
+					class:list={[
+						"nav-drawer__link",
+						(currentPath === item.href || currentPath.startsWith(item.href + "/")) && "nav-drawer__link--active",
+					]}
+				>
+					{item.label}
+				</a>
+			))}
+			<div class="nav-drawer__divider"></div>
+			<a href="https://edu.modfolio.io" class="nav-drawer__cta">
+				시작하기
+			</a>
+		</nav>
+	</div>
+</header>
+
+<script>
+	const nav = document.getElementById("works-nav");
+	const toggle = document.getElementById("works-nav-toggle");
+	const drawer = document.getElementById("works-nav-drawer");
+
+	if (nav && toggle && drawer) {
+		let lastScrollY = 0;
+		let navHidden = false;
+		let drawerOpen = false;
+
+		const show = () => {
+			nav.style.transform = "translateY(0)";
+			navHidden = false;
+		};
+
+		const hide = () => {
+			if (drawerOpen) return;
+			nav.style.transform = "translateY(-100%)";
+			navHidden = true;
+		};
+
+		window.addEventListener(
+			"scroll",
+			() => {
+				const currentY = window.scrollY;
+				if (currentY > lastScrollY && currentY > 100) {
+					hide();
+				} else {
+					show();
+				}
+				lastScrollY = currentY;
+			},
+			{ passive: true },
+		);
+
+		document.addEventListener(
+			"mousemove",
+			(e) => {
+				if (e.clientY < 80 && navHidden) {
+					show();
+				}
+			},
+			{ passive: true },
+		);
+
+		toggle.addEventListener("click", () => {
+			drawerOpen = !drawerOpen;
+			if (drawerOpen) {
+				drawer.style.maxHeight = `${drawer.scrollHeight}px`;
+				toggle.classList.add("nav-hamburger--open");
+				toggle.setAttribute("aria-expanded", "true");
+				toggle.setAttribute("aria-label", "메뉴 닫기");
+			} else {
+				drawer.style.maxHeight = "0";
+				toggle.classList.remove("nav-hamburger--open");
+				toggle.setAttribute("aria-expanded", "false");
+				toggle.setAttribute("aria-label", "메뉴 열기");
+			}
+		});
+	}
+</script>
+
+<style>
+	@layer components {
+		.nav {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			z-index: 50;
+			height: var(--nav-h);
+			background: rgba(255, 255, 255, 0.85);
+			backdrop-filter: blur(20px) saturate(180%);
+			-webkit-backdrop-filter: blur(20px) saturate(180%);
+			border-bottom: 1px solid var(--color-border-subtle);
+			transition: transform 300ms var(--ease-out);
+			will-change: transform;
+		}
+
+		.nav-inner {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			height: 100%;
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+			padding: 0 var(--mu-padding-x);
+		}
+
+		/* Logo */
+		.nav-logo {
+			display: flex;
+			align-items: center;
+		}
+
+		.nav-logo__text {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 700;
+			color: var(--p-teal-700);
+			letter-spacing: -0.01em;
+		}
+
+		/* Desktop Links */
+		.nav-links {
+			display: none;
+			align-items: center;
+			gap: var(--space-8);
+		}
+
+		@media (min-width: 768px) {
+			.nav-links {
+				display: flex;
+			}
+		}
+
+		.nav-link {
+			position: relative;
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 500;
+			color: var(--color-text-2);
+			padding: var(--space-1) 0;
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.nav-link::after {
+			content: "";
+			position: absolute;
+			bottom: -2px;
+			left: 0;
+			right: 0;
+			height: 2px;
+			background: var(--color-interactive-primary);
+			border-radius: var(--radius-full);
+			transform: scaleX(0);
+			transform-origin: center;
+			transition: transform var(--dur-fast) var(--ease-out);
+		}
+
+		.nav-link:hover {
+			color: var(--color-text-1);
+		}
+
+		.nav-link:hover::after {
+			transform: scaleX(1);
+		}
+
+		.nav-link--active {
+			color: var(--color-interactive-primary);
+			font-weight: 600;
+		}
+
+		.nav-link--active::after {
+			transform: scaleX(1);
+		}
+
+		/* Actions */
+		.nav-actions {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+		}
+
+		.nav-cta {
+			display: inline-flex;
+			align-items: center;
+			padding: var(--space-2) var(--space-4);
+			background: var(--color-interactive-primary);
+			color: var(--color-surface-0);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			border-radius: var(--radius-md);
+			transition:
+				background var(--dur-fast) var(--ease-out),
+				transform var(--dur-fast) var(--ease-out);
+		}
+
+		.nav-cta:hover {
+			background: var(--color-interactive-hover);
+			transform: translateY(-1px);
+		}
+
+		/* Hamburger */
+		.nav-hamburger {
+			display: flex;
+			flex-direction: column;
+			justify-content: center;
+			align-items: center;
+			gap: 5px;
+			width: 36px;
+			height: 36px;
+			border-radius: var(--radius-sm);
+			transition: background var(--dur-fast) var(--ease-out);
+		}
+
+		@media (min-width: 768px) {
+			.nav-hamburger {
+				display: none;
+			}
+		}
+
+		.nav-hamburger:hover {
+			background: var(--color-interactive-muted);
+		}
+
+		.nav-hamburger__line {
+			display: block;
+			width: 18px;
+			height: 2px;
+			background: var(--color-text-2);
+			border-radius: var(--radius-full);
+			transition:
+				transform var(--dur-fast) var(--ease-out),
+				opacity var(--dur-fast) var(--ease-out);
+		}
+
+		.nav-hamburger--open .nav-hamburger__line:nth-child(1) {
+			transform: translateY(7px) rotate(45deg);
+		}
+
+		.nav-hamburger--open .nav-hamburger__line:nth-child(2) {
+			opacity: 0;
+		}
+
+		.nav-hamburger--open .nav-hamburger__line:nth-child(3) {
+			transform: translateY(-7px) rotate(-45deg);
+		}
+
+		/* Mobile Drawer */
+		.nav-drawer {
+			display: block;
+			overflow: hidden;
+			max-height: 0;
+			background: rgba(255, 255, 255, 0.92);
+			backdrop-filter: blur(20px) saturate(180%);
+			-webkit-backdrop-filter: blur(20px) saturate(180%);
+			border-top: 1px solid var(--color-border-subtle);
+			transition: max-height 300ms var(--ease-out);
+			will-change: max-height;
+		}
+
+		@media (min-width: 768px) {
+			.nav-drawer {
+				display: none;
+			}
+		}
+
+		.nav-drawer__inner {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-1);
+			padding: var(--space-4) var(--mu-padding-x);
+		}
+
+		.nav-drawer__link {
+			display: block;
+			padding: var(--space-3) var(--space-3);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 500;
+			color: var(--color-text-2);
+			border-radius: var(--radius-md);
+			transition: all var(--dur-fast) var(--ease-out);
+		}
+
+		.nav-drawer__link:hover {
+			color: var(--color-text-1);
+			background: var(--color-interactive-muted);
+		}
+
+		.nav-drawer__link--active {
+			color: var(--color-interactive-primary);
+			font-weight: 600;
+			background: var(--color-interactive-muted);
+		}
+
+		.nav-drawer__divider {
+			height: 1px;
+			background: var(--color-border-subtle);
+			margin: var(--space-2) 0;
+		}
+
+		.nav-drawer__cta {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: var(--space-3) var(--space-4);
+			background: var(--color-interactive-primary);
+			color: var(--color-surface-0);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 600;
+			border-radius: var(--radius-md);
+			transition:
+				background var(--dur-fast) var(--ease-out),
+				transform var(--dur-fast) var(--ease-out);
+		}
+
+		.nav-drawer__cta:hover {
+			background: var(--color-interactive-hover);
+		}
+	}
+</style>

@@ -5,19 +5,26 @@
 	<div class="hero-dots" aria-hidden="true"></div>
 	<div class="hero-grain" aria-hidden="true"></div>
 
-	<div class="hero-content">
+	<div class="hero-content" data-parallax>
 		<h1 class="hero-title">교육이 달라져야 할 때</h1>
 		<p class="hero-agitate">
 			학원 관리, 스피킹 연습, 작문 첨삭 —<br class="hide-mobile" />
 			따로 노는 도구들 사이에서 시간을 낭비하고 있습니다.
 		</p>
 		<p class="hero-solution">Works가 하나로 연결합니다.</p>
-		<a href="https://edu.modfolio.io" class="hero-cta">시작하기</a>
+		<div class="hero-actions">
+			<a href="https://edu.modfolio.io" class="hero-btn hero-btn--primary">
+				시작하기
+			</a>
+			<a href="/apps" class="hero-btn hero-btn--secondary">
+				앱 둘러보기
+			</a>
+		</div>
 	</div>
 
 	<div class="hero-scroll-hint" aria-hidden="true">
-		<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-			<path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+		<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+			<path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
 		</svg>
 	</div>
 </section>
@@ -30,8 +37,8 @@
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			min-height: 100dvh;
-			padding: var(--space-8);
+			min-height: calc(100dvh - var(--nav-h));
+			padding: var(--space-8) var(--mu-padding-x);
 			text-align: center;
 			overflow: hidden;
 			background: linear-gradient(
@@ -67,7 +74,9 @@
 		.hero-content {
 			position: relative;
 			z-index: 1;
-			max-width: 640px;
+			max-width: 700px;
+			transform: translateY(calc(var(--scroll-y, 0) * -0.2px));
+			will-change: transform;
 		}
 
 		.hero-title {
@@ -79,7 +88,7 @@
 			background: linear-gradient(
 				135deg,
 				var(--p-teal-700),
-				var(--p-teal-500)
+				var(--p-teal-400)
 			);
 			background-clip: text;
 			-webkit-background-clip: text;
@@ -88,6 +97,7 @@
 		}
 
 		.hero-agitate {
+			font-family: var(--font-ui);
 			font-size: var(--font-size-body);
 			color: var(--color-text-2);
 			line-height: 1.7;
@@ -103,32 +113,57 @@
 			margin-bottom: var(--space-8);
 		}
 
-		.hero-cta {
+		.hero-actions {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: var(--space-4);
+			flex-wrap: wrap;
+		}
+
+		.hero-btn {
 			display: inline-flex;
 			align-items: center;
-			gap: var(--space-2);
+			justify-content: center;
 			padding: var(--space-3) var(--space-6);
-			background: var(--color-interactive-primary);
-			color: var(--color-surface-0);
 			font-family: var(--font-ui);
 			font-size: var(--font-size-body);
 			font-weight: 600;
 			border-radius: var(--radius-md);
 			transition:
 				transform var(--dur-fast) var(--ease-out),
-				box-shadow var(--dur-fast) var(--ease-out);
+				box-shadow var(--dur-fast) var(--ease-out),
+				background var(--dur-fast) var(--ease-out),
+				color var(--dur-fast) var(--ease-out);
 		}
 
-		.hero-cta:hover {
-			transform: translateY(-1px);
+		.hero-btn--primary {
+			background: var(--color-interactive-primary);
+			color: var(--color-surface-0);
+		}
+
+		.hero-btn--primary:hover {
+			background: var(--color-interactive-hover);
+			transform: translateY(-2px);
 			box-shadow: var(--shadow-glow);
+		}
+
+		.hero-btn--secondary {
+			background: transparent;
+			color: var(--color-interactive-primary);
+			border: 1.5px solid var(--color-interactive-primary);
+		}
+
+		.hero-btn--secondary:hover {
+			background: var(--color-interactive-muted);
+			transform: translateY(-2px);
 		}
 
 		.hero-scroll-hint {
 			position: absolute;
 			bottom: var(--space-8);
 			color: var(--p-teal-400);
-			animation: bounce 2s ease-in-out infinite;
+			animation: hero-bounce 2s ease-in-out infinite;
 		}
 
 		.hide-mobile {
@@ -141,7 +176,7 @@
 			}
 		}
 
-		@keyframes bounce {
+		@keyframes hero-bounce {
 			0%,
 			100% {
 				transform: translateY(0);

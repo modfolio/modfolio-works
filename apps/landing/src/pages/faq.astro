@@ -1,0 +1,270 @@
+---
+import Base from "../layouts/Base.astro";
+import Footer from "../components/landing/Footer.astro";
+
+import "../styles/reset.css";
+import "../styles/tokens.css";
+import "../styles/global.css";
+
+const faqs = [
+	{
+		q: "Modfolio Works는 무엇인가요?",
+		a: "Modfolio Works는 교육 분야에 특화된 앱 그룹입니다. 학원 운영 플랫폼 Naviaca, AI 스피킹 연습 앱 GistCore, AI 작문 첨삭 앱 Fortiscribe — 세 가지 앱이 하나의 계정 체계 아래 연결되어 교육의 전체 경험을 하나로 만듭니다.",
+	},
+	{
+		q: "각 앱은 따로 가입해야 하나요?",
+		a: "아닙니다. Modfolio Connect SSO로 한 번만 가입하면 Works 그룹의 모든 앱을 이용할 수 있습니다. 이메일, 소셜 로그인, 패스키 등 다양한 인증 방식을 지원합니다.",
+	},
+	{
+		q: "Naviaca는 어떤 학원에 적합한가요?",
+		a: "규모에 관계없이 모든 학원에 적합합니다. 학생 관리, 수업 편성, 출석, 성적, 결제까지 학원 운영에 필요한 모든 기능을 제공합니다. 특히 여러 반을 운영하는 어학원이나 보습학원에서 효과적입니다.",
+	},
+	{
+		q: "GistCore의 AI 튜터는 어떻게 작동하나요?",
+		a: "GistCore는 OPIc 시험의 실전 시나리오를 기반으로 AI와 대화 연습을 합니다. 발화 분석, 문법 교정, 표현 추천 등 즉각적인 피드백을 제공하여 스피킹 실력을 체계적으로 향상시킵니다.",
+	},
+	{
+		q: "Fortiscribe는 어떤 언어를 지원하나요?",
+		a: "영어와 한국어 작문을 지원합니다. AI가 문법, 구조, 논리, 표현을 다각도로 첨삭하며, 반복 훈련을 통해 글쓰기 실력을 측정 가능하게 향상시킵니다.",
+	},
+	{
+		q: "가격 정책은 어떻게 되나요?",
+		a: "각 앱은 독립적인 가격 정책을 운영합니다. 앱별 상세 가격은 각 앱의 공식 사이트에서 확인할 수 있습니다. 학원 단위 도입 시 Works 그룹 통합 요금제도 준비 중입니다.",
+	},
+	{
+		q: "데이터는 안전한가요?",
+		a: "모든 앱은 Cloudflare의 글로벌 엣지 네트워크에서 운영되며, 데이터는 암호화되어 전송 및 저장됩니다. Modfolio Connect SSO를 통한 인증으로 계정 보안을 강화하며, 데이터 소유권은 사용자에게 있습니다.",
+	},
+	{
+		q: "학원에서 도입하려면 어떻게 하나요?",
+		a: "Modfolio Connect 계정을 생성한 후 각 앱에 로그인하면 바로 사용할 수 있습니다. 학원 단위 도입 및 커스터마이즈가 필요한 경우 contact@modfolio.io로 문의해주세요.",
+	},
+];
+---
+
+<Base title="FAQ — Modfolio Works">
+	<main id="main">
+		<section class="faq-hero">
+			<div class="faq-hero__inner">
+				<p class="faq-hero__label">FAQ</p>
+				<h1 class="faq-hero__title">자주 묻는 질문</h1>
+				<p class="faq-hero__desc">
+					Modfolio Works와 교육 앱에 대해 궁금한 점을 모았습니다.
+				</p>
+			</div>
+		</section>
+
+		<section class="faq-section">
+			<div class="faq-section__inner">
+				<div class="faq-list" role="list">
+					{faqs.map((faq, i) => (
+						<details
+							class="faq-item"
+							data-reveal
+							data-reveal-delay={String(Math.min(i * 60, 360))}
+						>
+							<summary class="faq-item__question" role="listitem">
+								<span class="faq-item__q-text">{faq.q}</span>
+								<span class="faq-item__chevron" aria-hidden="true">
+									<svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+										<path d="M6 8l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+									</svg>
+								</span>
+							</summary>
+							<div class="faq-item__answer">
+								<p class="faq-item__a-text">{faq.a}</p>
+							</div>
+						</details>
+					))}
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Base>
+
+<script>
+	const reveals = document.querySelectorAll("[data-reveal]");
+
+	if (reveals.length > 0) {
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) {
+						const delay =
+							(entry.target as HTMLElement).dataset.revealDelay || "0";
+						(entry.target as HTMLElement).style.transitionDelay =
+							`${delay}ms`;
+						entry.target.classList.add("revealed");
+						observer.unobserve(entry.target);
+					}
+				}
+			},
+			{ threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+		);
+
+		for (const el of reveals) {
+			el.classList.add("reveal-pending");
+			observer.observe(el);
+		}
+	}
+</script>
+
+<style is:global>
+	@layer utilities {
+		.reveal-pending {
+			opacity: 0;
+			transform: translateY(16px);
+		}
+
+		.revealed {
+			opacity: 1;
+			transform: translateY(0);
+			transition:
+				opacity var(--dur-slow) var(--ease-out),
+				transform var(--dur-slow) var(--ease-out);
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.reveal-pending {
+				opacity: 1;
+				transform: none;
+			}
+		}
+	}
+</style>
+
+<style>
+	@layer components {
+		/* Hero */
+		.faq-hero {
+			padding: var(--space-24) var(--mu-padding-x) var(--space-16);
+			background: linear-gradient(
+				180deg,
+				var(--color-surface-0) 0%,
+				var(--p-teal-50) 100%
+			);
+			text-align: center;
+		}
+
+		.faq-hero__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.faq-hero__label {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: var(--color-text-3);
+			margin-bottom: var(--space-4);
+		}
+
+		.faq-hero__title {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h1);
+			font-weight: 700;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-4);
+		}
+
+		.faq-hero__desc {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-2);
+			max-width: 50ch;
+			margin: 0 auto;
+		}
+
+		/* FAQ Section */
+		.faq-section {
+			padding: var(--space-16) var(--mu-padding-x) var(--space-24);
+			background: var(--color-surface-0);
+		}
+
+		.faq-section__inner {
+			max-width: 800px;
+			margin: 0 auto;
+		}
+
+		.faq-list {
+			max-height: 600px;
+			overflow-y: auto;
+			scrollbar-width: thin;
+			scrollbar-color: var(--color-border-default) transparent;
+		}
+
+		.faq-list::-webkit-scrollbar {
+			width: 6px;
+		}
+
+		.faq-list::-webkit-scrollbar-track {
+			background: transparent;
+		}
+
+		.faq-list::-webkit-scrollbar-thumb {
+			background: var(--color-border-default);
+			border-radius: var(--radius-full);
+		}
+
+		/* Item */
+		.faq-item {
+			border-bottom: 1px solid var(--color-border-subtle);
+		}
+
+		.faq-item__question {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--space-4);
+			padding: var(--space-6) var(--space-2);
+			cursor: pointer;
+			list-style: none;
+			user-select: none;
+		}
+
+		.faq-item__question::-webkit-details-marker {
+			display: none;
+		}
+
+		.faq-item__question::marker {
+			display: none;
+			content: "";
+		}
+
+		.faq-item__q-text {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 600;
+			color: var(--color-text-1);
+			line-height: 1.5;
+		}
+
+		.faq-item__chevron {
+			flex-shrink: 0;
+			color: var(--color-text-3);
+			transition: transform var(--dur-fast) var(--ease-out);
+		}
+
+		.faq-item[open] .faq-item__chevron {
+			transform: rotate(180deg);
+		}
+
+		.faq-item__question:hover .faq-item__q-text {
+			color: var(--color-interactive-primary);
+		}
+
+		.faq-item__answer {
+			padding: 0 var(--space-2) var(--space-6);
+		}
+
+		.faq-item__a-text {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+			line-height: 1.8;
+		}
+	}
+</style>

@@ -1,48 +1,120 @@
 ---
-const eduApps = [
+const educationLinks = [
 	{ name: "Naviaca", url: "https://naviaca.com" },
 	{ name: "GistCore", url: "https://gistcore.com" },
 	{ name: "Fortiscribe", url: "https://fortiscribe.com" },
 ];
 
-const modfolioLinks = [
-	{ name: "Modfolio", url: "https://modfolio.io" },
+const platformLinks = [
 	{ name: "Connect", url: "https://connect.modfolio.io" },
+	{ name: "Pay", url: "https://pay.modfolio.io" },
 	{ name: "Docs", url: "https://docs.modfolio.io" },
+];
+
+const ecosystemLinks = [
+	{ name: "Works", url: "https://works.modfolio.io", isSelf: true },
+	{ name: "LS", url: "https://ls.modfolio.io", isSelf: false },
+	{ name: "Axiom", url: "https://axiom.modfolio.io", isSelf: false },
+	{ name: "Studio", url: "https://studio.modfolio.io", isSelf: false },
+];
+
+const snsLinks = [
+	{ name: "Instagram", url: "https://instagram.com/modfolio.io" },
+	{ name: "LinkedIn", url: "https://linkedin.com/company/modfolio" },
+	{ name: "YouTube", url: "https://youtube.com/@modfolio" },
+];
+
+const siteLinks = [
+	{ name: "앱 소개", url: "/apps" },
+	{ name: "소개", url: "/about" },
+	{ name: "FAQ", url: "/faq" },
 ];
 ---
 
 <footer class="footer">
-	<div class="footer-inner">
-		<div class="footer-brand">
-			<h3 class="footer-title">Modfolio Works</h3>
-			<p class="footer-tagline">교육의 미래를 연결합니다</p>
-		</div>
-		<div class="footer-nav-groups">
-			<nav class="footer-nav" aria-label="교육 앱">
-				<h4 class="footer-nav__heading">교육 앱</h4>
-				<ul class="footer-nav__list">
-					{eduApps.map((link) => (
+	<div class="footer__top">
+		<div class="footer__grid">
+			<!-- Brand Column -->
+			<div class="footer__brand">
+				<h3 class="footer__logo">Works</h3>
+				<p class="footer__tagline">교육의 미래를 연결합니다</p>
+				<nav class="footer__site-links" aria-label="사이트 페이지">
+					{siteLinks.map((link) => (
+						<a href={link.url} class="footer__link">{link.name}</a>
+					))}
+				</nav>
+				<div class="footer__sns">
+					{snsLinks.map((link) => (
+						<a
+							href={link.url}
+							class="footer__link"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							{link.name}
+						</a>
+					))}
+				</div>
+			</div>
+
+			<!-- Education Column -->
+			<nav class="footer__col" aria-label="교육 앱">
+				<h4 class="footer__col-heading">Education</h4>
+				<ul class="footer__col-list">
+					{educationLinks.map((link) => (
 						<li>
-							<a href={link.url} class="footer-nav__link">{link.name}</a>
+							<a href={link.url} class="footer__link" target="_blank" rel="noopener noreferrer">
+								{link.name}
+							</a>
 						</li>
 					))}
 				</ul>
 			</nav>
-			<nav class="footer-nav" aria-label="Modfolio">
-				<h4 class="footer-nav__heading">Modfolio</h4>
-				<ul class="footer-nav__list">
-					{modfolioLinks.map((link) => (
+
+			<!-- Platform Column -->
+			<nav class="footer__col" aria-label="플랫폼">
+				<h4 class="footer__col-heading">Platform</h4>
+				<ul class="footer__col-list">
+					{platformLinks.map((link) => (
 						<li>
-							<a href={link.url} class="footer-nav__link">{link.name}</a>
+							<a href={link.url} class="footer__link" target="_blank" rel="noopener noreferrer">
+								{link.name}
+							</a>
+						</li>
+					))}
+				</ul>
+			</nav>
+
+			<!-- Ecosystem Column -->
+			<nav class="footer__col" aria-label="생태계">
+				<h4 class="footer__col-heading">Ecosystem</h4>
+				<ul class="footer__col-list">
+					{ecosystemLinks.map((link) => (
+						<li>
+							<a
+								href={link.url}
+								class:list={["footer__link", link.isSelf && "footer__link--self"]}
+								{...(link.isSelf ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+							>
+								{link.name}
+							</a>
 						</li>
 					))}
 				</ul>
 			</nav>
 		</div>
 	</div>
-	<div class="footer-bottom">
-		<p class="footer-copyright">&copy; 2026 Modfolio Inc.</p>
+
+	<div class="footer__bottom">
+		<div class="footer__bottom-inner">
+			<p class="footer__legal">
+				모드폴리오 &middot; 대표 김동헌 &middot; 사업자등록번호 104-95-65636 &middot;
+				통신판매업 제2025-수원팔달-0953호 &middot; 출판사 제2024-000037호 &middot;
+				경기도 수원시 팔달구 효원로 278, 6층 602호 &middot;
+				contact@modfolio.io
+			</p>
+			<p class="footer__copyright">&copy; 2026 Modfolio. All rights reserved.</p>
+		</div>
 	</div>
 </footer>
 
@@ -53,82 +125,132 @@ const modfolioLinks = [
 			border-top: 1px solid var(--color-border-subtle);
 		}
 
-		.footer-inner {
-			display: flex;
-			flex-direction: column;
-			gap: var(--space-8);
-			max-width: 1080px;
+		/* Top Section */
+		.footer__top {
+			max-width: var(--mu-max-width);
 			margin: 0 auto;
-			padding: var(--space-12) var(--space-6);
+			padding: var(--space-16) var(--mu-padding-x);
 		}
 
-		@media (min-width: 640px) {
-			.footer-inner {
-				flex-direction: row;
-				justify-content: space-between;
-				align-items: flex-start;
+		.footer__grid {
+			display: grid;
+			grid-template-columns: 2fr 1fr 1fr 1fr;
+			gap: var(--space-8);
+		}
+
+		@media (max-width: 960px) {
+			.footer__grid {
+				grid-template-columns: 1fr 1fr;
+				gap: var(--space-10);
 			}
 		}
 
-		.footer-brand {
-			display: flex;
-			flex-direction: column;
-			gap: var(--space-2);
+		@media (max-width: 480px) {
+			.footer__grid {
+				grid-template-columns: 1fr;
+				gap: var(--space-8);
+			}
 		}
 
-		.footer-title {
+		/* Brand */
+		.footer__brand {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-3);
+		}
+
+		.footer__logo {
 			font-family: var(--font-display);
 			font-size: var(--font-size-h3);
 			font-weight: 500;
 			color: var(--color-text-1);
 		}
 
-		.footer-tagline {
-			font-size: var(--font-size-small);
+		.footer__tagline {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
 			color: var(--color-text-3);
 		}
 
-		.footer-nav-groups {
+		.footer__site-links {
 			display: flex;
-			gap: var(--space-12);
+			gap: var(--space-4);
+			margin-top: var(--space-2);
 		}
 
-		.footer-nav__heading {
-			font-size: var(--font-size-caption);
+		.footer__sns {
+			display: flex;
+			gap: var(--space-4);
+		}
+
+		/* Columns */
+		.footer__col-heading {
 			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
 			font-weight: 600;
 			text-transform: uppercase;
 			letter-spacing: 0.08em;
 			color: var(--color-text-3);
-			margin-bottom: var(--space-3);
+			margin-bottom: var(--space-4);
 		}
 
-		.footer-nav__list {
+		.footer__col-list {
 			display: flex;
 			flex-direction: column;
-			gap: var(--space-2);
+			gap: var(--space-3);
 		}
 
-		.footer-nav__link {
+		/* Links */
+		.footer__link {
+			font-family: var(--font-ui);
 			font-size: var(--font-size-small);
 			color: var(--color-text-2);
 			transition: color var(--dur-fast) var(--ease-out);
 		}
 
-		.footer-nav__link:hover {
+		.footer__link:hover {
 			color: var(--color-interactive-primary);
 		}
 
-		.footer-bottom {
-			max-width: 1080px;
-			margin: 0 auto;
-			padding: var(--space-4) var(--space-6);
+		.footer__link--self {
+			font-weight: 600;
+			color: var(--color-interactive-primary);
+		}
+
+		/* Bottom Bar */
+		.footer__bottom {
 			border-top: 1px solid var(--color-border-subtle);
 		}
 
-		.footer-copyright {
+		.footer__bottom-inner {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--space-4);
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+			padding: var(--space-4) var(--mu-padding-x);
+		}
+
+		@media (max-width: 768px) {
+			.footer__bottom-inner {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+		}
+
+		.footer__legal {
+			font-family: var(--font-ui);
 			font-size: var(--font-size-caption);
 			color: var(--color-text-3);
+			line-height: 1.6;
+		}
+
+		.footer__copyright {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			color: var(--color-text-3);
+			white-space: nowrap;
 		}
 	}
 </style>
