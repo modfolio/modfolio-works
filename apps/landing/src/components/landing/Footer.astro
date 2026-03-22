@@ -1,0 +1,134 @@
+---
+const eduApps = [
+	{ name: "Naviaca", url: "https://naviaca.com" },
+	{ name: "GistCore", url: "https://gistcore.com" },
+	{ name: "Fortiscribe", url: "https://fortiscribe.com" },
+];
+
+const modfolioLinks = [
+	{ name: "Modfolio", url: "https://modfolio.io" },
+	{ name: "Connect", url: "https://connect.modfolio.io" },
+	{ name: "Docs", url: "https://docs.modfolio.io" },
+];
+---
+
+<footer class="footer">
+	<div class="footer-inner">
+		<div class="footer-brand">
+			<h3 class="footer-title">Modfolio Works</h3>
+			<p class="footer-tagline">교육의 미래를 연결합니다</p>
+		</div>
+		<div class="footer-nav-groups">
+			<nav class="footer-nav" aria-label="교육 앱">
+				<h4 class="footer-nav__heading">교육 앱</h4>
+				<ul class="footer-nav__list">
+					{eduApps.map((link) => (
+						<li>
+							<a href={link.url} class="footer-nav__link">{link.name}</a>
+						</li>
+					))}
+				</ul>
+			</nav>
+			<nav class="footer-nav" aria-label="Modfolio">
+				<h4 class="footer-nav__heading">Modfolio</h4>
+				<ul class="footer-nav__list">
+					{modfolioLinks.map((link) => (
+						<li>
+							<a href={link.url} class="footer-nav__link">{link.name}</a>
+						</li>
+					))}
+				</ul>
+			</nav>
+		</div>
+	</div>
+	<div class="footer-bottom">
+		<p class="footer-copyright">&copy; 2026 Modfolio Inc.</p>
+	</div>
+</footer>
+
+<style>
+	@layer components {
+		.footer {
+			background: var(--color-surface-1);
+			border-top: 1px solid var(--color-border-subtle);
+		}
+
+		.footer-inner {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-8);
+			max-width: 1080px;
+			margin: 0 auto;
+			padding: var(--space-12) var(--space-6);
+		}
+
+		@media (min-width: 640px) {
+			.footer-inner {
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: flex-start;
+			}
+		}
+
+		.footer-brand {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-2);
+		}
+
+		.footer-title {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 500;
+			color: var(--color-text-1);
+		}
+
+		.footer-tagline {
+			font-size: var(--font-size-small);
+			color: var(--color-text-3);
+		}
+
+		.footer-nav-groups {
+			display: flex;
+			gap: var(--space-12);
+		}
+
+		.footer-nav__heading {
+			font-size: var(--font-size-caption);
+			font-family: var(--font-ui);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--color-text-3);
+			margin-bottom: var(--space-3);
+		}
+
+		.footer-nav__list {
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-2);
+		}
+
+		.footer-nav__link {
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.footer-nav__link:hover {
+			color: var(--color-interactive-primary);
+		}
+
+		.footer-bottom {
+			max-width: 1080px;
+			margin: 0 auto;
+			padding: var(--space-4) var(--space-6);
+			border-top: 1px solid var(--color-border-subtle);
+		}
+
+		.footer-copyright {
+			font-size: var(--font-size-caption);
+			color: var(--color-text-3);
+		}
+	}
+</style>

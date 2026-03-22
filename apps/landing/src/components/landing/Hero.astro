@@ -2,23 +2,17 @@
 ---
 
 <section class="hero" aria-label="Modfolio Works 소개">
-	<div class="hero-glow hero-glow--teal"></div>
-	<div class="hero-glow hero-glow--sage"></div>
-	<div class="hero-grain"></div>
+	<div class="hero-dots" aria-hidden="true"></div>
+	<div class="hero-grain" aria-hidden="true"></div>
 
 	<div class="hero-content">
-		<h1 class="hero-title">교육이<br />달라져야 할 때</h1>
+		<h1 class="hero-title">교육이 달라져야 할 때</h1>
 		<p class="hero-agitate">
 			학원 관리, 스피킹 연습, 작문 첨삭 —<br class="hide-mobile" />
 			따로 노는 도구들 사이에서 시간을 낭비하고 있습니다.
 		</p>
 		<p class="hero-solution">Works가 하나로 연결합니다.</p>
-		<a href="https://edu.modfolio.io" class="hero-cta">
-			Works 시작하기
-			<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-				<path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-			</svg>
-		</a>
+		<a href="https://edu.modfolio.io" class="hero-cta">시작하기</a>
 	</div>
 
 	<div class="hero-scroll-hint" aria-hidden="true">
@@ -40,36 +34,30 @@
 			padding: var(--space-8);
 			text-align: center;
 			overflow: hidden;
+			background: linear-gradient(
+				180deg,
+				var(--color-surface-0) 0%,
+				var(--p-teal-50) 100%
+			);
 		}
 
-		.hero-glow {
+		.hero-dots {
 			position: absolute;
-			width: 600px;
-			height: 600px;
-			border-radius: 50%;
-			filter: blur(120px);
-			opacity: 0.06;
+			inset: 0;
 			pointer-events: none;
-		}
-
-		.hero-glow--teal {
-			background: var(--color-accent-naviaca);
-			top: -200px;
-			right: -200px;
-			animation: breathe var(--dur-breath) ease-in-out infinite;
-		}
-
-		.hero-glow--sage {
-			background: var(--color-accent-gistcore);
-			bottom: -200px;
-			left: -200px;
-			animation: breathe var(--dur-breath) ease-in-out infinite reverse;
+			opacity: 0.4;
+			background-image: radial-gradient(
+				circle,
+				var(--p-teal-100) 1px,
+				transparent 1px
+			);
+			background-size: 32px 32px;
 		}
 
 		.hero-grain {
 			position: absolute;
 			inset: 0;
-			opacity: 0.02;
+			opacity: 0.015;
 			pointer-events: none;
 			background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 			background-repeat: repeat;
@@ -90,8 +78,8 @@
 			letter-spacing: -0.02em;
 			background: linear-gradient(
 				135deg,
-				var(--color-accent-naviaca),
-				var(--color-accent-primary)
+				var(--p-teal-700),
+				var(--p-teal-500)
 			);
 			background-clip: text;
 			-webkit-background-clip: text;
@@ -127,20 +115,20 @@
 			font-weight: 600;
 			border-radius: var(--radius-md);
 			transition:
-				opacity var(--dur-fast) var(--ease-out),
+				transform var(--dur-fast) var(--ease-out),
 				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
 		.hero-cta:hover {
-			opacity: 0.92;
+			transform: translateY(-1px);
 			box-shadow: var(--shadow-glow);
 		}
 
 		.hero-scroll-hint {
 			position: absolute;
 			bottom: var(--space-8);
-			color: var(--color-text-3);
-			animation: float 2s ease-in-out infinite;
+			color: var(--p-teal-400);
+			animation: bounce 2s ease-in-out infinite;
 		}
 
 		.hide-mobile {
@@ -153,25 +141,13 @@
 			}
 		}
 
-		@keyframes breathe {
-			0%,
-			100% {
-				opacity: 0.04;
-				transform: scale(1);
-			}
-			50% {
-				opacity: 0.08;
-				transform: scale(1.15);
-			}
-		}
-
-		@keyframes float {
+		@keyframes bounce {
 			0%,
 			100% {
 				transform: translateY(0);
 			}
 			50% {
-				transform: translateY(6px);
+				transform: translateY(8px);
 			}
 		}
 	}

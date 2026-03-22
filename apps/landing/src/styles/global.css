@@ -14,7 +14,7 @@
 
 	/* Selection */
 	::selection {
-		background: oklch(0.82 0.12 80 / 0.25);
+		background: oklch(0.55 0.1 185 / 0.15);
 		color: var(--color-text-1);
 	}
 

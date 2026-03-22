@@ -11,59 +11,69 @@
 
 	:root {
 		/* ══════════════════════════════════════
-		   PRIMITIVES — Raw Named Values
+		   PRIMITIVES — Light Surfaces
 		   ══════════════════════════════════════ */
-		--p-obsidian-0: oklch(0.06 0.01 275);
-		--p-obsidian-1: oklch(0.1 0.01 275);
-		--p-obsidian-2: oklch(0.14 0.015 275);
-		--p-obsidian-3: oklch(0.18 0.015 275);
+		--p-white: oklch(1 0 0);
+		--p-snow: oklch(0.985 0.002 240);
+		--p-mist: oklch(0.965 0.004 240);
+		--p-fog: oklch(0.935 0.006 240);
 
-		--p-chalk-1: oklch(0.92 0.01 300);
-		--p-chalk-2: oklch(0.68 0.02 290);
-		--p-chalk-3: oklch(0.45 0.02 280);
+		/* ── Teal Family (hue 185) ── */
+		--p-teal-900: oklch(0.25 0.06 185);
+		--p-teal-700: oklch(0.4 0.08 185);
+		--p-teal-500: oklch(0.55 0.1 185);
+		--p-teal-400: oklch(0.62 0.1 185);
+		--p-teal-100: oklch(0.92 0.04 185);
+		--p-teal-50: oklch(0.96 0.02 185);
 
-		--p-amber: oklch(0.82 0.12 80);
-		--p-teal: oklch(0.78 0.1 180);
-		--p-sage: oklch(0.76 0.08 155);
-		--p-parchment: oklch(0.8 0.08 65);
+		/* ── Dark Text ── */
+		--p-ink-900: oklch(0.15 0.01 250);
+		--p-ink-700: oklch(0.32 0.01 250);
+		--p-ink-500: oklch(0.5 0.01 250);
+		--p-ink-300: oklch(0.68 0.005 250);
+
+		/* ── Per-App Accents ── */
+		--p-naviaca: oklch(0.55 0.1 185);
+		--p-gistcore: oklch(0.55 0.12 155);
+		--p-fortiscribe: oklch(0.62 0.1 65);
 
 		/* ══════════════════════════════════════
 		   SEMANTIC — Role-Mapped Tokens
 		   ══════════════════════════════════════ */
 
 		/* Surface */
-		--color-surface-0: var(--p-obsidian-0);
-		--color-surface-1: var(--p-obsidian-1);
-		--color-surface-raised: var(--p-obsidian-2);
-		--color-surface-card: var(--p-obsidian-3);
+		--color-surface-0: var(--p-white);
+		--color-surface-1: var(--p-snow);
+		--color-surface-raised: var(--p-mist);
+		--color-surface-card: var(--p-white);
 
 		/* Text */
-		--color-text-1: var(--p-chalk-1);
-		--color-text-2: var(--p-chalk-2);
-		--color-text-3: var(--p-chalk-3);
+		--color-text-1: var(--p-ink-900);
+		--color-text-2: var(--p-ink-700);
+		--color-text-3: var(--p-ink-500);
 
 		/* Border */
-		--color-border-default: oklch(0.2 0.01 275);
-		--color-border-subtle: oklch(0.15 0.01 275);
-		--color-border-hover: oklch(0.28 0.015 275);
+		--color-border-default: oklch(0.88 0.005 240);
+		--color-border-subtle: oklch(0.92 0.003 240);
+		--color-border-hover: oklch(0.8 0.01 240);
 
 		/* Interactive */
-		--color-interactive-primary: var(--p-amber);
-		--color-interactive-hover: oklch(0.87 0.14 80);
-		--color-interactive-muted: oklch(0.82 0.06 80);
+		--color-interactive-primary: var(--p-teal-500);
+		--color-interactive-hover: var(--p-teal-400);
+		--color-interactive-muted: var(--p-teal-100);
 
 		/* Status */
-		--color-success: oklch(0.72 0.12 155);
-		--color-warning: oklch(0.8 0.12 80);
-		--color-danger: oklch(0.65 0.2 25);
+		--color-success: oklch(0.55 0.12 155);
+		--color-warning: oklch(0.62 0.12 80);
+		--color-danger: oklch(0.55 0.2 25);
 
 		/* ══════════════════════════════════════
 		   ACCENT — Per-App Brand Colors
 		   ══════════════════════════════════════ */
-		--color-accent-primary: var(--p-amber);
-		--color-accent-naviaca: var(--p-teal);
-		--color-accent-gistcore: var(--p-sage);
-		--color-accent-fortiscribe: var(--p-parchment);
+		--color-accent-primary: var(--p-teal-500);
+		--color-accent-naviaca: var(--p-naviaca);
+		--color-accent-gistcore: var(--p-gistcore);
+		--color-accent-fortiscribe: var(--p-fortiscribe);
 
 		/* ══════════════════════════════════════
 		   TYPOGRAPHY
@@ -105,12 +115,18 @@
 		--radius-full: 9999px;
 
 		/* ══════════════════════════════════════
-		   SHADOWS
+		   SHADOWS (Light Theme)
 		   ══════════════════════════════════════ */
-		--shadow-sm: 0 2px 8px oklch(0 0 0 / 0.3);
-		--shadow-md: 0 6px 20px oklch(0 0 0 / 0.35);
-		--shadow-lg: 0 12px 40px oklch(0 0 0 / 0.4);
-		--shadow-glow: 0 0 40px oklch(0.82 0.12 80 / 0.08);
+		--shadow-sm:
+			0 1px 3px oklch(0.55 0.01 240 / 0.06),
+			0 1px 2px oklch(0.55 0.01 240 / 0.04);
+		--shadow-md:
+			0 4px 12px oklch(0.55 0.01 240 / 0.08),
+			0 2px 4px oklch(0.55 0.01 240 / 0.04);
+		--shadow-lg:
+			0 8px 24px oklch(0.55 0.01 240 / 0.1),
+			0 4px 8px oklch(0.55 0.01 240 / 0.05);
+		--shadow-glow: 0 0 40px oklch(0.55 0.1 185 / 0.08);
 
 		/* ══════════════════════════════════════
 		   MOTION

@@ -1,21 +1,35 @@
 ---
 ---
 
-<section class="cta" aria-label="시작하기" data-reveal>
-	<h2 class="cta-heading">교육의 미래,<br />지금 시작하세요</h2>
-	<p class="cta-sub">Modfolio Connect 계정으로 1분 안에 시작</p>
-	<a href="https://edu.modfolio.io" class="cta-button">
-		무료로 시작하기
-		<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-			<path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-		</svg>
-	</a>
+<section class="cta-section" aria-label="시작하기">
+	<div class="cta-card" data-reveal>
+		<h2 class="cta-heading">교육의 미래를 지금 시작하세요</h2>
+		<p class="cta-sub">Modfolio Connect 계정으로 1분 안에 시작</p>
+		<a href="https://edu.modfolio.io" class="cta-button">
+			시작하기
+			<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+				<path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+		</a>
+	</div>
 </section>
 
 <style>
 	@layer components {
-		.cta {
+		.cta-section {
 			padding: var(--space-24) var(--space-6);
+		}
+
+		.cta-card {
+			max-width: 960px;
+			margin: 0 auto;
+			padding: var(--space-16) var(--space-8);
+			background: linear-gradient(
+				135deg,
+				var(--p-teal-50),
+				var(--p-teal-100)
+			);
+			border-radius: var(--radius-xl);
 			text-align: center;
 		}
 
@@ -24,13 +38,13 @@
 			font-size: var(--font-size-h1);
 			font-weight: 700;
 			line-height: 1.2;
-			color: var(--color-text-1);
+			color: var(--p-teal-900);
 			margin-bottom: var(--space-4);
 		}
 
 		.cta-sub {
 			font-size: var(--font-size-small);
-			color: var(--color-text-2);
+			color: var(--p-teal-700);
 			margin-bottom: var(--space-8);
 		}
 
@@ -46,15 +60,13 @@
 			font-weight: 600;
 			border-radius: var(--radius-md);
 			transition:
-				opacity var(--dur-fast) var(--ease-out),
-				box-shadow var(--dur-base) var(--ease-out);
+				transform var(--dur-fast) var(--ease-snap),
+				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
 		.cta-button:hover {
-			opacity: 0.92;
-			box-shadow:
-				var(--shadow-glow),
-				0 0 60px oklch(0.82 0.12 80 / 0.12);
+			transform: translateY(-2px);
+			box-shadow: var(--shadow-glow);
 		}
 	}
 </style>

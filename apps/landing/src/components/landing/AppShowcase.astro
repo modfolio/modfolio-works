@@ -9,30 +9,41 @@ const { apps } = Astro.props;
 ---
 
 <section class="showcase" id="apps" aria-label="교육 앱">
-	<h2 class="showcase-heading">세 가지 교육, 하나의 플랫폼</h2>
-	<div class="showcase-grid">
-		{apps.map((app, i) => (
-			<article
-				class:list={["showcase-card", { "showcase-card--offset": i === 1 }]}
-				data-reveal
-			>
-				<div class="showcase-card__accent" style={`background: ${app.accentVar}`} />
-				<div class="showcase-card__body">
-					<h3 class="showcase-card__name">{app.name}</h3>
-					<p class="showcase-card__tagline">{app.tagline}</p>
-					<p class="showcase-card__desc">{app.description}</p>
-					<div class="showcase-card__footer">
-						<span class="showcase-card__domain">{app.domain}</span>
-						<span class:list={[
-							"showcase-card__status",
-							app.status === "active" ? "showcase-card__status--active" : "showcase-card__status--landing"
-						]}>
-							{app.status === "active" ? "Active" : "Coming Soon"}
-						</span>
+	<div class="showcase-inner">
+		<h2 class="showcase-heading">세 가지 교육, 하나의 플랫폼</h2>
+		<div class="showcase-grid">
+			{apps.map((app, i) => (
+				<article
+					class:list={[
+						"showcase-card",
+						{ "showcase-card--offset": i === 1 },
+						{ "showcase-card--coming-soon": app.status === "landing" },
+					]}
+					data-reveal
+					data-reveal-delay={String(i * 120)}
+				>
+					<div class="showcase-card__accent" style={`--card-accent: ${app.accentVar}`} />
+					<div class="showcase-card__body">
+						<h3 class="showcase-card__name">{app.name}</h3>
+						<p class="showcase-card__tagline">{app.tagline}</p>
+						<p class="showcase-card__desc">{app.description}</p>
+						<div class="showcase-card__footer">
+							<span class="showcase-card__domain">{app.domain}</span>
+							<span
+								class:list={[
+									"showcase-card__status",
+									app.status === "active"
+										? "showcase-card__status--active"
+										: "showcase-card__status--landing",
+								]}
+							>
+								{app.status === "active" ? "Active" : "Coming Soon"}
+							</span>
+						</div>
 					</div>
-				</div>
-			</article>
-		))}
+				</article>
+			))}
+		</div>
 	</div>
 </section>
 
@@ -40,6 +51,10 @@ const { apps } = Astro.props;
 	@layer components {
 		.showcase {
 			padding: var(--space-24) var(--space-6);
+			background: var(--color-surface-1);
+		}
+
+		.showcase-inner {
 			max-width: 1080px;
 			margin: 0 auto;
 		}
@@ -47,7 +62,7 @@ const { apps } = Astro.props;
 		.showcase-heading {
 			font-family: var(--font-display);
 			font-size: var(--font-size-h2);
-			font-weight: 700;
+			font-weight: 500;
 			text-align: center;
 			margin-bottom: var(--space-16);
 			color: var(--color-text-1);
@@ -74,35 +89,50 @@ const { apps } = Astro.props;
 		.showcase-card {
 			position: relative;
 			display: flex;
+			flex-direction: column;
 			background: var(--color-surface-card);
-			border: 1px solid var(--color-border-default);
+			border: 1px solid var(--color-border-subtle);
 			border-radius: var(--radius-lg);
 			overflow: hidden;
+			box-shadow: var(--shadow-sm);
 			transition:
 				transform var(--dur-base) var(--ease-out),
 				border-color var(--dur-fast) var(--ease-out),
 				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
-		.showcase-card:hover {
-			border-color: var(--color-border-hover);
+		.showcase-card:not(.showcase-card--coming-soon):hover {
+			transform: translateY(-4px);
 			box-shadow: var(--shadow-md);
 		}
 
+		.showcase-card--coming-soon:hover {
+			border-color: var(--color-border-hover);
+		}
+
+		@media (min-width: 768px) {
+			.showcase-card--offset:not(.showcase-card--coming-soon):hover {
+				transform: translateY(calc(var(--space-8) - 4px));
+			}
+		}
+
 		.showcase-card__accent {
+			height: 3px;
 			flex-shrink: 0;
-			width: 3px;
+			background: var(--card-accent);
 		}
 
 		.showcase-card__body {
 			padding: var(--space-6);
 			flex: 1;
+			display: flex;
+			flex-direction: column;
 		}
 
 		.showcase-card__name {
 			font-family: var(--font-display);
 			font-size: var(--font-size-h3);
-			font-weight: 700;
+			font-weight: 400;
 			margin-bottom: var(--space-2);
 			color: var(--color-text-1);
 		}
@@ -121,6 +151,7 @@ const { apps } = Astro.props;
 			line-height: 1.65;
 			max-width: 45ch;
 			margin-bottom: var(--space-6);
+			flex: 1;
 		}
 
 		.showcase-card__footer {

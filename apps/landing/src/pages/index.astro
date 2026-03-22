@@ -5,6 +5,7 @@ import AppShowcase from "../components/landing/AppShowcase.astro";
 import SocialProof from "../components/landing/SocialProof.astro";
 import FAQ from "../components/landing/FAQ.astro";
 import CTA from "../components/landing/CTA.astro";
+import Footer from "../components/landing/Footer.astro";
 import { apps } from "../lib/apps";
 
 import "../styles/reset.css";
@@ -20,6 +21,7 @@ import "../styles/global.css";
 		<FAQ />
 		<CTA />
 	</main>
+	<Footer />
 </Base>
 
 <script>
@@ -30,6 +32,10 @@ import "../styles/global.css";
 			(entries) => {
 				for (const entry of entries) {
 					if (entry.isIntersecting) {
+						const delay =
+							(entry.target as HTMLElement).dataset.revealDelay || "0";
+						(entry.target as HTMLElement).style.transitionDelay =
+							`${delay}ms`;
 						entry.target.classList.add("revealed");
 						observer.unobserve(entry.target);
 					}
@@ -49,7 +55,7 @@ import "../styles/global.css";
 	@layer utilities {
 		.reveal-pending {
 			opacity: 0;
-			transform: translateY(12px);
+			transform: translateY(16px);
 		}
 
 		.revealed {
