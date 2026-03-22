@@ -12,16 +12,9 @@ const platformLinks = [
 ];
 
 const ecosystemLinks = [
-	{ name: "Works", url: "https://works.modfolio.io", isSelf: true },
-	{ name: "LS", url: "https://ls.modfolio.io", isSelf: false },
-	{ name: "Axiom", url: "https://axiom.modfolio.io", isSelf: false },
-	{ name: "Studio", url: "https://studio.modfolio.io", isSelf: false },
-];
-
-const siteLinks = [
-	{ name: "앱 소개", url: "/apps" },
-	{ name: "소개", url: "/about" },
-	{ name: "FAQ", url: "/faq" },
+	{ name: "LS", url: "https://ls.modfolio.io" },
+	{ name: "Axiom", url: "https://axiom.modfolio.io" },
+	{ name: "Studio", url: "https://studio.modfolio.io" },
 ];
 ---
 
@@ -32,11 +25,6 @@ const siteLinks = [
 			<div class="footer__brand">
 				<h3 class="footer__logo">Modfolio Works</h3>
 				<p class="footer__tagline">교육의 미래를 연결합니다</p>
-				<nav class="footer__site-links" aria-label="사이트 페이지">
-					{siteLinks.map((link) => (
-						<a href={link.url} class="footer__link">{link.name}</a>
-					))}
-				</nav>
 				<div class="footer__sns" aria-label="소셜 미디어">
 					<!-- Instagram -->
 					<a
@@ -118,8 +106,9 @@ const siteLinks = [
 						<li>
 							<a
 								href={link.url}
-								class:list={["footer__link", link.isSelf && "footer__link--self"]}
-								{...(link.isSelf ? {} : { target: "_blank", rel: "noopener noreferrer" })}
+								class="footer__link"
+								target="_blank"
+								rel="noopener noreferrer"
 							>
 								{link.name}
 							</a>
@@ -133,10 +122,10 @@ const siteLinks = [
 	<div class="footer__bottom">
 		<div class="footer__bottom-inner">
 			<p class="footer__legal">
-				모드폴리오 &middot; 대표 김동헌 &middot; 사업자등록번호 104-95-65636 &middot;
-				통신판매업 제2025-수원팔달-0953호 &middot; 출판사 제2024-000037호 &middot;
-				경기도 수원시 팔달구 효원로 278, 6층 602호 &middot;
-				contact@modfolio.io
+				모드폴리오 &middot; 대표 김동헌 &middot; 사업자등록번호 104-95-65636 &middot; 통신판매업 제2025-수원팔달-0953호
+			</p>
+			<p class="footer__legal">
+				출판사 제2024-000037호 &middot; 경기도 수원시 팔달구 효원로 278, 6층 602호 &middot; contact@modfolio.io
 			</p>
 			<p class="footer__copyright">&copy; 2026 Modfolio. All rights reserved.</p>
 		</div>
@@ -197,12 +186,6 @@ const siteLinks = [
 			color: var(--color-text-3);
 		}
 
-		.footer__site-links {
-			display: flex;
-			gap: var(--space-4);
-			margin-top: var(--space-2);
-		}
-
 		/* SNS Icons */
 		.footer__sns {
 			display: flex;
@@ -248,11 +231,6 @@ const siteLinks = [
 		}
 
 		.footer__link:hover {
-			color: var(--color-interactive-primary);
-		}
-
-		.footer__link--self {
-			font-weight: 600;
 			color: var(--color-interactive-primary);
 		}
 
