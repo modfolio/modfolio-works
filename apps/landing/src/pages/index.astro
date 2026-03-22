@@ -5,59 +5,22 @@ import AppShowcase from "../components/landing/AppShowcase.astro";
 import SocialProof from "../components/landing/SocialProof.astro";
 import FAQ from "../components/landing/FAQ.astro";
 import CTA from "../components/landing/CTA.astro";
-import Header from "../components/portal/Header.astro";
-import AppCard from "../components/portal/AppCard.astro";
 import { apps } from "../lib/apps";
 
 import "../styles/reset.css";
 import "../styles/tokens.css";
 import "../styles/global.css";
-
-const user = Astro.locals.user;
-const title = user
-	? "포털 — Modfolio Works"
-	: "Modfolio Works — 교육의 미래를 연결합니다";
 ---
 
-<Base title={title}>
-	{user ? (
-		<>
-			<Header userName={user.name} />
-			<main id="main" class="portal-main">
-				<h1 class="sr-only">Works 포털</h1>
-				<div class="portal-grid">
-					{apps.map((app) => (
-						<AppCard app={app} />
-					))}
-				</div>
-			</main>
-		</>
-	) : (
-		<main id="main">
-			<Hero />
-			<AppShowcase apps={apps} />
-			<SocialProof />
-			<FAQ />
-			<CTA />
-		</main>
-	)}
+<Base title="Modfolio Works — 교육의 미래를 연결합니다">
+	<main id="main">
+		<Hero />
+		<AppShowcase apps={apps} />
+		<SocialProof />
+		<FAQ />
+		<CTA />
+	</main>
 </Base>
-
-<style>
-	@layer components {
-		.portal-main {
-			max-width: 1080px;
-			margin: 0 auto;
-			padding: var(--space-8) var(--space-6);
-		}
-
-		.portal-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-			gap: var(--space-6);
-		}
-	}
-</style>
 
 <script>
 	const reveals = document.querySelectorAll("[data-reveal]");

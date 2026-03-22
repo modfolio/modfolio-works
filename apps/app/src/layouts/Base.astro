@@ -1,0 +1,36 @@
+---
+interface Props {
+	title: string;
+	description?: string;
+}
+
+const { title, description = "Modfolio Works 포털 — 교육 앱 허브" } =
+	Astro.props;
+const canonicalUrl = new URL(
+	Astro.url.pathname,
+	"https://app.works.modfolio.io",
+);
+---
+
+<html lang="ko">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>{title}</title>
+	<meta name="description" content={description} />
+	<link rel="canonical" href={canonicalUrl.href} />
+	<meta name="theme-color" content="#0F0F17" />
+
+	<!-- Fonts: Adobe Fonts (Master Kit) + Pretendard -->
+	<link rel="preconnect" href="https://use.typekit.net" crossorigin />
+	<link rel="stylesheet" href="https://use.typekit.net/fmh4fod.css" />
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+
+	<!-- Cascade Layers -->
+	<style is:inline>@layer reset, base, tokens, components, utilities;</style>
+</head>
+<body>
+	<a href="#main" class="skip-to-content">본문으로 건너뛰기</a>
+	<slot />
+</body>
+</html>

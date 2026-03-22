@@ -6,11 +6,13 @@
 	],
 	"packageManager": "bun@1.2.4",
 	"scripts": {
-		"build": "cd apps/landing && bun run build",
-		"dev": "cd apps/landing && bun run dev",
+		"dev:landing": "cd apps/landing && bun run dev",
+		"dev:app": "cd apps/app && bun run dev",
+		"build:landing": "cd apps/landing && bun run build",
+		"build:app": "cd apps/app && bun run build",
 		"check": "biome check .",
 		"check:fix": "biome check --write .",
-		"typecheck": "cd apps/landing && bun run typecheck"
+		"typecheck": "cd apps/landing && bun run typecheck && cd ../../apps/app && bun run typecheck"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.4",
