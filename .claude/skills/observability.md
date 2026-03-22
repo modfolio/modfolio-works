@@ -19,7 +19,7 @@ CF OTLP Export (CF 대시보드에서 destination 설정)
 CF Tunnel → 로컬/서버 OTel Collector (:4317 gRPC / :4318 HTTP)
   │
   ↓
-SigNoz (localhost:8080) — Logs + Traces + Metrics 통합 UI
+SigNoz (localhost:3301) — Logs + Traces + Metrics 통합 UI
 ```
 
 ## wrangler.jsonc 설정
@@ -52,17 +52,15 @@ SigNoz (localhost:8080) — Logs + Traces + Metrics 통합 UI
 | `destinations` | `["modfolio-signoz"]` | CF 대시보드에서 생성한 destination 이름 |
 | `persist` | `false` | CF 대시보드 저장 비활성 → 외부 전송만 (비용 절감) |
 
-### OTLP Destination 설정 (CF 대시보드, 1회)
+### OTLP Destination (설정 완료)
 
-1. Cloudflare Dashboard → Account → Observability → **OTLP Export**
-2. **Traces destination** 생성:
-   - Name: `modfolio-signoz`
-   - Endpoint: `https://{cf-tunnel-hostname}/v1/traces`
-3. **Logs destination** 생성:
-   - Name: `modfolio-signoz-logs`
-   - Endpoint: `https://{cf-tunnel-hostname}/v1/logs`
+| Destination | Endpoint | Dataset |
+|-------------|----------|---------|
+| `modfolio-signoz` | `https://otel.modfolio.io/v1/traces` | `opentelemetry-traces` |
+| `modfolio-signoz-logs` | `https://otel.modfolio.io/v1/logs` | `opentelemetry-logs` |
 
-이 설정은 **계정 레벨** — 한 번 만들면 모든 앱이 destination 이름으로 참조.
+CF Named Tunnel `modfolio-otel` → `otel.modfolio.io` → 로컬 SigNoz OTel Collector (:4318).
+계정 레벨 설정 — 모든 앱이 destination 이름으로 참조.
 
 ## 프레임워크별 wrangler.jsonc 위치
 
@@ -141,15 +139,16 @@ Neon GitHub App이 PR 코멘트에 연결 문자열을 자동으로 제공.
 `modfolio-universe/tools/signoz/` 디렉토리 참조.
 
 ```bash
-cd tools/signoz && docker compose up -d
+cd tools/signoz && ./setup.sh        # SigNoz 기동
 # SigNoz UI: http://localhost:8080
+# Login: admin@modfolio.io / Modfolio2026!
 ```
 
-CF Tunnel로 외부 노출:
+CF Named Tunnel (고정 URL):
 
 ```bash
-cloudflared tunnel --url http://localhost:4318
-# 생성된 URL을 CF 대시보드 OTLP destination에 설정
+~/.local/bin/cloudflared tunnel run --url http://localhost:4318 modfolio-otel
+# otel.modfolio.io → localhost:4318 (고정)
 ```
 
 ### 요구사항
