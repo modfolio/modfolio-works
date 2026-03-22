@@ -100,8 +100,10 @@
 | AI Model Router | 2 | multi-provider fallback, task routing, prompt caching | `/ai-patterns` |
 | Resend Email | 2+ | HTML template builders, fire-and-forget | `/email-patterns` |
 | Rate Limiting | 2+ | in-memory sliding window + D1-based distributed | — |
+| Observability (OTLP) | 전체 | CF Automatic Tracing → SigNoz, wrangler.jsonc only, 벤더 SDK 금지 | `/observability` |
 
 CF Pages 규칙: `pages_build_output_dir` + `nodejs_compat` + wrangler.jsonc. 상세: `/deploy` skill.
+Observability 규칙: CF Automatic Tracing + OTLP export → SigNoz. 벤더 SDK 금지. 상세: `/observability` skill.
 
 ## SSO 연동 가이드 (v5.1.0, 2026-03-17)
 
