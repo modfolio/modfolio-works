@@ -6,10 +6,7 @@ interface Props {
 
 const { title, description = "Modfolio Works 포털 — 교육 앱 허브" } =
 	Astro.props;
-const canonicalUrl = new URL(
-	Astro.url.pathname,
-	"https://app.works.modfolio.io",
-);
+const canonicalUrl = new URL(Astro.url.pathname, "https://edu.modfolio.io");
 ---
 
 <html lang="ko">
