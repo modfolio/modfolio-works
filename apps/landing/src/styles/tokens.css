@@ -18,13 +18,13 @@
 		--p-mist: oklch(0.965 0.004 240);
 		--p-fog: oklch(0.935 0.006 240);
 
-		/* ── Teal Family (hue 185) ── */
-		--p-teal-900: oklch(0.25 0.06 185);
-		--p-teal-700: oklch(0.4 0.08 185);
-		--p-teal-500: oklch(0.55 0.1 185);
-		--p-teal-400: oklch(0.62 0.1 185);
-		--p-teal-100: oklch(0.92 0.04 185);
-		--p-teal-50: oklch(0.96 0.02 185);
+		/* ── Teal Family (hue 175 — refined cyan-teal) ── */
+		--p-teal-900: oklch(0.25 0.07 175);
+		--p-teal-700: oklch(0.38 0.09 175);
+		--p-teal-500: oklch(0.52 0.11 175);
+		--p-teal-400: oklch(0.6 0.1 175);
+		--p-teal-100: oklch(0.93 0.04 175);
+		--p-teal-50: oklch(0.97 0.02 175);
 
 		/* ── Dark Text ── */
 		--p-ink-900: oklch(0.15 0.01 250);
@@ -33,7 +33,7 @@
 		--p-ink-300: oklch(0.68 0.005 250);
 
 		/* ── Per-App Accents ── */
-		--p-naviaca: oklch(0.55 0.1 185);
+		--p-naviaca: oklch(0.52 0.11 175);
 		--p-gistcore: oklch(0.55 0.12 155);
 		--p-fortiscribe: oklch(0.62 0.1 65);
 

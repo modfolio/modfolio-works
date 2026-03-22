@@ -133,11 +133,12 @@ const menuCategories = [
 <!-- Header -->
 <header id="works-nav" class="nav">
 	<div class="nav-inner">
-		<a href="/" class="nav-logo" aria-label="Modfolio Works 홈">
-			<span class="nav-logo__text">Modfolio Works</span>
-		</a>
+		<div class="nav-left">
+			<a href="/" class="nav-logo" aria-label="Modfolio Works 홈">
+				<span class="nav-logo__text">Modfolio Works</span>
+			</a>
 
-		<nav class="nav-center" aria-label="주요 탐색">
+			<nav class="nav-center" aria-label="주요 탐색">
 			<button
 				id="menuTrigger"
 				class="nav-link nav-link--apps"
@@ -164,6 +165,7 @@ const menuCategories = [
 				</a>
 			))}
 		</nav>
+		</div>
 
 		<div class="nav-actions">
 			<a href="https://edu.modfolio.io" class="nav-cta">시작하기</a>
@@ -553,7 +555,7 @@ const menuCategories = [
 			right: 0;
 			z-index: 50;
 			height: var(--nav-h);
-			background: rgba(255, 255, 255, 0.9);
+			background: rgba(255, 255, 255, 0.7);
 			backdrop-filter: blur(20px) saturate(180%);
 			-webkit-backdrop-filter: blur(20px) saturate(180%);
 			border-bottom: 1px solid var(--color-border-subtle);
@@ -564,14 +566,17 @@ const menuCategories = [
 		.nav-inner {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
 			height: 100%;
-			max-width: var(--mu-max-width);
-			margin: 0 auto;
 			padding: 0 var(--mu-padding-x);
 		}
 
-		/* ── Logo ── */
+		/* ── Logo + Nav Group (left side) ── */
+		.nav-left {
+			display: flex;
+			align-items: center;
+			gap: var(--space-8);
+		}
+
 		.nav-logo {
 			display: flex;
 			align-items: center;
@@ -663,11 +668,12 @@ const menuCategories = [
 			transition: transform var(--dur-fast) var(--ease-out);
 		}
 
-		/* ── Actions ── */
+		/* ── Actions (push to right edge) ── */
 		.nav-actions {
 			display: flex;
 			align-items: center;
 			gap: var(--space-3);
+			margin-left: auto;
 		}
 
 		.nav-cta {
