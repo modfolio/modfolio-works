@@ -192,8 +192,9 @@ bun run sync-knowledge -- naviaca   # 특정 프로젝트만
 
 전파 대상:
 - **CLAUDE.md**: 생태계 컨텍스트 섹션 (ECOSYSTEM_START/END)
-- **스킬 12종**: design-tokens, typography, motion-patterns, ui-quality-gate, plan, contracts, deploy, journal, sso-integrate, ai-patterns, drizzle-patterns, email-patterns
-- **에이전트 2종**: code-reviewer, knowledge-searcher
+- **스킬 13종**: design-tokens, typography, motion-patterns, ui-quality-gate, plan, contracts, deploy, journal, sso-integrate, ai-patterns, drizzle-patterns, email-patterns, multi-review
+- **에이전트 6종**: code-reviewer, knowledge-searcher, design-critic, accessibility-auditor, architecture-sentinel, visual-qa
+- **에이전트 (universe 전용)**: ecosystem-auditor
 - **공통 파일**: claude-code-bible.md, .mcp.json
 
 ### 자식 → universe (수집)
