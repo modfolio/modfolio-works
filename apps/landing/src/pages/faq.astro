@@ -182,6 +182,7 @@ const faqs = [
 		.faq-section {
 			padding: var(--space-16) var(--mu-padding-x) var(--space-24);
 			background: var(--color-surface-0);
+			min-height: 60vh;
 		}
 
 		.faq-section__inner {
@@ -190,23 +191,7 @@ const faqs = [
 		}
 
 		.faq-list {
-			max-height: 600px;
-			overflow-y: auto;
-			scrollbar-width: thin;
-			scrollbar-color: var(--color-border-default) transparent;
-		}
-
-		.faq-list::-webkit-scrollbar {
-			width: 6px;
-		}
-
-		.faq-list::-webkit-scrollbar-track {
-			background: transparent;
-		}
-
-		.faq-list::-webkit-scrollbar-thumb {
-			background: var(--color-border-default);
-			border-radius: var(--radius-full);
+			max-height: none;
 		}
 
 		/* Item */
