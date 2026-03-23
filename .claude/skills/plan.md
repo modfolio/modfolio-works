@@ -1,13 +1,31 @@
 ---
-description: 기획 품질 기준 (Plan Mode 참조). 제품 설계 수준 상세도
+description: 기획 품질 기준 (Plan Mode 참조). 제품 설계 수준 상세도. Product Lens + Scope 결정 포함
 effort: max
 model: opus
+allowed-tools: Read, Glob, Grep
 ---
 
 # Plan Quality Standards
 
 > Plan Mode(Shift+Tab)나 기획 작업 시 참조하는 기준.
 > 제품 설계 수준의 상세도를 목표로 한다 (TODO 목록 아님).
+
+## Product Lens (구현 전 질문)
+
+Plan 작성 전 다음을 먼저 확인:
+
+1. **문제 재정의**: 이 기능이 해결하려는 문제가 진짜 맞는가?
+2. **범위 결정** — 4가지 모드 중 하나 선택:
+   - **10x Vision**: 10배 가치를 만들려면?
+   - **Baseline Extension**: 합리적 추가
+   - **Scope Lock**: 현재 범위에서 실패 모드 점검
+   - **Reduction**: 핵심만 남기고 제거
+3. **AC를 테스트 코드 형태로 작성** (Test-First 기획)
+4. **회색 영역 질문** — 기능 종류별로 AI의 가정을 제거:
+   - **Visual/UI**: 레이아웃(카드/리스트/그리드), 밀도, 빈 상태, 에러 상태, 반응형 우선순위
+   - **API/서버**: 응답 구조, 에러 코드, 인증, 속도 제한
+   - **데이터/스키마**: 그룹핑 기준, 소프트/하드 삭제, 중복 처리
+   - 한 번에 2-3개씩 질문 (압도하지 않도록)
 
 ## 필수 포함 항목
 
