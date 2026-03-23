@@ -1,6 +1,7 @@
 ---
-description: 생태계 공통 레이아웃 규격 (헤더/푸터/섹션) — 참조용, 강제 아님
+description: 생태계 공통 레이아웃 규격. 헤더 80px/푸터 2-tier/섹션 구조 + 반응형 브레이크포인트 참조
 effort: low
+allowed-tools: Read, Glob, Grep
 ---
 
 # Layout Patterns — 생태계 레이아웃 규격
