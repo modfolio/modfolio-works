@@ -1,7 +1,7 @@
 ---
-description: Resend 이메일 (fire-and-forget, 템플릿)
+description: Resend 이메일 통합 패턴. fire-and-forget 전송 + 템플릿 관리 + 에러 처리
 effort: low
-model: sonnet
+allowed-tools: Read, Glob, Grep
 ---
 
 # Email Patterns — Resend Integration
