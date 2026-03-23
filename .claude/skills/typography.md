@@ -1,6 +1,7 @@
 ---
 description: Adobe Fonts + Pretendard + CLS 방지 + 유동 타이포
 effort: medium
+allowed-tools: Read, Glob, Grep
 ---
 
 # Typography — Adobe Fonts + Pretendard
