@@ -101,6 +101,7 @@
 | Resend Email | 2+ | HTML template builders, fire-and-forget | `/email-patterns` |
 | Rate Limiting | 2+ | in-memory sliding window + D1-based distributed | — |
 | Observability (OTLP) | 전체 | CF Automatic Tracing → SigNoz, wrangler.jsonc only, 벤더 SDK 금지 | `/observability` |
+| Design Tooling | 전체 | Paper(양방향 이터레이션) + Figma(협업/공유). Code↔Paper는 MCP 직접, Code→Figma는 캡처 | `/design` |
 
 CF Pages 규칙: `pages_build_output_dir` + `nodejs_compat` + wrangler.jsonc. 상세: `/deploy` skill.
 Observability 규칙: CF Automatic Tracing + OTLP export → SigNoz. 벤더 SDK 금지. 상세: `/observability` skill.
@@ -308,6 +309,7 @@ npx wrangler pages secret put NPM_TOKEN --project-name={cf-project-name}
 - **다음**: 디자인 고도화, 하위 앱 상태 연동 (health check)
 
 <!-- ECOSYSTEM_END -->
+
 
 
 
