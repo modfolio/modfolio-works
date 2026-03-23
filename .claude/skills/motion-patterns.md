@@ -1,6 +1,7 @@
 ---
 description: 스프링 물리 모션 + 접근성 + Matter.js/Rapier.js
 effort: medium
+allowed-tools: Read, Glob, Grep
 ---
 
 # Motion Patterns — 스프링 물리 + 접근성
