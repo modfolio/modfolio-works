@@ -1,7 +1,8 @@
 ---
-description: Connect SDK SSO 연동 (OIDC PKCE)
+description: Connect SDK SSO 연동 가이드. OIDC PKCE 플로우 + JWT 검증 + 콜백 설정
 effort: max
 model: opus
+allowed-tools: Read, Glob, Grep
 ---
 
 # Skill: SSO 연동
