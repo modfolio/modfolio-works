@@ -21,7 +21,7 @@ maxTurns: 30
 1. Figma MCP로 페이지 디자인 구조 로드 (있으면)
 2. `/layout-patterns` 스킬에서 구조 규격 로드 (header 80px, footer 2-tier 등)
 3. 대상 앱의 토큰 팔레트 읽기
-4. `sequential-thinking` MCP로 레이아웃 결정 추론 체인 실행 (복잡한 경우)
+4. 복잡한 레이아웃 결정 시 단계별 추론 체인을 거쳐 결정 (extended thinking 활용)
 5. 프레임워크별 레이아웃 패턴 적용:
    - SvelteKit 5: `+layout.svelte` + `+page.svelte`
    - Astro: `.astro` layouts with island components

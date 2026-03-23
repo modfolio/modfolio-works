@@ -51,7 +51,7 @@ Figma 프레임 링크 받기
 
 ## 디자인 시스템 결정
 
-- `sequential-thinking` MCP로 복잡한 디자인 결정 추론 체인 실행
+- 복잡한 디자인 결정 시 단계별 추론 체인을 거쳐 결정할 것 (extended thinking 활용)
 - 토큰 팔레트 설계/수정 (3-tier: Primitives → Semantic → Accent)
 - `/design-tokens` 스킬의 명명 규칙 준수
 

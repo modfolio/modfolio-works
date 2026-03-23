@@ -1,0 +1,44 @@
+{
+	"version": "0.0.1",
+	"configurations": [
+		{
+			"name": "works-landing",
+			"runtimeExecutable": "bun",
+			"runtimeArgs": ["run", "dev:landing"],
+			"port": 4321
+		},
+		{
+			"name": "works-app",
+			"runtimeExecutable": "bun",
+			"runtimeArgs": ["run", "dev:app"],
+			"port": 4322
+		},
+		{
+			"name": "naviaca",
+			"runtimeExecutable": "bash",
+			"runtimeArgs": [
+				"-c",
+				"cd /c/Projects/modfolio-universe/naviaca && bun run dev"
+			],
+			"port": 4010
+		},
+		{
+			"name": "gistcore",
+			"runtimeExecutable": "bash",
+			"runtimeArgs": [
+				"-c",
+				"cd /c/Projects/modfolio-universe/gistcore && bun run dev"
+			],
+			"port": 4050
+		},
+		{
+			"name": "fortiscribe",
+			"runtimeExecutable": "bash",
+			"runtimeArgs": [
+				"-c",
+				"cd /c/Projects/modfolio-universe/fortiscribe && bun run dev"
+			],
+			"port": 4030
+		}
+	]
+}

@@ -7,6 +7,7 @@
 			"Bash(bun run dev)",
 			"Bash(bun run dev:*)",
 			"Bash(bun run build)",
+			"Bash(bun run build:*)",
 			"Bash(bun run test:*)",
 			"Bash(bun run lint)",
 			"Bash(bun run lint:*)",
@@ -33,7 +34,31 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "echo $TOOL_INPUT | grep -q 'git commit' && bun run check && bun run typecheck || true"
+						"command": "if echo \"$TOOL_INPUT\" | grep -q 'git commit'; then bun run check && bun run typecheck; fi"
+					},
+					{
+						"type": "command",
+						"command": "if echo \"$TOOL_INPUT\" | grep -q 'git push'; then bun run check && bun run typecheck 2>&1 | tail -20; fi"
+					},
+					{
+						"type": "command",
+						"command": "if echo \"$TOOL_INPUT\" | grep -qE 'gh api|gh pr|gh issue|gh run'; then echo '⚠ GitHub API 호출 감지. 로컬에서 가능한 작업인지 먼저 확인하세요. rate limit 낭비 주의.'; fi"
+					}
+				]
+			}
+		],
+		"Stop": [
+			{
+				"hooks": [
+					{
+						"type": "agent",
+						"prompt": "End-of-turn quality gate for Astro project. Check changed files for violations.\n\nSTEP 1: Run `git status --porcelain` to identify changed files.\nCategorize: UI (.astro/.css), Pages (.astro in pages/), Tokens (tokens.css, variables), Config (astro.config.*).\n\nSTEP 2: Per category, grep changed files for:\n- UI/Pages: hardcoded colors (#hex, rgb(, hsl( outside var()), hardcoded spacing (raw px not var(--space-*)), animation without prefers-reduced-motion, animate on width/height/top/left\n- Astro: client:load on large components (prefer client:visible or client:idle), inline <style> without using CSS custom properties/tokens\n- TS: @ts-ignore, biome-ignore, eslint-disable, as any, hardcoded secrets\n\nSTEP 3: Check memory/pattern-history.md for repeated violations.\n\nRESPONSE FORMAT: You MUST respond with ONLY a JSON object, no other text.\nIf no violations: {\"ok\": true}\nIf violations found: {\"ok\": false, \"reason\": \"## Quality Gate: FAIL\\n- [severity] file:line — description\"}",
+						"timeout": 30
+					},
+					{
+						"type": "agent",
+						"prompt": "Check if architecture/design decisions were made in this turn. If yes, append to memory/decisions-log.md with format:\n\n## [date] [title]\n- 결정: ...\n- 근거: ...\n- 대안: ...\n- 선택 이유: ...\n\nRESPONSE FORMAT: You MUST respond with ONLY a JSON object, no other text.\nIf no decisions were made: {\"ok\": true}\nIf decisions were logged: {\"ok\": true}",
+						"timeout": 15
 					}
 				]
 			}
