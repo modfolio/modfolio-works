@@ -1,10 +1,14 @@
 ---
-description: Zod 이벤트 스키마 가이드 + breaking change 분석
-effort: max
-model: opus
+description: Zod 이벤트 계약 스키마 가이드. ModfolioEventBase + discriminated union + 버전 관리 + breaking change 영향 분석
+effort: medium
+allowed-tools: Read, Glob, Grep
 ---
 
 # Skill: 이벤트 계약
+
+## Auto Context
+@contracts/events/index.ts
+@ecosystem.json
 
 앱 간 데이터 교환을 위한 Zod 스키마 이벤트 계약 가이드.
 
