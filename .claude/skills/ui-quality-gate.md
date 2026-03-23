@@ -2,6 +2,7 @@
 description: UI 자가 검증 체크리스트 + 정규화 관문
 effort: max
 model: opus
+allowed-tools: Read, Glob, Grep
 ---
 
 # UI Quality Gate — 자가 검증 체크리스트
