@@ -24,10 +24,7 @@
     "neon": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@neondatabase/mcp-server-neon"],
-      "env": {
-        "NEON_API_KEY": "${NEON_API_KEY}"
-      }
+      "args": ["-y", "mcp-remote", "https://mcp.neon.tech/mcp"]
     },
     "svelte": {
       "type": "stdio",
