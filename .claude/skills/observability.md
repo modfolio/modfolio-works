@@ -1,6 +1,7 @@
 ---
-description: CF 자동 트레이싱 + OTLP + SigNoz 옵저버빌리티
+description: Cloudflare Automatic Tracing + OTLP 표준 + SigNoz 로컬 옵저버빌리티. wrangler.jsonc 설정 가이드
 effort: medium
+allowed-tools: Read, Glob, Grep
 ---
 
 # Observability — 생태계 표준
