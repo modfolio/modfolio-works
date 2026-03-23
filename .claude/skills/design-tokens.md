@@ -1,9 +1,13 @@
 ---
 description: 3-tier 디자인 토큰 구조 + 탐색 프로토콜
 effort: medium
+allowed-tools: Read, Glob, Grep
 ---
 
 # Design Tokens — 3-Tier Architecture
+
+## Auto Context
+!find . -name 'tokens.css' -o -name 'variables.css' 2>/dev/null | head -3
 
 > House of Brands 원칙에 따라 각 앱의 **값**은 다르지만 **구조와 명명 규칙**은 동일.
 > 이 스킬은 구조를 정의한다. 특정 색상값을 처방하지 않는다.
