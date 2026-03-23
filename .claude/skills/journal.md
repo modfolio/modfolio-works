@@ -1,7 +1,7 @@
 ---
-description: 개발 저널 기록
+description: 개발 저널 기록 — 일자별 작업 로그 + 의사결정 맥락 + knowledge/journal/ 관리
 effort: low
-model: sonnet
+allowed-tools: Read, Glob, Grep
 ---
 
 # Skill: /journal — 개발 저널 기록
