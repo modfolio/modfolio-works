@@ -1,7 +1,13 @@
 ---
-description: CF Pages 배포 가이드
+description: Cloudflare Pages 네이티브 GitHub 연동 배포. wrangler.jsonc 환경변수 빌드 설정 가이드
 effort: medium
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
 ---
+
+## Auto Context
+@wrangler.jsonc
+@package.json
+!git branch --show-current
 
 # Skill: 배포
 
@@ -56,11 +62,13 @@ CF Pages 대시보드 또는 API:
 
 ## CF API 정보
 
-| 항목 | 값 |
-|------|-----|
-| Account ID | `1b371ab22db7b19da66380e525fb1cc1` |
-| All-API Token | `tFLPlLIN94dzw05MvQQ47AW0ENbwkZs11zLXBF4L` |
-| Pages API Token | `A2rI4bNV4SsiMyGJZs4jGk9o6fi5_NPWKZCFNzxm` |
+| 항목 | 조회 방법 |
+|------|-----------|
+| Account ID | `doppler secrets get CF_ACCOUNT_ID --plain` |
+| All-API Token | `doppler secrets get CF_API_TOKEN --plain` |
+| Pages API Token | `doppler secrets get CF_PAGES_API_TOKEN --plain` |
+
+> ⚠ 시크릿은 Doppler에서만 관리. 코드/설정 파일에 평문 기록 금지.
 
 ## 새 앱 배포 체크리스트
 
