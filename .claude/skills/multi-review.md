@@ -1,8 +1,9 @@
 ---
-description: 3-agent 병렬 리뷰 — design-critic + accessibility-auditor + architecture-sentinel
+description: 3-agent 병렬 리뷰 — design-critic + accessibility-auditor + architecture-sentinel. P0-P3 심각도 태깅
 effort: max
 model: opus
 context: fork
+allowed-tools: Read, Glob, Grep, Agent
 ---
 
 # Multi-Review — 3-Agent 병렬 검증
