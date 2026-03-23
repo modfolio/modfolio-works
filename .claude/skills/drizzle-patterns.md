@@ -1,6 +1,7 @@
 ---
 description: Drizzle ORM 규칙 (prefix, helpers, migrations)
 effort: medium
+allowed-tools: Read, Glob, Grep
 ---
 
 # Drizzle ORM — 생태계 규칙
