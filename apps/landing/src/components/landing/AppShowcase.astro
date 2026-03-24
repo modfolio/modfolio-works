@@ -23,7 +23,6 @@ const { apps } = Astro.props;
 					data-reveal
 					data-reveal-delay={String(i * 120)}
 				>
-					<div class="showcase-card__accent" style={`--card-accent: ${app.accentVar}`} />
 					<div class="showcase-card__body">
 						<h3 class="showcase-card__name">{app.name}</h3>
 						<p class="showcase-card__tagline">{app.tagline}</p>
@@ -123,12 +122,6 @@ const { apps } = Astro.props;
 			.showcase-card--offset:hover {
 				transform: translateY(calc(var(--space-8) - 4px));
 			}
-		}
-
-		.showcase-card__accent {
-			height: 3px;
-			flex-shrink: 0;
-			background: var(--card-accent);
 		}
 
 		.showcase-card__body {

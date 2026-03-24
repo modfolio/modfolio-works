@@ -30,7 +30,6 @@ import "../styles/global.css";
 						data-reveal
 						data-reveal-delay={String(i * 120)}
 					>
-						<div class="apps-card__accent" style={`--card-accent: ${app.accentVar}`} />
 						<div class="apps-card__body">
 							<div class="apps-card__header">
 								<h2 class="apps-card__name">{app.name}</h2>
@@ -179,12 +178,6 @@ import "../styles/global.css";
 		.apps-card:hover {
 			transform: translateY(-4px);
 			box-shadow: var(--shadow-md);
-		}
-
-		.apps-card__accent {
-			height: 3px;
-			flex-shrink: 0;
-			background: var(--card-accent);
 		}
 
 		.apps-card__body {
