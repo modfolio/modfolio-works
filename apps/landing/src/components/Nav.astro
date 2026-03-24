@@ -1,134 +1,6 @@
 ---
 const currentPath = Astro.url.pathname;
-
-const navLinks = [
-	{ label: "소개", href: "/about" },
-	{ label: "FAQ", href: "/faq" },
-];
-
-const menuCategories = [
-	{
-		key: "education",
-		title: "Education",
-		items: [
-			{
-				letter: "N",
-				name: "Naviaca",
-				desc: "학원 CRM + LMS",
-				href: "https://naviaca.com",
-				accent: "var(--color-accent-naviaca)",
-				previewDesc:
-					"학생 관리, 수업 편성, 출석, 성적, 결제까지 학원에 필요한 모든 기능을 하나의 시스템으로 제공합니다.",
-			},
-			{
-				letter: "G",
-				name: "GistCore",
-				desc: "AI 스피킹 연습",
-				href: "https://gistcore.com",
-				accent: "var(--color-accent-gistcore)",
-				previewDesc:
-					"OPIc 실전 시나리오를 AI 튜터와 반복 연습. 발화 분석과 즉각 피드백으로 스피킹 실력을 끌어올립니다.",
-			},
-			{
-				letter: "F",
-				name: "Fortiscribe",
-				desc: "AI 작문 첨삭",
-				href: "https://fortiscribe.com",
-				accent: "var(--color-accent-fortiscribe)",
-				previewDesc:
-					"영어, 한국어 작문을 제출하면 AI가 문법, 구조, 논리를 다각도로 첨삭합니다.",
-			},
-		],
-	},
-	{
-		key: "community",
-		title: "Community",
-		items: [
-			{
-				letter: "O",
-				name: "Modfolio On",
-				desc: "교육 커뮤니티",
-				href: "https://on.modfolio.io",
-				accent: "var(--color-interactive-primary)",
-				previewDesc:
-					"교육 현장의 이야기를 나누고, 교사와 학생이 함께 성장하는 커뮤니티입니다.",
-			},
-		],
-	},
-	{
-		key: "platform",
-		title: "Platform",
-		items: [
-			{
-				letter: "C",
-				name: "Connect",
-				desc: "SSO 인증",
-				href: "https://connect.modfolio.io",
-				accent: "var(--color-interactive-primary)",
-				previewDesc:
-					"한 번의 로그인으로 모든 Modfolio 앱에 접근. SSO, 패스키, 소셜 로그인을 지원합니다.",
-			},
-			{
-				letter: "P",
-				name: "Pay",
-				desc: "결제 게이트웨이",
-				href: "https://pay.modfolio.io",
-				accent: "var(--color-interactive-primary)",
-				previewDesc:
-					"안전하고 투명한 결제 시스템. 학원과 학생 모두를 위한 통합 결제 게이트웨이입니다.",
-			},
-			{
-				letter: "D",
-				name: "Docs",
-				desc: "문서 가이드",
-				href: "https://docs.modfolio.io",
-				accent: "var(--color-interactive-primary)",
-				previewDesc:
-					"Modfolio 생태계의 기술 문서, 가이드, API 레퍼런스를 한곳에서 확인하세요.",
-			},
-		],
-	},
-];
 ---
-
-<!-- Overlay -->
-<div class="menu-overlay" id="menuOverlay"></div>
-
-<!-- Mega Menu Panel -->
-<div class="mega-menu" id="megaMenu">
-	<div class="menu-left">
-		{menuCategories.map((cat, catIdx) => (
-			<div class:list={["menu-category", catIdx > 0 && "menu-category--bordered"]}>
-				<p class="menu-category__title">{cat.title}</p>
-				{cat.items.map((item) => (
-					<a
-						href={item.href}
-						class="menu-item"
-						data-preview-name={item.name}
-						data-preview-desc={item.previewDesc}
-						data-preview-url={item.href}
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						<span class="menu-item__icon" style={`background: ${item.accent}`}>
-							{item.letter}
-						</span>
-						<span class="menu-item__text">
-							<span class="menu-item__name">{item.name}</span>
-							<span class="menu-item__desc">{item.desc}</span>
-						</span>
-					</a>
-				))}
-			</div>
-		))}
-	</div>
-	<div class="menu-right">
-		<div id="defaultPreview" class="menu-right__default">
-			<p class="menu-right__hint">앱 위에 마우스를 올려보세요</p>
-		</div>
-		<div id="previewPanel" class="menu-right__panel"></div>
-	</div>
-</div>
 
 <!-- Header -->
 <header id="works-nav" class="nav">
@@ -139,36 +11,31 @@ const menuCategories = [
 			</a>
 
 			<nav class="nav-center" aria-label="주요 탐색">
-			<button
-				id="menuTrigger"
-				class="nav-link nav-link--apps"
-				type="button"
-				aria-expanded="false"
-				aria-haspopup="true"
-			>
-				앱
-				<svg class="nav-link__chevron" width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-					<path d="M3 4.5l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-				</svg>
-			</button>
-
-			{navLinks.map((item) => (
 				<a
-					href={item.href}
+					href="/apps"
 					class:list={[
 						"nav-link",
-						(currentPath === item.href || currentPath.startsWith(item.href + "/")) && "nav-link--active",
+						(currentPath === "/apps" || currentPath.startsWith("/apps/")) && "nav-link--active",
 					]}
-					aria-current={currentPath === item.href ? "page" : undefined}
+					aria-current={currentPath === "/apps" ? "page" : undefined}
 				>
-					{item.label}
+					Apps
 				</a>
-			))}
-		</nav>
+				<a
+					href="/contact"
+					class:list={[
+						"nav-link",
+						(currentPath === "/contact" || currentPath.startsWith("/contact/")) && "nav-link--active",
+					]}
+					aria-current={currentPath === "/contact" ? "page" : undefined}
+				>
+					Contact
+				</a>
+			</nav>
 		</div>
 
 		<div class="nav-actions">
-			<a href="https://edu.modfolio.io" class="nav-cta">시작하기</a>
+			<a href="https://edu.modfolio.io" class="nav-cta">Get Started</a>
 			<button
 				id="works-nav-toggle"
 				class="nav-hamburger"
@@ -185,39 +52,34 @@ const menuCategories = [
 
 	<!-- Mobile Drawer -->
 	<div id="works-nav-drawer" class="nav-drawer">
-		<nav class="nav-drawer__inner" aria-label="모바일 탐색">
-			{menuCategories.map((cat) => (
-				<details class="nav-drawer__section">
-					<summary class="nav-drawer__section-title">{cat.title}</summary>
-					<div class="nav-drawer__section-items">
-						{cat.items.map((item) => (
-							<a href={item.href} class="nav-drawer__app-link" target="_blank" rel="noopener noreferrer">
-								<span class="nav-drawer__app-icon" style={`background: ${item.accent}`}>{item.letter}</span>
-								<span class="nav-drawer__app-info">
-									<span class="nav-drawer__app-name">{item.name}</span>
-									<span class="nav-drawer__app-desc">{item.desc}</span>
-								</span>
-							</a>
-						))}
-					</div>
-				</details>
-			))}
-
-			<div class="nav-drawer__divider"></div>
-
-			<a href="/about" class:list={["nav-drawer__link", currentPath === "/about" && "nav-drawer__link--active"]}>소개</a>
-			<a href="/faq" class:list={["nav-drawer__link", currentPath === "/faq" && "nav-drawer__link--active"]}>FAQ</a>
-
-			<div class="nav-drawer__divider"></div>
-
-			<a href="https://edu.modfolio.io" class="nav-drawer__cta">시작하기</a>
-		</nav>
+		<a
+			href="/apps"
+			class:list={[
+				"nav-drawer__link",
+				(currentPath === "/apps" || currentPath.startsWith("/apps/")) && "nav-drawer__link--active",
+			]}
+			aria-current={currentPath === "/apps" ? "page" : undefined}
+		>
+			Apps
+		</a>
+		<a
+			href="/contact"
+			class:list={[
+				"nav-drawer__link",
+				(currentPath === "/contact" || currentPath.startsWith("/contact/")) && "nav-drawer__link--active",
+			]}
+			aria-current={currentPath === "/contact" ? "page" : undefined}
+		>
+			Contact
+		</a>
+		<hr class="nav-drawer__divider" />
+		<a href="https://edu.modfolio.io" class="nav-drawer__cta">Get Started</a>
 	</div>
 </header>
 
 <script>
 	/* ═══════════════════════════════════
-	   Scroll Hide / Show (kept from current)
+	   Scroll Hide / Show
 	   ═══════════════════════════════════ */
 	const nav = document.getElementById("works-nav");
 	const toggle = document.getElementById("works-nav-toggle");
@@ -235,7 +97,6 @@ const menuCategories = [
 
 		const hideNav = () => {
 			if (drawerOpen) return;
-			if (megaMenu?.classList.contains("active")) return;
 			nav.style.transform = "translateY(-100%)";
 			navHidden = true;
 		};
@@ -279,272 +140,10 @@ const menuCategories = [
 			}
 		});
 	}
-
-	/* ═══════════════════════════════════
-	   Mega Menu — Open / Close
-	   ═══════════════════════════════════ */
-	const menuTrigger = document.getElementById("menuTrigger");
-	const overlay = document.getElementById("menuOverlay");
-	const megaMenu = document.getElementById("megaMenu");
-
-	function openMenu() {
-		overlay?.classList.add("active");
-		megaMenu?.classList.add("active");
-		menuTrigger?.setAttribute("aria-expanded", "true");
-		menuTrigger?.classList.add("nav-link--menu-open");
-	}
-
-	function closeMenu() {
-		overlay?.classList.remove("active");
-		megaMenu?.classList.remove("active");
-		menuTrigger?.setAttribute("aria-expanded", "false");
-		menuTrigger?.classList.remove("nav-link--menu-open");
-	}
-
-	menuTrigger?.addEventListener("click", () => {
-		const isOpen = megaMenu?.classList.contains("active");
-		if (isOpen) {
-			closeMenu();
-		} else {
-			openMenu();
-		}
-	});
-
-	overlay?.addEventListener("click", closeMenu);
-
-	document.addEventListener("keydown", (e) => {
-		if (e.key === "Escape") closeMenu();
-	});
-
-	window.addEventListener("scroll", closeMenu, { passive: true });
-
-	/* ═══════════════════════════════════
-	   Preview Panel — Hover
-	   ═══════════════════════════════════ */
-	const menuItems = document.querySelectorAll<HTMLElement>("[data-preview-name]");
-	const previewPanel = document.getElementById("previewPanel");
-	const defaultPreview = document.getElementById("defaultPreview");
-
-	for (const item of menuItems) {
-		item.addEventListener("mouseenter", () => {
-			const name = item.dataset.previewName;
-			const desc = item.dataset.previewDesc;
-			const url = item.dataset.previewUrl;
-			if (previewPanel && defaultPreview) {
-				defaultPreview.style.display = "none";
-				previewPanel.innerHTML = `
-					<h3 class="preview-name">${name}</h3>
-					<p class="preview-desc">${desc}</p>
-					<a href="${url}" class="preview-link" target="_blank" rel="noopener noreferrer">방문하기 →</a>
-				`;
-			}
-		});
-	}
-
-	document.querySelector(".menu-left")?.addEventListener("mouseleave", () => {
-		if (previewPanel && defaultPreview) {
-			previewPanel.innerHTML = "";
-			defaultPreview.style.display = "block";
-		}
-	});
 </script>
 
 <style>
 	@layer components {
-		/* ═══════════════════════════════════
-		   Overlay
-		   ═══════════════════════════════════ */
-		.menu-overlay {
-			position: fixed;
-			inset: 0;
-			top: var(--nav-h);
-			background: rgba(0, 0, 0, 0.3);
-			backdrop-filter: blur(2px);
-			z-index: 90;
-			opacity: 0;
-			visibility: hidden;
-			transition: opacity 0.25s ease, visibility 0.25s ease;
-		}
-
-		.menu-overlay.active {
-			opacity: 1;
-			visibility: visible;
-		}
-
-		/* ═══════════════════════════════════
-		   Mega Menu Panel
-		   ═══════════════════════════════════ */
-		.mega-menu {
-			position: fixed;
-			top: var(--nav-h);
-			left: 0;
-			bottom: 0;
-			background: var(--color-surface-0);
-			z-index: 95;
-			display: grid;
-			grid-template-columns: 420px 1fr;
-			width: 100%;
-			max-width: 1000px;
-			box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
-			opacity: 0;
-			visibility: hidden;
-			transition: opacity 0.25s ease, visibility 0.25s ease;
-			overflow: hidden;
-		}
-
-		.mega-menu.active {
-			opacity: 1;
-			visibility: visible;
-		}
-
-		/* ── Staggered Column Fade-In ── */
-		.menu-left {
-			opacity: 0;
-			transform: translateY(8px);
-			transition: opacity 0.35s ease, transform 0.35s ease;
-			padding: var(--space-6) var(--space-8);
-			border-right: 1px solid var(--color-border-subtle);
-			overflow-y: auto;
-		}
-
-		.menu-right {
-			opacity: 0;
-			transform: translateY(8px);
-			transition: opacity 0.35s ease 0.12s, transform 0.35s ease 0.12s;
-			background: var(--p-teal-50);
-			padding: var(--space-10);
-			display: flex;
-			flex-direction: column;
-			justify-content: center;
-		}
-
-		.mega-menu.active .menu-left,
-		.mega-menu.active .menu-right {
-			opacity: 1;
-			transform: translateY(0);
-		}
-
-		/* ── Left Column: Categories ── */
-		.menu-category {
-			padding-bottom: var(--space-4);
-		}
-
-		.menu-category--bordered {
-			border-top: 1px solid var(--color-border-subtle);
-			padding-top: var(--space-4);
-		}
-
-		.menu-category__title {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
-			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.08em;
-			color: var(--color-text-3);
-			margin-bottom: var(--space-3);
-		}
-
-		/* ── Menu Items ── */
-		.menu-item {
-			display: flex;
-			align-items: center;
-			gap: var(--space-3);
-			padding: var(--space-2);
-			border-radius: var(--radius-md);
-			text-decoration: none;
-			transition: background var(--dur-fast) var(--ease-out);
-		}
-
-		.menu-item:hover {
-			background: var(--p-teal-50);
-		}
-
-		.menu-item__icon {
-			display: grid;
-			place-items: center;
-			width: 32px;
-			height: 32px;
-			border-radius: var(--radius-full);
-			font-family: var(--font-display);
-			font-size: var(--font-size-small);
-			font-weight: 700;
-			color: var(--color-surface-0);
-			flex-shrink: 0;
-			line-height: 1;
-		}
-
-		.menu-item__text {
-			display: flex;
-			flex-direction: column;
-			gap: 2px;
-			min-width: 0;
-		}
-
-		.menu-item__name {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			font-weight: 500;
-			color: var(--color-text-1);
-		}
-
-		.menu-item__desc {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
-			color: var(--color-text-3);
-		}
-
-		/* ── Right Column: Preview ── */
-		.menu-right__default {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			height: 100%;
-		}
-
-		.menu-right__hint {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			color: var(--color-text-3);
-			font-style: italic;
-		}
-
-		.menu-right__panel {
-			display: flex;
-			flex-direction: column;
-			gap: var(--space-4);
-		}
-
-		/* Preview Panel Dynamic Content */
-		:global(.preview-name) {
-			font-family: var(--font-display);
-			font-size: var(--font-size-h3);
-			font-weight: 500;
-			color: var(--color-text-1);
-		}
-
-		:global(.preview-desc) {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			color: var(--color-text-2);
-			line-height: 1.7;
-		}
-
-		:global(.preview-link) {
-			display: inline-flex;
-			align-items: center;
-			gap: var(--space-2);
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			font-weight: 600;
-			color: var(--color-interactive-primary);
-			margin-top: var(--space-2);
-			transition: gap var(--dur-fast) var(--ease-out);
-		}
-
-		:global(.preview-link:hover) {
-			gap: var(--space-3);
-		}
-
 		/* ═══════════════════════════════════
 		   Header Bar
 		   ═══════════════════════════════════ */
@@ -609,15 +208,11 @@ const menuCategories = [
 			position: relative;
 			display: inline-flex;
 			align-items: center;
-			gap: 4px;
 			font-family: var(--font-ui);
 			font-size: var(--font-size-small);
 			font-weight: 500;
 			color: var(--color-text-2);
 			padding: var(--space-1) 0;
-			background: none;
-			border: none;
-			cursor: pointer;
 			transition: color var(--dur-fast) var(--ease-out);
 		}
 
@@ -650,22 +245,6 @@ const menuCategories = [
 
 		.nav-link--active::after {
 			transform: scaleX(1);
-		}
-
-		.nav-link--menu-open {
-			color: var(--color-text-1);
-		}
-
-		.nav-link--menu-open::after {
-			transform: scaleX(1);
-		}
-
-		.nav-link--menu-open .nav-link__chevron {
-			transform: rotate(180deg);
-		}
-
-		.nav-link__chevron {
-			transition: transform var(--dur-fast) var(--ease-out);
 		}
 
 		/* ── Actions (push to right edge) ── */
@@ -707,6 +286,9 @@ const menuCategories = [
 			gap: 5px;
 			width: 36px;
 			height: 36px;
+			background: none;
+			border: none;
+			cursor: pointer;
 			border-radius: var(--radius-sm);
 			transition: background var(--dur-fast) var(--ease-out);
 		}
@@ -757,6 +339,7 @@ const menuCategories = [
 			border-top: 1px solid var(--color-border-subtle);
 			transition: max-height 300ms var(--ease-out);
 			will-change: max-height;
+			padding: 0 var(--mu-padding-x);
 		}
 
 		@media (min-width: 768px) {
@@ -765,111 +348,20 @@ const menuCategories = [
 			}
 		}
 
-		.nav-drawer__inner {
-			display: flex;
-			flex-direction: column;
-			gap: var(--space-1);
-			padding: var(--space-4) var(--mu-padding-x);
-		}
-
-		/* ── Drawer Accordion ── */
-		.nav-drawer__section {
-			border-radius: var(--radius-md);
-		}
-
-		.nav-drawer__section-title {
-			display: flex;
-			align-items: center;
-			padding: var(--space-3);
-			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
-			font-weight: 600;
-			text-transform: uppercase;
-			letter-spacing: 0.08em;
-			color: var(--color-text-3);
-			cursor: pointer;
-			list-style: none;
-			user-select: none;
-			border-radius: var(--radius-md);
-			transition: background var(--dur-fast) var(--ease-out);
-		}
-
-		.nav-drawer__section-title::-webkit-details-marker {
-			display: none;
-		}
-
-		.nav-drawer__section-title::marker {
-			display: none;
-			content: "";
-		}
-
-		.nav-drawer__section-title:hover {
-			background: var(--color-interactive-muted);
-		}
-
-		.nav-drawer__section-items {
-			display: flex;
-			flex-direction: column;
-			gap: var(--space-1);
-			padding: 0 0 var(--space-2) var(--space-2);
-		}
-
-		.nav-drawer__app-link {
-			display: flex;
-			align-items: center;
-			gap: var(--space-3);
-			padding: var(--space-3);
-			border-radius: var(--radius-md);
-			transition: background var(--dur-fast) var(--ease-out);
-		}
-
-		.nav-drawer__app-link:hover {
-			background: var(--color-interactive-muted);
-		}
-
-		.nav-drawer__app-icon {
-			display: grid;
-			place-items: center;
-			width: 28px;
-			height: 28px;
-			border-radius: var(--radius-full);
-			font-family: var(--font-display);
-			font-size: var(--font-size-caption);
-			font-weight: 700;
-			color: var(--color-surface-0);
-			flex-shrink: 0;
-			line-height: 1;
-		}
-
-		.nav-drawer__app-info {
-			display: flex;
-			flex-direction: column;
-			gap: 1px;
-		}
-
-		.nav-drawer__app-name {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			font-weight: 500;
-			color: var(--color-text-1);
-		}
-
-		.nav-drawer__app-desc {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
-			color: var(--color-text-3);
-		}
-
-		/* ── Drawer Plain Links ── */
 		.nav-drawer__link {
 			display: block;
-			padding: var(--space-3) var(--space-3);
+			padding: var(--space-3);
 			font-family: var(--font-ui);
 			font-size: var(--font-size-body);
 			font-weight: 500;
 			color: var(--color-text-2);
 			border-radius: var(--radius-md);
 			transition: all var(--dur-fast) var(--ease-out);
+			margin-top: var(--space-2);
+		}
+
+		.nav-drawer__link:first-child {
+			margin-top: var(--space-4);
 		}
 
 		.nav-drawer__link:hover {
@@ -885,6 +377,7 @@ const menuCategories = [
 
 		.nav-drawer__divider {
 			height: 1px;
+			border: none;
 			background: var(--color-border-subtle);
 			margin: var(--space-2) 0;
 		}
@@ -894,6 +387,7 @@ const menuCategories = [
 			align-items: center;
 			justify-content: center;
 			padding: var(--space-3) var(--space-4);
+			margin-bottom: var(--space-4);
 			background: var(--color-interactive-primary);
 			color: var(--color-surface-0);
 			font-family: var(--font-ui);
@@ -907,20 +401,6 @@ const menuCategories = [
 
 		.nav-drawer__cta:hover {
 			background: var(--color-interactive-hover);
-		}
-
-		/* ═══════════════════════════════════
-		   Mobile: Mega Menu Full Width, Hide Right
-		   ═══════════════════════════════════ */
-		@media (max-width: 768px) {
-			.mega-menu {
-				grid-template-columns: 1fr;
-				max-width: 100%;
-			}
-
-			.menu-right {
-				display: none;
-			}
 		}
 	}
 </style>

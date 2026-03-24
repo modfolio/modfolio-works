@@ -12,6 +12,7 @@ const platformLinks = [
 ];
 
 const ecosystemLinks = [
+	{ name: "Modfolio", url: "https://modfolio.io" },
 	{ name: "LS", url: "https://ls.modfolio.io" },
 	{ name: "Axiom", url: "https://axiom.modfolio.io" },
 	{ name: "Studio", url: "https://studio.modfolio.io" },
@@ -24,50 +25,7 @@ const ecosystemLinks = [
 			<!-- Brand Column -->
 			<div class="footer__brand">
 				<h3 class="footer__logo">Modfolio Works</h3>
-				<p class="footer__tagline">교육의 미래를 연결합니다</p>
-				<div class="footer__sns" aria-label="소셜 미디어">
-					<!-- Instagram -->
-					<a
-						href="https://instagram.com/modfolio.io"
-						class="footer__sns-link"
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label="Instagram"
-					>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" stroke-width="1.5" />
-							<circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.5" />
-							<circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" />
-						</svg>
-					</a>
-					<!-- LinkedIn -->
-					<a
-						href="https://linkedin.com/company/modfolio"
-						class="footer__sns-link"
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label="LinkedIn"
-					>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-							<rect x="2" y="9" width="4" height="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-							<circle cx="4" cy="4" r="2" stroke="currentColor" stroke-width="1.5" />
-						</svg>
-					</a>
-					<!-- YouTube -->
-					<a
-						href="https://youtube.com/@modfolio"
-						class="footer__sns-link"
-						target="_blank"
-						rel="noopener noreferrer"
-						aria-label="YouTube"
-					>
-						<svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29.94 29.94 0 0 0 1 12a29.94 29.94 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.94 2C5.12 20 12 20 12 20s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2A29.94 29.94 0 0 0 23 12a29.94 29.94 0 0 0-.46-5.58z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-							<path d="M9.75 15.02l5.25-3.02-5.25-3.02v6.04z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
-						</svg>
-					</a>
-				</div>
+				<p class="footer__tagline">Where Potential Unfolds</p>
 			</div>
 
 			<!-- Education Column -->
@@ -182,25 +140,6 @@ const ecosystemLinks = [
 			font-family: var(--font-ui);
 			font-size: var(--font-size-caption);
 			color: var(--color-text-3);
-		}
-
-		/* SNS Icons */
-		.footer__sns {
-			display: flex;
-			gap: var(--space-4);
-			margin-top: var(--space-1);
-		}
-
-		.footer__sns-link {
-			display: flex;
-			align-items: center;
-			justify-content: center;
-			color: var(--color-text-3);
-			transition: color var(--dur-fast) var(--ease-out);
-		}
-
-		.footer__sns-link:hover {
-			color: var(--color-text-1);
 		}
 
 		/* Columns */

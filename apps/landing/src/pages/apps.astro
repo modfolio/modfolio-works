@@ -8,90 +8,61 @@ import "../styles/tokens.css";
 import "../styles/global.css";
 ---
 
-<Base title="교육 앱 — Modfolio Works">
+<Base title="Apps — Modfolio Works" description="학원 운영, AI 스피킹, 작문 첨삭. 교육의 각 단계를 맡는 세 가지 앱.">
 	<main id="main">
-		<section class="apps-hero">
-			<div class="apps-hero__inner">
-				<p class="apps-hero__label">Modfolio Works</p>
-				<h1 class="apps-hero__title">교육 앱</h1>
-				<p class="apps-hero__desc">
-					학원 운영, AI 스피킹, 작문 첨삭 — 교육에 필요한 모든 것을 하나의 계정으로.
+		<section class="apps-hero" aria-label="교육 앱">
+			<div class="apps-hero__inner" data-reveal>
+				<p class="apps-hero__eyebrow">Apps</p>
+				<h1 class="apps-hero__title">각자의 영역에서, 정확하게.</h1>
+				<p class="apps-hero__sub">
+					학원 운영, 스피킹 연습, 작문 첨삭.<br class="hide-mobile" />
+					세 가지 앱이 교육의 각 단계를 맡습니다.
 				</p>
 			</div>
 		</section>
 
-		{apps.map((app, i) => (
-			<section
-				id={app.id}
-				class:list={["app-section", i % 2 === 0 ? "app-section--light" : "app-section--snow"]}
-			>
-				<div class="app-section__inner" data-reveal>
-					<div class="app-section__info">
-						<div
-							class="app-section__icon"
-							style={`background: ${app.accentVar}`}
-						>
-							<span class="app-section__initial">
-								{app.name.charAt(0)}
-							</span>
+		<section class="apps-grid-section" aria-label="앱 목록">
+			<div class="apps-grid">
+				{apps.map((app, i) => (
+					<a
+						href={`/apps/${app.id}`}
+						class="apps-card"
+						data-reveal
+						data-reveal-delay={String(i * 120)}
+					>
+						<div class="apps-card__accent" style={`--card-accent: ${app.accentVar}`} />
+						<div class="apps-card__body">
+							<div class="apps-card__header">
+								<h2 class="apps-card__name">{app.name}</h2>
+								<span
+									class:list={[
+										"apps-card__status",
+										app.status === "active"
+											? "apps-card__status--active"
+											: "apps-card__status--landing",
+									]}
+								>
+									{app.status === "active" ? "운영 중" : "출시 준비 중"}
+								</span>
+							</div>
+							<p class="apps-card__tagline">{app.tagline}</p>
+							<p class="apps-card__desc">{app.shortDescription}</p>
+							<div class="apps-card__footer">
+								<span class="apps-card__domain">{app.domain}</span>
+								<span class="apps-card__link">자세히 보기 →</span>
+							</div>
 						</div>
-						<h2 class="app-section__name">{app.name}</h2>
-						<p class="app-section__tagline">{app.tagline}</p>
-						<p class="app-section__outcome">{app.outcome}</p>
-						<span class="app-section__domain">{app.domain}</span>
-					</div>
-					<div class="app-section__detail">
-						<p class="app-section__desc">{app.description}</p>
-						<div class="app-section__meta">
-							<span class:list={[
-								"app-section__status",
-								app.status === "active" ? "app-section__status--active" : "app-section__status--landing",
-							]}>
-								{app.status === "active" ? "운영 중" : "출시 준비 중"}
-							</span>
-						</div>
-						<a
-							href={app.url}
-							class="app-section__cta"
-							style={`background: ${app.accentVar}`}
-							target="_blank"
-							rel="noopener noreferrer"
-						>
-							앱 방문하기 &rarr;
-						</a>
-					</div>
-				</div>
-			</section>
-		))}
+					</a>
+				))}
+			</div>
+		</section>
 	</main>
 	<Footer />
 </Base>
 
 <script>
-	const reveals = document.querySelectorAll("[data-reveal]");
-
-	if (reveals.length > 0) {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						const delay =
-							(entry.target as HTMLElement).dataset.revealDelay || "0";
-						(entry.target as HTMLElement).style.transitionDelay =
-							`${delay}ms`;
-						entry.target.classList.add("revealed");
-						observer.unobserve(entry.target);
-					}
-				}
-			},
-			{ threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
-		);
-
-		for (const el of reveals) {
-			el.classList.add("reveal-pending");
-			observer.observe(el);
-		}
-	}
+	import { initReveal } from "../lib/reveal";
+	initReveal();
 </script>
 
 <style is:global>
@@ -120,28 +91,26 @@ import "../styles/global.css";
 
 <style>
 	@layer components {
-		/* Hero */
 		.apps-hero {
+			min-height: 40vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: var(--color-surface-0);
 			padding: var(--space-24) var(--mu-padding-x) var(--space-16);
-			background: linear-gradient(
-				180deg,
-				var(--color-surface-0) 0%,
-				var(--p-teal-50) 100%
-			);
 			text-align: center;
 		}
 
 		.apps-hero__inner {
 			max-width: var(--mu-max-width);
-			margin: 0 auto;
 		}
 
-		.apps-hero__label {
+		.apps-hero__eyebrow {
 			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
+			font-size: var(--font-size-small);
 			font-weight: 600;
 			text-transform: uppercase;
-			letter-spacing: 0.1em;
+			letter-spacing: 0.08em;
 			color: var(--color-text-3);
 			margin-bottom: var(--space-4);
 		}
@@ -151,167 +120,147 @@ import "../styles/global.css";
 			font-size: var(--font-size-h1);
 			font-weight: 700;
 			color: var(--color-text-1);
+			line-height: 1.2;
 			margin-bottom: var(--space-4);
 		}
 
-		.apps-hero__desc {
+		.apps-hero__sub {
 			font-family: var(--font-ui);
 			font-size: var(--font-size-body);
 			color: var(--color-text-2);
+			line-height: 1.6;
 			max-width: 50ch;
 			margin: 0 auto;
-			line-height: 1.7;
 		}
 
-		/* App Sections */
-		.app-section {
-			min-height: 60vh;
-			display: flex;
-			align-items: center;
-			padding: var(--space-24) var(--mu-padding-x);
+		.hide-mobile {
+			display: none;
 		}
 
-		.app-section--light {
-			background: var(--color-surface-0);
-		}
-
-		.app-section--snow {
-			background: var(--color-surface-1);
-		}
-
-		.app-section__inner {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: var(--space-16);
-			align-items: center;
-			max-width: var(--mu-max-width);
-			margin: 0 auto;
-			width: 100%;
-		}
-
-		@media (max-width: 768px) {
-			.app-section__inner {
-				grid-template-columns: 1fr;
-				gap: var(--space-8);
+		@media (min-width: 640px) {
+			.hide-mobile {
+				display: inline;
 			}
 		}
 
-		.app-section__info {
-			display: flex;
-			flex-direction: column;
-			gap: var(--space-3);
+		/* ── Card Grid ── */
+		.apps-grid-section {
+			padding: var(--space-16) var(--mu-padding-x) var(--space-24);
+			background: var(--color-surface-1);
 		}
 
-		.app-section__icon {
+		.apps-grid {
+			max-width: 1080px;
+			margin: 0 auto;
 			display: grid;
-			place-items: center;
-			width: 80px;
-			height: 80px;
-			border-radius: var(--radius-full);
-			margin-bottom: var(--space-2);
-		}
-
-		.app-section__initial {
-			font-family: var(--font-display);
-			font-size: var(--font-size-h2);
-			font-weight: 700;
-			color: var(--color-surface-0);
-			line-height: 1;
-		}
-
-		.app-section__name {
-			font-family: var(--font-display);
-			font-size: var(--font-size-display);
-			font-weight: 700;
-			color: var(--color-text-1);
-			line-height: 1.1;
-		}
-
-		.app-section__tagline {
-			font-family: var(--font-display);
-			font-size: var(--font-size-h3);
-			font-weight: 400;
-			color: var(--color-text-2);
-		}
-
-		.app-section__outcome {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			color: var(--color-text-3);
-			font-style: italic;
-		}
-
-		.app-section__domain {
-			display: inline-block;
-			width: fit-content;
-			padding: var(--space-1) var(--space-3);
-			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
-			font-weight: 500;
-			color: var(--color-text-3);
-			background: var(--color-surface-raised);
-			border-radius: var(--radius-full);
-		}
-
-		/* Detail side */
-		.app-section__detail {
-			display: flex;
-			flex-direction: column;
+			grid-template-columns: 1fr;
 			gap: var(--space-6);
 		}
 
-		.app-section__desc {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-body);
-			color: var(--color-text-2);
-			line-height: 1.8;
+		@media (min-width: 768px) {
+			.apps-grid {
+				grid-template-columns: repeat(3, 1fr);
+			}
 		}
 
-		.app-section__meta {
+		.apps-card {
 			display: flex;
-			align-items: center;
-			gap: var(--space-3);
-		}
-
-		.app-section__status {
-			display: inline-flex;
-			align-items: center;
-			padding: var(--space-1) var(--space-3);
-			font-family: var(--font-ui);
-			font-size: var(--font-size-caption);
-			font-weight: 600;
-			border-radius: var(--radius-full);
-		}
-
-		.app-section__status--active {
-			background: var(--color-interactive-muted);
-			color: var(--color-interactive-primary);
-		}
-
-		.app-section__status--landing {
-			background: var(--color-surface-raised);
-			color: var(--color-text-3);
-		}
-
-		.app-section__cta {
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			width: fit-content;
-			padding: var(--space-3) var(--space-6);
-			color: var(--color-surface-0);
-			font-family: var(--font-ui);
-			font-size: var(--font-size-body);
-			font-weight: 600;
-			border-radius: var(--radius-md);
+			flex-direction: column;
+			background: var(--color-surface-card);
+			border: 1px solid var(--color-border-subtle);
+			border-radius: var(--radius-lg);
+			overflow: hidden;
+			box-shadow: var(--shadow-sm);
 			transition:
-				transform var(--dur-fast) var(--ease-out),
+				transform var(--dur-base) var(--ease-out),
 				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
-		.app-section__cta:hover {
-			transform: translateY(-2px);
+		.apps-card:hover {
+			transform: translateY(-4px);
 			box-shadow: var(--shadow-md);
+		}
+
+		.apps-card__accent {
+			height: 3px;
+			flex-shrink: 0;
+			background: var(--card-accent);
+		}
+
+		.apps-card__body {
+			padding: var(--space-6);
+			flex: 1;
+			display: flex;
+			flex-direction: column;
+		}
+
+		.apps-card__header {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			margin-bottom: var(--space-2);
+		}
+
+		.apps-card__name {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 400;
+			color: var(--color-text-1);
+		}
+
+		.apps-card__status {
+			font-size: var(--font-size-caption);
+			font-family: var(--font-ui);
+			letter-spacing: 0.02em;
+			padding: var(--space-1) var(--space-3);
+			border-radius: var(--radius-full);
+		}
+
+		.apps-card__status--active {
+			background: oklch(0.72 0.12 155 / 0.12);
+			color: var(--color-success);
+		}
+
+		.apps-card__status--landing {
+			background: oklch(0.8 0.08 65 / 0.12);
+			color: var(--color-accent-fortiscribe);
+		}
+
+		.apps-card__tagline {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 500;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-3);
+		}
+
+		.apps-card__desc {
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+			line-height: 1.65;
+			margin-bottom: var(--space-6);
+			flex: 1;
+		}
+
+		.apps-card__footer {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+		}
+
+		.apps-card__domain {
+			font-size: var(--font-size-caption);
+			color: var(--color-text-3);
+		}
+
+		.apps-card__link {
+			font-size: var(--font-size-caption);
+			color: var(--color-text-3);
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.apps-card:hover .apps-card__link {
+			color: var(--color-interactive-primary);
 		}
 	}
 </style>

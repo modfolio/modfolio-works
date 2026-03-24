@@ -1,8 +1,10 @@
 ---
 import Base from "../layouts/Base.astro";
 import Hero from "../components/landing/Hero.astro";
-import AppHighlight from "../components/landing/AppHighlight.astro";
-import SocialProof from "../components/landing/SocialProof.astro";
+import Philosophy from "../components/landing/Philosophy.astro";
+import AppShowcase from "../components/landing/AppShowcase.astro";
+import HowItWorks from "../components/landing/HowItWorks.astro";
+import FAQ from "../components/landing/FAQ.astro";
 import CTA from "../components/landing/CTA.astro";
 import Footer from "../components/landing/Footer.astro";
 import { apps } from "../lib/apps";
@@ -12,54 +14,21 @@ import "../styles/tokens.css";
 import "../styles/global.css";
 ---
 
-<Base title="Modfolio Works — 교육의 미래를 연결합니다">
+<Base title="Modfolio Works — Where Potential Unfolds">
 	<main id="main">
 		<Hero />
-		<AppHighlight apps={apps} />
-		<SocialProof />
+		<Philosophy />
+		<AppShowcase apps={apps} />
+		<HowItWorks />
+		<FAQ />
 		<CTA />
 	</main>
 	<Footer />
 </Base>
 
 <script>
-	/* ── Reveal Observer ── */
-	const reveals = document.querySelectorAll("[data-reveal]");
-
-	if (reveals.length > 0) {
-		const observer = new IntersectionObserver(
-			(entries) => {
-				for (const entry of entries) {
-					if (entry.isIntersecting) {
-						const delay =
-							(entry.target as HTMLElement).dataset.revealDelay || "0";
-						(entry.target as HTMLElement).style.transitionDelay =
-							`${delay}ms`;
-						entry.target.classList.add("revealed");
-						observer.unobserve(entry.target);
-					}
-				}
-			},
-			{ threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
-		);
-
-		for (const el of reveals) {
-			el.classList.add("reveal-pending");
-			observer.observe(el);
-		}
-	}
-
-	/* ── Parallax ── */
-	window.addEventListener(
-		"scroll",
-		() => {
-			document.documentElement.style.setProperty(
-				"--scroll-y",
-				window.scrollY.toString(),
-			);
-		},
-		{ passive: true },
-	);
+	import { initReveal } from "../lib/reveal";
+	initReveal();
 </script>
 
 <style is:global>

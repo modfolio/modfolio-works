@@ -1,0 +1,453 @@
+---
+import Base from "../../layouts/Base.astro";
+import Footer from "../../components/landing/Footer.astro";
+import { apps } from "../../lib/apps";
+import type { WorksApp } from "../../lib/apps";
+import "../../styles/reset.css";
+import "../../styles/tokens.css";
+import "../../styles/global.css";
+
+export function getStaticPaths() {
+	return apps.map((app) => ({
+		params: { app: app.id },
+		props: { app },
+	}));
+}
+
+const { app } = Astro.props as { app: WorksApp };
+---
+
+<Base title={`${app.name} — Modfolio Works`} description={app.tagline}>
+	<main id="main">
+		<!-- Breadcrumb -->
+		<nav class="breadcrumb" aria-label="경로">
+			<div class="breadcrumb__inner">
+				<a href="/" class="breadcrumb__link">Works</a>
+				<span class="breadcrumb__sep" aria-hidden="true">→</span>
+				<a href="/apps" class="breadcrumb__link">Apps</a>
+				<span class="breadcrumb__sep" aria-hidden="true">→</span>
+				<span class="breadcrumb__current">{app.name}</span>
+			</div>
+		</nav>
+
+		<!-- Detail Hero -->
+		<section class="detail-hero">
+			<div class="detail-hero__inner" data-reveal>
+				<div class="detail-hero__meta">
+					<span
+						class:list={[
+							"detail-hero__status",
+							app.status === "active"
+								? "detail-hero__status--active"
+								: "detail-hero__status--landing",
+						]}
+					>
+						{app.status === "active" ? "운영 중" : "출시 준비 중"}
+					</span>
+					<span class="detail-hero__domain">{app.domain}</span>
+				</div>
+				<h1 class="detail-hero__name">{app.name}</h1>
+				<p class="detail-hero__tagline">{app.tagline}</p>
+				<div class="detail-hero__cta">
+					{
+						app.status === "active" ? (
+							<a
+								href={`https://${app.domain}`}
+								class="detail-hero__btn detail-hero__btn--primary"
+								style={`background: ${app.accentVar}`}
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								{app.domain} 방문 →
+							</a>
+						) : (
+							<>
+								<p class="detail-hero__coming-soon">출시되면 알려드리겠습니다</p>
+								<a
+									href={`https://${app.domain}`}
+									class="detail-hero__btn detail-hero__btn--ghost"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									{app.domain} 방문 →
+								</a>
+							</>
+						)
+					}
+				</div>
+			</div>
+		</section>
+
+		<!-- Outcome Band -->
+		<section class="outcome-band">
+			<div class="outcome-band__inner" data-reveal>
+				<p class="outcome-band__text">{app.outcome}</p>
+			</div>
+		</section>
+
+		<!-- Features -->
+		<section class="features">
+			<div class="features__inner">
+				<div class="features__grid">
+					{
+						app.features.map((feature, i) => (
+							<article
+								class="features__card"
+								data-reveal
+								data-reveal-delay={String(i * 100)}
+							>
+								<h3 class="features__card-title">{feature.title}</h3>
+								<p class="features__card-body">{feature.body}</p>
+							</article>
+						))
+					}
+				</div>
+			</div>
+		</section>
+
+		<!-- Description -->
+		<section class="description">
+			<div class="description__inner" data-reveal>
+				<p class="description__text">{app.description}</p>
+			</div>
+		</section>
+
+		<!-- CTA -->
+		<section class="cta-section">
+			<div class="cta-section__inner" data-reveal>
+				<p class="cta-section__label">
+					{
+						app.status === "active"
+							? "직접 경험해보세요."
+							: "출시되면 알려드리겠습니다."
+					}
+				</p>
+				<a
+					href={`https://${app.domain}`}
+					class="cta-section__btn"
+					style={`background: ${app.accentVar}`}
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					{app.domain} 방문 →
+				</a>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Base>
+
+<script>
+	import { initReveal } from "../../lib/reveal";
+	initReveal();
+</script>
+
+<style>
+	@layer components {
+		/* ── Breadcrumb ── */
+		.breadcrumb {
+			padding: var(--space-6) var(--mu-padding-x);
+			background: var(--color-surface-0);
+			border-bottom: 1px solid var(--color-border-subtle);
+		}
+
+		.breadcrumb__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			flex-wrap: wrap;
+		}
+
+		.breadcrumb__link {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			color: var(--color-text-3);
+			text-decoration: none;
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.breadcrumb__link:hover {
+			color: var(--color-interactive-primary);
+		}
+
+		.breadcrumb__sep {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			color: var(--color-text-3);
+			opacity: 0.5;
+		}
+
+		.breadcrumb__current {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			color: var(--color-text-2);
+		}
+
+		/* ── Detail Hero ── */
+		.detail-hero {
+			padding: var(--space-20) var(--mu-padding-x) var(--space-24);
+			background: var(--color-surface-0);
+		}
+
+		.detail-hero__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.detail-hero__meta {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+			margin-bottom: var(--space-6);
+			flex-wrap: wrap;
+		}
+
+		.detail-hero__status {
+			display: inline-flex;
+			align-items: center;
+			padding: var(--space-1) var(--space-3);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
+			border-radius: var(--radius-full);
+		}
+
+		.detail-hero__status--active {
+			background: var(--color-interactive-muted);
+			color: var(--color-interactive-primary);
+		}
+
+		.detail-hero__status--landing {
+			background: var(--color-surface-raised);
+			color: var(--color-text-3);
+		}
+
+		.detail-hero__domain {
+			display: inline-flex;
+			align-items: center;
+			padding: var(--space-1) var(--space-3);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 500;
+			color: var(--color-text-3);
+			background: var(--color-surface-raised);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-full);
+		}
+
+		.detail-hero__name {
+			font-family: var(--font-display);
+			font-size: var(--font-size-display);
+			font-weight: 700;
+			color: var(--color-text-1);
+			line-height: 1.05;
+			letter-spacing: -0.02em;
+			margin-bottom: var(--space-4);
+		}
+
+		.detail-hero__tagline {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 400;
+			color: var(--color-text-2);
+			margin-bottom: var(--space-10);
+			max-width: 55ch;
+		}
+
+		.detail-hero__cta {
+			display: flex;
+			align-items: center;
+			gap: var(--space-4);
+			flex-wrap: wrap;
+		}
+
+		.detail-hero__btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding: var(--space-3) var(--space-8);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 600;
+			border-radius: var(--radius-md);
+			text-decoration: none;
+			transition:
+				transform var(--dur-fast) var(--ease-out),
+				box-shadow var(--dur-fast) var(--ease-out);
+		}
+
+		.detail-hero__btn--primary {
+			color: var(--color-surface-0);
+		}
+
+		.detail-hero__btn--primary:hover {
+			transform: translateY(-2px);
+			box-shadow: var(--shadow-md);
+		}
+
+		.detail-hero__btn--ghost {
+			color: var(--color-text-2);
+			background: transparent;
+			border: 1px solid var(--color-border-default);
+		}
+
+		.detail-hero__btn--ghost:hover {
+			border-color: var(--color-border-hover);
+			color: var(--color-text-1);
+			transform: translateY(-1px);
+		}
+
+		.detail-hero__coming-soon {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-3);
+			font-style: italic;
+		}
+
+		/* ── Outcome Band ── */
+		.outcome-band {
+			background: var(--p-teal-500);
+			padding: var(--space-16) var(--mu-padding-x);
+		}
+
+		.outcome-band__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+			text-align: center;
+		}
+
+		.outcome-band__text {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 700;
+			color: var(--color-surface-0);
+			line-height: 1.2;
+		}
+
+		/* ── Features ── */
+		.features {
+			background: var(--color-surface-1);
+			padding: var(--space-20) var(--mu-padding-x);
+		}
+
+		.features__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.features__grid {
+			display: grid;
+			grid-template-columns: repeat(3, 1fr);
+			gap: var(--space-8);
+		}
+
+		@media (max-width: 768px) {
+			.features__grid {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		.features__card {
+			padding: var(--space-8);
+			background: var(--color-surface-card);
+			border: 1px solid var(--color-border-subtle);
+			border-radius: var(--radius-lg);
+			box-shadow: var(--shadow-sm);
+		}
+
+		.features__card-title {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 600;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-3);
+		}
+
+		.features__card-body {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			color: var(--color-text-2);
+			line-height: 1.7;
+		}
+
+		/* ── Description ── */
+		.description {
+			background: var(--color-surface-0);
+			padding: var(--space-20) var(--mu-padding-x);
+		}
+
+		.description__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.description__text {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-2);
+			line-height: 1.7;
+			max-width: 65ch;
+			margin: 0 auto;
+			text-align: center;
+		}
+
+		/* ── Bottom CTA ── */
+		.cta-section {
+			background: var(--color-surface-1);
+			padding: var(--space-20) var(--mu-padding-x);
+		}
+
+		.cta-section__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: var(--space-6);
+			text-align: center;
+		}
+
+		.cta-section__label {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 700;
+			color: var(--color-text-1);
+		}
+
+		.cta-section__btn {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding: var(--space-4) var(--space-10);
+			color: var(--color-surface-0);
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 600;
+			border-radius: var(--radius-md);
+			text-decoration: none;
+			transition:
+				transform var(--dur-fast) var(--ease-out),
+				box-shadow var(--dur-fast) var(--ease-out);
+		}
+
+		.cta-section__btn:hover {
+			transform: translateY(-2px);
+			box-shadow: var(--shadow-md);
+		}
+
+		/* ── Responsive tweaks ── */
+		@media (max-width: 768px) {
+			.detail-hero__name {
+				font-size: var(--font-size-h1);
+			}
+
+			.detail-hero__cta {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+		}
+	}
+</style>

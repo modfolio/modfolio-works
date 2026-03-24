@@ -1,0 +1,258 @@
+---
+import Base from "../layouts/Base.astro";
+import Footer from "../components/landing/Footer.astro";
+
+import "../styles/reset.css";
+import "../styles/tokens.css";
+import "../styles/global.css";
+---
+
+<Base
+	title="Contact — Modfolio Works"
+	description="Modfolio Works 연락처 및 사업자 정보."
+>
+	<main id="main">
+		<!-- Hero -->
+		<section class="contact-hero">
+			<div class="contact-hero__inner" data-reveal>
+				<p class="contact-hero__label">Contact</p>
+				<h1 class="contact-hero__title">Contact</h1>
+				<p class="contact-hero__sub">
+					단체 도입이나 협업에 대해 이야기하고 싶다면 편하게 연락해주세요.
+				</p>
+			</div>
+		</section>
+
+		<!-- Contact Information -->
+		<section class="contact-info">
+			<div class="contact-info__inner" data-reveal>
+				<h2 class="contact-info__heading">연락처</h2>
+				<dl class="contact-info__list">
+					<div class="contact-info__row">
+						<dt class="contact-info__term">이메일</dt>
+						<dd class="contact-info__detail">
+							<a
+								href="mailto:contact@modfolio.io"
+								class="contact-info__link"
+							>
+								contact@modfolio.io
+							</a>
+						</dd>
+					</div>
+					<div class="contact-info__row">
+						<dt class="contact-info__term">주소</dt>
+						<dd class="contact-info__detail">
+							경기도 수원시 팔달구 효원로 278, 6층 602호
+						</dd>
+					</div>
+				</dl>
+			</div>
+		</section>
+
+		<!-- Business Information -->
+		<section class="biz-info">
+			<div class="biz-info__inner" data-reveal>
+				<h2 class="biz-info__heading">사업자 정보</h2>
+				<dl class="biz-info__list">
+					<div class="biz-info__row">
+						<dt class="biz-info__term">상호</dt>
+						<dd class="biz-info__detail">모드폴리오</dd>
+					</div>
+					<div class="biz-info__row">
+						<dt class="biz-info__term">대표</dt>
+						<dd class="biz-info__detail">김동헌</dd>
+					</div>
+					<div class="biz-info__row">
+						<dt class="biz-info__term">사업자등록번호</dt>
+						<dd class="biz-info__detail">104-95-65636</dd>
+					</div>
+					<div class="biz-info__row">
+						<dt class="biz-info__term">통신판매업</dt>
+						<dd class="biz-info__detail">제2025-수원팔달-0953호</dd>
+					</div>
+					<div class="biz-info__row">
+						<dt class="biz-info__term">출판사 등록</dt>
+						<dd class="biz-info__detail">제2024-000037호</dd>
+					</div>
+				</dl>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Base>
+
+<script>
+	import { initReveal } from "../lib/reveal";
+	initReveal();
+</script>
+
+<style>
+	@layer components {
+		/* ── Hero ── */
+		.contact-hero {
+			padding: var(--space-24) var(--mu-padding-x) var(--space-16);
+			background: linear-gradient(
+				180deg,
+				var(--color-surface-0) 0%,
+				var(--p-teal-50) 100%
+			);
+			text-align: center;
+		}
+
+		.contact-hero__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.contact-hero__label {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: var(--color-text-3);
+			margin-bottom: var(--space-4);
+		}
+
+		.contact-hero__title {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h1);
+			font-weight: 700;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-4);
+		}
+
+		.contact-hero__sub {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-2);
+			max-width: 50ch;
+			margin: 0 auto;
+			line-height: 1.7;
+		}
+
+		/* ── Contact Information ── */
+		.contact-info {
+			padding: clamp(4rem, 8vh, 8rem) var(--mu-padding-x);
+			background: var(--color-surface-0);
+		}
+
+		.contact-info__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.contact-info__heading {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 500;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-10);
+		}
+
+		.contact-info__list {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+			border-top: 1px solid var(--color-border-default);
+		}
+
+		.contact-info__row {
+			display: grid;
+			grid-template-columns: 140px 1fr;
+			gap: var(--space-6);
+			padding: var(--space-6) 0;
+			border-bottom: 1px solid var(--color-border-subtle);
+			align-items: baseline;
+		}
+
+		@media (max-width: 768px) {
+			.contact-info__row {
+				grid-template-columns: 1fr;
+				gap: var(--space-2);
+			}
+		}
+
+		.contact-info__term {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			color: var(--color-text-3);
+		}
+
+		.contact-info__detail {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-1);
+			line-height: 1.6;
+		}
+
+		.contact-info__link {
+			color: var(--color-interactive-primary);
+			text-decoration: none;
+			font-weight: 500;
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.contact-info__link:hover {
+			color: var(--color-interactive-hover);
+			text-decoration: underline;
+		}
+
+		/* ── Business Information ── */
+		.biz-info {
+			padding: clamp(4rem, 8vh, 8rem) var(--mu-padding-x);
+			background: var(--color-surface-1);
+		}
+
+		.biz-info__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.biz-info__heading {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 500;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-10);
+		}
+
+		.biz-info__list {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+			border-top: 1px solid var(--color-border-default);
+		}
+
+		.biz-info__row {
+			display: grid;
+			grid-template-columns: 180px 1fr;
+			gap: var(--space-6);
+			padding: var(--space-5) 0;
+			border-bottom: 1px solid var(--color-border-subtle);
+			align-items: baseline;
+		}
+
+		@media (max-width: 768px) {
+			.biz-info__row {
+				grid-template-columns: 1fr;
+				gap: var(--space-2);
+			}
+		}
+
+		.biz-info__term {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			color: var(--color-text-3);
+		}
+
+		.biz-info__detail {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-1);
+			line-height: 1.6;
+		}
+	}
+</style>

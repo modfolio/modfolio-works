@@ -10,14 +10,15 @@ const { apps } = Astro.props;
 
 <section class="showcase" id="apps" aria-label="교육 앱">
 	<div class="showcase-inner">
-		<h2 class="showcase-heading">세 가지 교육, 하나의 플랫폼</h2>
+		<p class="showcase-eyebrow">Apps</p>
+		<h2 class="showcase-heading" data-reveal>지금, 여기서부터.</h2>
 		<div class="showcase-grid">
 			{apps.map((app, i) => (
-				<article
+				<a
+					href={`/apps/${app.id}`}
 					class:list={[
 						"showcase-card",
 						{ "showcase-card--offset": i === 1 },
-						{ "showcase-card--coming-soon": app.status === "landing" },
 					]}
 					data-reveal
 					data-reveal-delay={String(i * 120)}
@@ -26,9 +27,10 @@ const { apps } = Astro.props;
 					<div class="showcase-card__body">
 						<h3 class="showcase-card__name">{app.name}</h3>
 						<p class="showcase-card__tagline">{app.tagline}</p>
-						<p class="showcase-card__desc">{app.description}</p>
+						<p class="showcase-card__desc">{app.shortDescription}</p>
+						<p class="showcase-card__outcome">{app.outcome}</p>
 						<div class="showcase-card__footer">
-							<span class="showcase-card__domain">{app.domain}</span>
+							<span class="showcase-card__cta">자세히 보기 · {app.domain}</span>
 							<span
 								class:list={[
 									"showcase-card__status",
@@ -37,11 +39,11 @@ const { apps } = Astro.props;
 										: "showcase-card__status--landing",
 								]}
 							>
-								{app.status === "active" ? "Active" : "Coming Soon"}
+								{app.status === "active" ? "운영 중" : "출시 준비 중"}
 							</span>
 						</div>
 					</div>
-				</article>
+				</a>
 			))}
 		</div>
 	</div>
@@ -50,13 +52,24 @@ const { apps } = Astro.props;
 <style>
 	@layer components {
 		.showcase {
-			padding: var(--space-24) var(--space-6);
+			padding: var(--space-24) var(--mu-padding-x);
 			background: var(--color-surface-1);
 		}
 
 		.showcase-inner {
 			max-width: 1080px;
 			margin: 0 auto;
+		}
+
+		.showcase-eyebrow {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--color-text-3);
+			text-align: center;
+			margin-bottom: var(--space-4);
 		}
 
 		.showcase-heading {
@@ -101,17 +114,13 @@ const { apps } = Astro.props;
 				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
-		.showcase-card:not(.showcase-card--coming-soon):hover {
+		.showcase-card:hover {
 			transform: translateY(-4px);
 			box-shadow: var(--shadow-md);
 		}
 
-		.showcase-card--coming-soon:hover {
-			border-color: var(--color-border-hover);
-		}
-
 		@media (min-width: 768px) {
-			.showcase-card--offset:not(.showcase-card--coming-soon):hover {
+			.showcase-card--offset:hover {
 				transform: translateY(calc(var(--space-8) - 4px));
 			}
 		}
@@ -149,7 +158,14 @@ const { apps } = Astro.props;
 			font-size: var(--font-size-small);
 			color: var(--color-text-2);
 			line-height: 1.65;
-			max-width: 45ch;
+			margin-bottom: var(--space-4);
+		}
+
+		.showcase-card__outcome {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			color: var(--color-interactive-primary);
 			margin-bottom: var(--space-6);
 			flex: 1;
 		}
@@ -160,17 +176,21 @@ const { apps } = Astro.props;
 			justify-content: space-between;
 		}
 
-		.showcase-card__domain {
+		.showcase-card__cta {
 			font-size: var(--font-size-caption);
 			color: var(--color-text-3);
 			font-family: var(--font-ui);
+			transition: color var(--dur-fast) var(--ease-out);
+		}
+
+		.showcase-card:hover .showcase-card__cta {
+			color: var(--color-interactive-primary);
 		}
 
 		.showcase-card__status {
 			font-size: var(--font-size-caption);
 			font-family: var(--font-ui);
-			text-transform: uppercase;
-			letter-spacing: 0.05em;
+			letter-spacing: 0.02em;
 			padding: var(--space-1) var(--space-3);
 			border-radius: var(--radius-full);
 		}
@@ -181,7 +201,7 @@ const { apps } = Astro.props;
 		}
 
 		.showcase-card__status--landing {
-			background: oklch(0.80 0.08 65 / 0.12);
+			background: oklch(0.8 0.08 65 / 0.12);
 			color: var(--color-accent-fortiscribe);
 		}
 	}

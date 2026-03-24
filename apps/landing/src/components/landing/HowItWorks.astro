@@ -1,0 +1,95 @@
+---
+---
+
+<section class="how-it-works" aria-label="시작하기" data-reveal>
+	<div class="how-it-works__inner">
+		<h2 class="how-it-works__heading">시작하는 데 5분이면 됩니다.</h2>
+		<ol class="how-it-works__steps">
+			<li class="how-it-works__step">
+				<span class="how-it-works__num" aria-hidden="true">01</span>
+				<h3 class="how-it-works__title">계정 하나면 됩니다</h3>
+				<p class="how-it-works__body">
+					Modfolio Connect로 로그인하세요. 별도 가입 없이 모든 Works 앱에
+					접근합니다.
+				</p>
+			</li>
+			<li class="how-it-works__step">
+				<span class="how-it-works__num" aria-hidden="true">02</span>
+				<h3 class="how-it-works__title">필요한 앱을 고르세요</h3>
+				<p class="how-it-works__body">
+					학원 운영, 스피킹, 작문. 각 앱이 독립적으로 동작하면서도 하나의 계정
+					안에 있습니다.
+				</p>
+			</li>
+			<li class="how-it-works__step">
+				<span class="how-it-works__num" aria-hidden="true">03</span>
+				<h3 class="how-it-works__title">바로 시작</h3>
+				<p class="how-it-works__body">
+					설치도, 교육도 필요 없습니다. 로그인하면 바로 사용할 수 있습니다.
+				</p>
+			</li>
+		</ol>
+	</div>
+</section>
+
+<style>
+	@layer components {
+		.how-it-works {
+			background: var(--color-surface-0);
+			padding: clamp(6rem, 10vh, 10rem) var(--mu-padding-x);
+		}
+
+		.how-it-works__inner {
+			max-width: var(--mu-max-width);
+			margin: 0 auto;
+		}
+
+		.how-it-works__heading {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h2);
+			font-weight: 700;
+			color: var(--color-text-1);
+			text-align: center;
+			margin-bottom: var(--space-12);
+		}
+
+		.how-it-works__steps {
+			list-style: none;
+			padding: 0;
+			margin: 0;
+			display: grid;
+			gap: var(--space-8);
+		}
+
+		.how-it-works__num {
+			display: block;
+			font-family: var(--font-display);
+			font-size: var(--font-size-h1);
+			font-weight: 700;
+			color: var(--color-interactive-muted);
+			margin-bottom: var(--space-4);
+			line-height: 1;
+		}
+
+		.how-it-works__title {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			font-weight: 600;
+			color: var(--color-text-1);
+			margin-bottom: var(--space-2);
+		}
+
+		.how-it-works__body {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-body);
+			color: var(--color-text-2);
+			line-height: 1.6;
+		}
+
+		@media (min-width: 768px) {
+			.how-it-works__steps {
+				grid-template-columns: repeat(3, 1fr);
+			}
+		}
+	}
+</style>

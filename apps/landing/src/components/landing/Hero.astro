@@ -6,15 +6,12 @@
 	<div class="hero-grain" aria-hidden="true"></div>
 
 	<div class="hero-content" data-parallax>
-		<h1 class="hero-title">교육이<br />달라져야 할 때</h1>
-		<p class="hero-agitate">
-			학원 관리, 스피킹 연습, 작문 첨삭 —<br class="hide-mobile" />
-			따로 노는 도구들 사이에서 시간을 낭비하고 있습니다.
-		</p>
-		<p class="hero-solution">Works가 하나로 연결합니다.</p>
+		<p class="hero-eyebrow">Modfolio Works</p>
+		<h1 class="hero-title">배움의 방식이<br />바뀌고 있습니다.</h1>
+		<p class="hero-sub">우리는 그 다음을 준비합니다.</p>
 		<div class="hero-actions">
 			<a href="https://edu.modfolio.io" class="hero-btn hero-btn--primary">
-				시작하기
+				Get Started
 			</a>
 			<a href="/apps" class="hero-btn hero-btn--secondary">
 				앱 둘러보기
@@ -111,18 +108,19 @@
 			margin-bottom: var(--space-6);
 		}
 
-		/* ── Body Text ── */
-		.hero-agitate {
+		/* ── Eyebrow ── */
+		.hero-eyebrow {
 			font-family: var(--font-ui);
-			font-size: var(--font-size-body);
-			color: var(--color-text-2);
-			line-height: 1.7;
-			max-width: 50ch;
-			margin: 0 auto var(--space-4);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--color-text-3);
+			margin-bottom: var(--space-4);
 		}
 
-		/* ── Solution ── */
-		.hero-solution {
+		/* ── Sub ── */
+		.hero-sub {
 			font-family: var(--font-display);
 			font-size: var(--font-size-h3);
 			font-weight: 500;
@@ -194,16 +192,6 @@
 			bottom: var(--space-8);
 			color: var(--p-teal-400);
 			animation: hero-bounce 2s ease-in-out infinite;
-		}
-
-		.hide-mobile {
-			display: none;
-		}
-
-		@media (min-width: 640px) {
-			.hide-mobile {
-				display: inline;
-			}
 		}
 
 		@keyframes hero-bounce {
