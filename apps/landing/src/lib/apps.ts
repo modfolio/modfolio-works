@@ -10,6 +10,8 @@ export interface WorksApp {
 	url: string;
 	status: "active" | "landing";
 	accentVar: string;
+	cardImage: string;
+	detailImage: string;
 }
 
 export const apps: WorksApp[] = [
@@ -39,6 +41,8 @@ export const apps: WorksApp[] = [
 		url: "https://app.naviaca.com",
 		status: "active",
 		accentVar: "var(--color-accent-naviaca)",
+		cardImage: "/images/cards/naviaca.svg",
+		detailImage: "/images/detail/naviaca.svg",
 	},
 	{
 		id: "gistcore",
@@ -66,6 +70,8 @@ export const apps: WorksApp[] = [
 		url: "https://app.gistcore.com",
 		status: "active",
 		accentVar: "var(--color-accent-gistcore)",
+		cardImage: "/images/cards/gistcore.svg",
+		detailImage: "/images/detail/gistcore.svg",
 	},
 	{
 		id: "fortiscribe",
@@ -93,5 +99,7 @@ export const apps: WorksApp[] = [
 		url: "https://app.fortiscribe.com",
 		status: "landing",
 		accentVar: "var(--color-accent-fortiscribe)",
+		cardImage: "/images/cards/fortiscribe.svg",
+		detailImage: "/images/detail/fortiscribe.svg",
 	},
 ];

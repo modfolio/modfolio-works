@@ -23,6 +23,15 @@ const { apps } = Astro.props;
 					data-reveal
 					data-reveal-delay={String(i * 120)}
 				>
+					<div class="showcase-card__image">
+						<img
+							src={app.cardImage}
+							alt={`${app.name} 미리보기`}
+							class="showcase-card__img"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
 					<div class="showcase-card__body">
 						<h3 class="showcase-card__name">{app.name}</h3>
 						<p class="showcase-card__tagline">{app.tagline}</p>
@@ -122,6 +131,24 @@ const { apps } = Astro.props;
 			.showcase-card--offset:hover {
 				transform: translateY(calc(var(--space-8) - 4px));
 			}
+		}
+
+		.showcase-card__image {
+			position: relative;
+			aspect-ratio: 16 / 9;
+			overflow: hidden;
+			background: linear-gradient(135deg, var(--p-teal-50), var(--p-mist));
+		}
+
+		.showcase-card__img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			transition: transform var(--dur-slow) var(--ease-out);
+		}
+
+		.showcase-card:hover .showcase-card__img {
+			transform: scale(1.03);
 		}
 
 		.showcase-card__body {

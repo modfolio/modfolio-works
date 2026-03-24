@@ -2,6 +2,11 @@
 ---
 
 <section class="philosophy" aria-label="우리의 철학" data-reveal>
+	<div class="philosophy__bg" aria-hidden="true">
+		<img src="/images/philosophy/bg.svg" alt="" class="philosophy__bg-img" loading="lazy" decoding="async" />
+		<div class="philosophy__bg-overlay"></div>
+	</div>
+
 	<div class="philosophy__inner">
 		<div class="philosophy__col">
 			<p class="philosophy__label">우리가 믿는 것</p>
@@ -24,11 +29,36 @@
 <style>
 	@layer components {
 		.philosophy {
+			position: relative;
 			background: var(--color-surface-1);
 			padding: clamp(6rem, 10vh, 10rem) var(--mu-padding-x);
 		}
 
+		/* ── Background image layer ── */
+		.philosophy__bg {
+			position: absolute;
+			inset: 0;
+			overflow: hidden;
+			z-index: 0;
+		}
+
+		.philosophy__bg-img {
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			background: var(--color-surface-1);
+		}
+
+		.philosophy__bg-overlay {
+			position: absolute;
+			inset: 0;
+			background: oklch(0.985 0.002 240 / 0.88);
+		}
+
+		/* ── Inner content ── */
 		.philosophy__inner {
+			position: relative;
+			z-index: 1;
 			max-width: var(--mu-max-width);
 			margin: 0 auto;
 			display: grid;

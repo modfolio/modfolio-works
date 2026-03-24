@@ -12,6 +12,7 @@ const menuCategories = [
 				desc: "학원 CRM + LMS",
 				href: "https://naviaca.com",
 				accent: "var(--color-accent-naviaca)",
+				image: "/images/menu/naviaca.svg",
 				previewDesc:
 					"학생 관리, 수업 편성, 출석, 성적, 결제까지 학원에 필요한 모든 기능을 하나의 시스템으로 제공합니다.",
 			},
@@ -21,6 +22,7 @@ const menuCategories = [
 				desc: "AI 스피킹 연습",
 				href: "https://gistcore.com",
 				accent: "var(--color-accent-gistcore)",
+				image: "/images/menu/gistcore.svg",
 				previewDesc:
 					"OPIc 실전 시나리오를 AI 튜터와 반복 연습. 발화 분석과 즉각 피드백으로 스피킹 실력을 끌어올립니다.",
 			},
@@ -30,6 +32,7 @@ const menuCategories = [
 				desc: "AI 작문 첨삭",
 				href: "https://fortiscribe.com",
 				accent: "var(--color-accent-fortiscribe)",
+				image: "/images/menu/fortiscribe.svg",
 				previewDesc:
 					"영어, 한국어 작문을 제출하면 AI가 문법, 구조, 논리를 다각도로 첨삭합니다.",
 			},
@@ -45,6 +48,7 @@ const menuCategories = [
 				desc: "교육 커뮤니티",
 				href: "https://on.modfolio.io",
 				accent: "var(--color-interactive-primary)",
+				image: "/images/menu/on.svg",
 				previewDesc:
 					"교육 현장의 이야기를 나누고, 교사와 학생이 함께 성장하는 커뮤니티입니다.",
 			},
@@ -60,6 +64,7 @@ const menuCategories = [
 				desc: "SSO 인증",
 				href: "https://connect.modfolio.io",
 				accent: "var(--color-interactive-primary)",
+				image: "/images/menu/connect.svg",
 				previewDesc:
 					"한 번의 로그인으로 모든 Modfolio 앱에 접근. SSO, 패스키, 소셜 로그인을 지원합니다.",
 			},
@@ -69,6 +74,7 @@ const menuCategories = [
 				desc: "결제 게이트웨이",
 				href: "https://pay.modfolio.io",
 				accent: "var(--color-interactive-primary)",
+				image: "/images/menu/pay.svg",
 				previewDesc:
 					"안전하고 투명한 결제 시스템. 학원과 학생 모두를 위한 통합 결제 게이트웨이입니다.",
 			},
@@ -78,6 +84,7 @@ const menuCategories = [
 				desc: "문서 가이드",
 				href: "https://docs.modfolio.io",
 				accent: "var(--color-interactive-primary)",
+				image: "/images/menu/docs.svg",
 				previewDesc:
 					"Modfolio 생태계의 기술 문서, 가이드, API 레퍼런스를 한곳에서 확인하세요.",
 			},
@@ -102,6 +109,7 @@ const menuCategories = [
 						data-preview-name={item.name}
 						data-preview-desc={item.previewDesc}
 						data-preview-url={item.href}
+						data-preview-img={item.image}
 						target="_blank"
 						rel="noopener noreferrer"
 					>
@@ -119,7 +127,11 @@ const menuCategories = [
 	</div>
 	<div class="menu-right">
 		<div id="defaultPreview" class="menu-right__default">
-			<p class="menu-right__hint">앱 위에 마우스를 올려보세요</p>
+			<img src="/images/menu/default.svg" alt="" class="menu-right__bg" loading="eager" decoding="async" />
+			<div class="menu-right__scrim"></div>
+			<div class="menu-right__overlay">
+				<p class="menu-right__tagline">Where<br />Potential<br />Unfolds</p>
+			</div>
 		</div>
 		<div id="previewPanel" class="menu-right__panel"></div>
 	</div>
@@ -335,12 +347,20 @@ const menuCategories = [
 			const name = item.dataset.previewName;
 			const desc = item.dataset.previewDesc;
 			const url = item.dataset.previewUrl;
+			const img = item.dataset.previewImg || '';
 			if (previewPanel && defaultPreview) {
 				defaultPreview.style.display = "none";
+				previewPanel.style.display = "block";
 				previewPanel.innerHTML = `
-					<h3 class="preview-name">${name}</h3>
-					<p class="preview-desc">${desc}</p>
-					<a href="${url}" class="preview-link" target="_blank" rel="noopener noreferrer">방문하기 →</a>
+					<img src="${img}" alt="" class="menu-right__bg" loading="lazy" decoding="async" />
+					<div class="menu-right__scrim"></div>
+					<div class="menu-right__overlay">
+						<h3 class="preview-name">${name}</h3>
+						<p class="preview-desc">${desc}</p>
+						<a href="${url}" class="preview-link" target="_blank" rel="noopener noreferrer">
+							방문하기 <span aria-hidden="true">→</span>
+						</a>
+					</div>
 				`;
 			}
 		});
@@ -348,6 +368,7 @@ const menuCategories = [
 
 	document.querySelector(".menu-left")?.addEventListener("mouseleave", () => {
 		if (previewPanel && defaultPreview) {
+			previewPanel.style.display = "none";
 			previewPanel.innerHTML = "";
 			defaultPreview.style.display = "block";
 		}
@@ -416,11 +437,9 @@ const menuCategories = [
 			opacity: 0;
 			transform: translateY(8px);
 			transition: opacity 0.35s ease 0.12s, transform 0.35s ease 0.12s;
-			background: var(--p-teal-50);
-			padding: var(--space-10);
 			display: flex;
 			flex-direction: column;
-			justify-content: center;
+			position: relative;
 		}
 
 		.mega-menu.active .menu-left,
@@ -498,40 +517,78 @@ const menuCategories = [
 			color: var(--color-text-3);
 		}
 
-		/* ── Right Column: Preview ── */
-		.menu-right__default {
-			display: flex;
-			align-items: center;
-			justify-content: center;
+		/* ── Menu Right — Image Preview ── */
+		.menu-right__default,
+		.menu-right__panel {
+			position: relative;
+			width: 100%;
 			height: 100%;
-		}
-
-		.menu-right__hint {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			color: var(--color-text-3);
-			font-style: italic;
+			overflow: hidden;
 		}
 
 		.menu-right__panel {
+			display: none;
+		}
+
+		.menu-right__bg {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+			/* Fallback background when no image */
+			background: var(--p-teal-50);
+		}
+
+		.menu-right__scrim {
+			position: absolute;
+			inset: 0;
+			background: linear-gradient(
+				to top,
+				oklch(0.15 0.02 240 / 0.85) 0%,
+				oklch(0.15 0.02 240 / 0.3) 50%,
+				transparent 100%
+			);
+			pointer-events: none;
+		}
+
+		.menu-right__overlay {
+			position: relative;
+			z-index: 1;
 			display: flex;
 			flex-direction: column;
-			gap: var(--space-4);
+			justify-content: flex-end;
+			height: 100%;
+			padding: var(--space-10);
+		}
+
+		.menu-right__tagline {
+			font-family: var(--font-display);
+			font-size: var(--font-size-display);
+			font-weight: 700;
+			line-height: 1.1;
+			color: var(--color-surface-0);
+			letter-spacing: -0.02em;
+			text-shadow: 0 2px 20px oklch(0.1 0 0 / 0.3);
 		}
 
 		/* Preview Panel Dynamic Content */
 		:global(.preview-name) {
 			font-family: var(--font-display);
-			font-size: var(--font-size-h3);
+			font-size: var(--font-size-h2);
 			font-weight: 500;
-			color: var(--color-text-1);
+			color: var(--color-surface-0);
+			margin-bottom: var(--space-3);
+			text-shadow: 0 1px 10px oklch(0.1 0 0 / 0.3);
 		}
 
 		:global(.preview-desc) {
 			font-family: var(--font-ui);
 			font-size: var(--font-size-small);
-			color: var(--color-text-2);
+			color: oklch(0.95 0 0 / 0.85);
 			line-height: 1.7;
+			max-width: 35ch;
+			margin-bottom: var(--space-6);
 		}
 
 		:global(.preview-link) {
@@ -541,8 +598,7 @@ const menuCategories = [
 			font-family: var(--font-ui);
 			font-size: var(--font-size-small);
 			font-weight: 600;
-			color: var(--color-interactive-primary);
-			margin-top: var(--space-2);
+			color: var(--color-surface-0);
 			transition: gap var(--dur-fast) var(--ease-out);
 		}
 

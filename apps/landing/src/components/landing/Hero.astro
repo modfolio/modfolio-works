@@ -5,17 +5,29 @@
 	<div class="hero-mesh" aria-hidden="true"></div>
 	<div class="hero-grain" aria-hidden="true"></div>
 
-	<div class="hero-content" data-parallax>
-		<p class="hero-eyebrow">Modfolio Works</p>
-		<h1 class="hero-title">배움의 방식이<br />바뀌고 있습니다.</h1>
-		<p class="hero-sub">우리는 그 다음을 준비합니다.</p>
-		<div class="hero-actions">
-			<a href="https://edu.modfolio.io" class="hero-btn hero-btn--primary">
-				Get Started
-			</a>
-			<a href="/apps" class="hero-btn hero-btn--secondary">
-				앱 둘러보기
-			</a>
+	<div class="hero-content">
+		<div class="hero-text">
+			<p class="hero-eyebrow">Modfolio Works</p>
+			<h1 class="hero-title">배움의 방식이<br />바뀌고 있습니다.</h1>
+			<p class="hero-sub">우리는 그 다음을 준비합니다.</p>
+			<div class="hero-actions">
+				<a href="https://edu.modfolio.io" class="hero-btn hero-btn--primary">
+					Get Started
+				</a>
+				<a href="/apps" class="hero-btn hero-btn--secondary">
+					앱 둘러보기
+				</a>
+			</div>
+		</div>
+
+		<div class="hero-visual" data-parallax aria-hidden="true">
+			<img
+				src="/images/hero/visual.svg"
+				alt="교육 환경"
+				class="hero-visual__img"
+				loading="eager"
+				decoding="async"
+			/>
 		</div>
 	</div>
 
@@ -36,7 +48,6 @@
 			justify-content: center;
 			min-height: calc(100dvh - var(--nav-h));
 			padding: var(--space-8) var(--mu-padding-x);
-			text-align: center;
 			overflow: hidden;
 		}
 
@@ -84,9 +95,38 @@
 		.hero-content {
 			position: relative;
 			z-index: 1;
-			max-width: 700px;
+			width: 100%;
+			max-width: var(--mu-max-width);
+			display: grid;
+			grid-template-columns: 1fr;
+			align-items: center;
+			gap: var(--space-8);
+			text-align: center;
 			transform: translateY(calc(var(--scroll-y, 0) * -0.2px));
 			will-change: transform;
+		}
+
+		/* ── Text column ── */
+		.hero-text {
+			text-align: center;
+		}
+
+		/* ── Visual column ── */
+		.hero-visual {
+			max-width: 320px;
+			margin: 0 auto;
+		}
+
+		.hero-visual__img {
+			width: 100%;
+			max-width: 560px;
+			height: auto;
+			border-radius: var(--radius-xl);
+			box-shadow: var(--shadow-lg);
+			background: var(--p-teal-100);
+			aspect-ratio: 1;
+			object-fit: cover;
+			display: block;
 		}
 
 		/* ── Title ── */
@@ -186,6 +226,27 @@
 			}
 		}
 
+		/* ── Desktop: 2-column layout ── */
+		@media (min-width: 768px) {
+			.hero-content {
+				grid-template-columns: 1fr 1fr;
+				text-align: left;
+			}
+
+			.hero-text {
+				text-align: left;
+			}
+
+			.hero-actions {
+				justify-content: flex-start;
+			}
+
+			.hero-visual {
+				max-width: 100%;
+				margin: 0;
+			}
+		}
+
 		/* ── Scroll Hint ── */
 		.hero-scroll-hint {
 			position: absolute;
@@ -201,6 +262,18 @@
 			}
 			50% {
 				transform: translateY(8px);
+			}
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.hero-mesh {
+				animation: none;
+			}
+			.hero-btn--primary {
+				animation: none;
+			}
+			.hero-scroll-hint {
+				animation: none;
 			}
 		}
 	}

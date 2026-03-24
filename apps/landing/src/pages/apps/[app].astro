@@ -33,47 +33,58 @@ const { app } = Astro.props as { app: WorksApp };
 		<!-- Detail Hero -->
 		<section class="detail-hero">
 			<div class="detail-hero__inner" data-reveal>
-				<div class="detail-hero__meta">
-					<span
-						class:list={[
-							"detail-hero__status",
-							app.status === "active"
-								? "detail-hero__status--active"
-								: "detail-hero__status--landing",
-						]}
-					>
-						{app.status === "active" ? "운영 중" : "출시 준비 중"}
-					</span>
-					<span class="detail-hero__domain">{app.domain}</span>
-				</div>
-				<h1 class="detail-hero__name">{app.name}</h1>
-				<p class="detail-hero__tagline">{app.tagline}</p>
-				<div class="detail-hero__cta">
-					{
-						app.status === "active" ? (
-							<a
-								href={`https://${app.domain}`}
-								class="detail-hero__btn detail-hero__btn--primary"
-								style={`background: ${app.accentVar}`}
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								{app.domain} 방문 →
-							</a>
-						) : (
-							<>
-								<p class="detail-hero__coming-soon">출시되면 알려드리겠습니다</p>
+				<div class="detail-hero__content">
+					<div class="detail-hero__meta">
+						<span
+							class:list={[
+								"detail-hero__status",
+								app.status === "active"
+									? "detail-hero__status--active"
+									: "detail-hero__status--landing",
+							]}
+						>
+							{app.status === "active" ? "운영 중" : "출시 준비 중"}
+						</span>
+						<span class="detail-hero__domain">{app.domain}</span>
+					</div>
+					<h1 class="detail-hero__name">{app.name}</h1>
+					<p class="detail-hero__tagline">{app.tagline}</p>
+					<div class="detail-hero__cta">
+						{
+							app.status === "active" ? (
 								<a
 									href={`https://${app.domain}`}
-									class="detail-hero__btn detail-hero__btn--ghost"
+									class="detail-hero__btn detail-hero__btn--primary"
+									style={`background: ${app.accentVar}`}
 									target="_blank"
 									rel="noopener noreferrer"
 								>
 									{app.domain} 방문 →
 								</a>
-							</>
-						)
-					}
+							) : (
+								<>
+									<p class="detail-hero__coming-soon">출시되면 알려드리겠습니다</p>
+									<a
+										href={`https://${app.domain}`}
+										class="detail-hero__btn detail-hero__btn--ghost"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										{app.domain} 방문 →
+									</a>
+								</>
+							)
+						}
+					</div>
+				</div>
+				<div class="detail-hero__visual">
+					<img
+						src={app.detailImage}
+						alt={`${app.name} 제품 화면`}
+						class="detail-hero__img"
+						loading="eager"
+						decoding="async"
+					/>
 				</div>
 			</div>
 		</section>
@@ -195,6 +206,33 @@ const { app } = Astro.props as { app: WorksApp };
 		.detail-hero__inner {
 			max-width: var(--mu-max-width);
 			margin: 0 auto;
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: var(--space-8);
+			align-items: center;
+		}
+
+		@media (min-width: 768px) {
+			.detail-hero__inner {
+				grid-template-columns: 1fr 1fr;
+			}
+		}
+
+		.detail-hero__visual {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.detail-hero__img {
+			width: 100%;
+			max-width: 500px;
+			height: auto;
+			border-radius: var(--radius-lg);
+			box-shadow: var(--shadow-lg);
+			background: linear-gradient(135deg, var(--p-teal-50), var(--p-mist));
+			aspect-ratio: 4 / 3;
+			object-fit: cover;
 		}
 
 		.detail-hero__meta {
