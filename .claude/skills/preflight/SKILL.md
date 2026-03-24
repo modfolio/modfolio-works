@@ -121,7 +121,7 @@ ru=$(ls .claude/rules/*.md 2>/dev/null | wc -l)
 gl=$([ -f knowledge/global.md ] && echo "Y" || echo "N")
 ```
 
-- skills < 38, agents < 17, rules < 9 → ⚠ WARN + `/harness-check` 실행 안내
+- skills < 39, agents < 17, rules < 5 → ⚠ WARN + `/harness-check` 실행 안내 (rules 최소 5 = universal rules)
 - 전체 일치 → ✅ PASS
 
 ## 출력 형식
