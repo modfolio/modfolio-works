@@ -1,0 +1,57 @@
+---
+---
+
+<section class="manifesto" id="manifesto" aria-label="우리의 이야기" data-reveal>
+	<div class="manifesto__inner">
+		<div class="manifesto__part" data-reveal>
+			<p class="manifesto__label">What We See</p>
+			<p class="manifesto__body">매일 수천 시간의 수업이 진행되고, 수백만 글자가 쓰여지고, 셀 수 없는 대화가 오갑니다. 하지만 정작 성장은 눈에 보이지 않습니다. 성적표 한 장으로는 읽을 수 없는 변화가 있습니다.</p>
+		</div>
+
+		<div class="manifesto__part" data-reveal data-reveal-delay="120">
+			<p class="manifesto__label">What We Believe</p>
+			<p class="manifesto__body">기술의 역할은 교육을 대체하는 것이 아닙니다. 보이지 않던 것을 보이게 만드는 것입니다. 학원 운영의 비효율, 말하기의 미세한 진전, 작문의 느린 성숙 — 이 모든 것을 측정 가능하게 만들 때, 교육은 비로소 정확해집니다.</p>
+		</div>
+
+		<div class="manifesto__part" data-reveal data-reveal-delay="240">
+			<p class="manifesto__label">Where We Go</p>
+			<p class="manifesto__body">아직 교실 밖에 있는 배움까지. 본질은 지키되, 보이지 않는 것은 반드시 드러내는 교육 환경을 만들어갑니다.</p>
+		</div>
+	</div>
+</section>
+
+<style>
+	@layer components {
+		.manifesto {
+			background: var(--color-surface-1);
+			padding: clamp(6rem, 12vh, 12rem) var(--mu-padding-x);
+		}
+
+		.manifesto__inner {
+			max-width: 800px;
+			margin: 0 auto;
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-16);
+		}
+
+		.manifesto__label {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-small);
+			font-weight: 600;
+			text-transform: uppercase;
+			letter-spacing: 0.08em;
+			color: var(--color-text-3);
+			margin-bottom: var(--space-4);
+		}
+
+		.manifesto__body {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 400;
+			color: var(--color-text-1);
+			line-height: 1.7;
+			max-width: 60ch;
+		}
+	}
+</style>

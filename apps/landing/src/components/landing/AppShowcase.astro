@@ -10,8 +10,8 @@ const { apps } = Astro.props;
 
 <section class="showcase" id="apps" aria-label="교육 앱">
 	<div class="showcase-inner">
-		<p class="showcase-eyebrow">Apps</p>
-		<h2 class="showcase-heading" data-reveal>지금, 여기서부터.</h2>
+		<p class="showcase-eyebrow">What We Reveal</p>
+		<h2 class="showcase-heading" data-reveal>세 가지 보이지 않는 것.</h2>
 		<div class="showcase-grid">
 			{apps.map((app, i) => (
 				<a
@@ -33,10 +33,9 @@ const { apps } = Astro.props;
 						/>
 					</div>
 					<div class="showcase-card__body">
+						<p class="showcase-card__vision-label">{app.visionLabel}</p>
 						<h3 class="showcase-card__name">{app.name}</h3>
-						<p class="showcase-card__tagline">{app.tagline}</p>
-						<p class="showcase-card__desc">{app.shortDescription}</p>
-						<p class="showcase-card__outcome">{app.outcome}</p>
+						<p class="showcase-card__desc">{app.visionDesc}</p>
 						<div class="showcase-card__footer">
 							<span class="showcase-card__cta">자세히 보기 · {app.domain}</span>
 							<span
@@ -156,6 +155,15 @@ const { apps } = Astro.props;
 			flex-direction: column;
 		}
 
+		.showcase-card__vision-label {
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			font-weight: 600;
+			color: var(--color-interactive-primary);
+			margin-bottom: var(--space-2);
+			letter-spacing: 0.02em;
+		}
+
 		.showcase-card__name {
 			font-family: var(--font-display);
 			font-size: var(--font-size-h3);
@@ -164,27 +172,11 @@ const { apps } = Astro.props;
 			color: var(--color-text-1);
 		}
 
-		.showcase-card__tagline {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-body);
-			font-weight: 500;
-			color: var(--color-text-1);
-			margin-bottom: var(--space-3);
-		}
-
 		.showcase-card__desc {
 			font-size: var(--font-size-small);
 			color: var(--color-text-2);
 			line-height: 1.65;
 			margin-bottom: var(--space-4);
-		}
-
-		.showcase-card__outcome {
-			font-family: var(--font-ui);
-			font-size: var(--font-size-small);
-			font-weight: 600;
-			color: var(--color-interactive-primary);
-			margin-bottom: var(--space-6);
 			flex: 1;
 		}
 

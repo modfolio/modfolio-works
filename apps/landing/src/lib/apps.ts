@@ -10,6 +10,8 @@ export interface WorksApp {
 	url: string;
 	status: "active" | "landing";
 	accentVar: string;
+	visionLabel: string;
+	visionDesc: string;
 	cardImage: string;
 	detailImage: string;
 }
@@ -40,6 +42,9 @@ export const apps: WorksApp[] = [
 		domain: "naviaca.com",
 		url: "https://app.naviaca.com",
 		status: "active",
+		visionLabel: "보이지 않는 것: 운영의 비효율",
+		visionDesc:
+			"학원 운영에 쏟는 시간은 측정되지 않습니다. Naviaca는 흩어진 업무를 하나의 흐름으로 모아, 보이지 않던 시간을 돌려줍니다.",
 		accentVar: "var(--color-accent-naviaca)",
 		cardImage: "/images/cards/naviaca.svg",
 		detailImage: "/images/detail/naviaca.svg",
@@ -69,6 +74,9 @@ export const apps: WorksApp[] = [
 		domain: "gistcore.com",
 		url: "https://app.gistcore.com",
 		status: "active",
+		visionLabel: "보이지 않는 것: 말하기의 성장",
+		visionDesc:
+			"스피킹 실력은 시험장 밖에서 느는 법입니다. GistCore는 발화의 미세한 변화를 추적하고, 눈에 보이지 않던 진전을 증명합니다.",
 		accentVar: "var(--color-accent-gistcore)",
 		cardImage: "/images/cards/gistcore.svg",
 		detailImage: "/images/detail/gistcore.svg",
@@ -98,6 +106,9 @@ export const apps: WorksApp[] = [
 		domain: "fortiscribe.com",
 		url: "https://app.fortiscribe.com",
 		status: "landing",
+		visionLabel: "보이지 않는 것: 글쓰기의 성숙",
+		visionDesc:
+			"작문 실력은 천천히 무릅니다. Fortiscribe는 제출마다 쌓이는 변화를 기록하고, 보이지 않던 성장을 측정합니다.",
 		accentVar: "var(--color-accent-fortiscribe)",
 		cardImage: "/images/cards/fortiscribe.svg",
 		detailImage: "/images/detail/fortiscribe.svg",
