@@ -215,12 +215,12 @@ const { apps } = Astro.props;
 		}
 
 		.showcase-card__status--active {
-			background: oklch(0.72 0.12 155 / 0.12);
+			background: var(--color-status-active-bg);
 			color: var(--color-success);
 		}
 
 		.showcase-card__status--landing {
-			background: oklch(0.8 0.08 65 / 0.12);
+			background: var(--color-status-pending-bg);
 			color: var(--color-accent-fortiscribe);
 		}
 	}

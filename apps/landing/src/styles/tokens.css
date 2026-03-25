@@ -66,6 +66,16 @@
 		--color-success: oklch(0.55 0.12 155);
 		--color-warning: oklch(0.62 0.12 80);
 		--color-danger: oklch(0.55 0.2 25);
+		--color-status-active-bg: oklch(0.72 0.12 155 / 0.12);
+		--color-status-pending-bg: oklch(0.8 0.08 65 / 0.12);
+
+		/* Glass Surfaces */
+		--color-glass-light: oklch(1 0 0 / 0.7);
+		--color-glass-heavy: oklch(1 0 0 / 0.95);
+
+		/* Scrims */
+		--color-scrim-light: oklch(0.15 0.02 240 / 0.3);
+		--color-scrim-heavy: oklch(0.15 0.02 240 / 0.85);
 
 		/* ══════════════════════════════════════
 		   ACCENT — Per-App Brand Colors
