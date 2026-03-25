@@ -65,7 +65,7 @@
 			align-items: center;
 			justify-content: center;
 			padding: var(--space-3) var(--space-6);
-			background: var(--color-surface-0);
+			background: linear-gradient(135deg, var(--color-surface-0), var(--p-snow));
 			color: var(--color-interactive-primary);
 			font-family: var(--font-ui);
 			font-size: var(--font-size-body);
@@ -79,6 +79,10 @@
 		.cta-band__btn:hover {
 			transform: translateY(-2px);
 			box-shadow: var(--shadow-lg);
+		}
+
+		.cta-band__btn:active {
+			transform: scale(0.98);
 		}
 	}
 </style>

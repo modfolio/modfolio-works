@@ -112,13 +112,11 @@ const { apps } = Astro.props;
 			display: flex;
 			flex-direction: column;
 			background: var(--color-surface-card);
-			border: 1px solid var(--color-border-subtle);
 			border-radius: var(--radius-lg);
 			overflow: hidden;
 			box-shadow: var(--shadow-sm);
 			transition:
-				transform var(--dur-base) var(--ease-out),
-				border-color var(--dur-fast) var(--ease-out),
+				transform var(--dur-fast) var(--ease-snap),
 				box-shadow var(--dur-fast) var(--ease-out);
 		}
 
@@ -137,7 +135,7 @@ const { apps } = Astro.props;
 			position: relative;
 			aspect-ratio: 16 / 9;
 			overflow: hidden;
-			background: linear-gradient(135deg, var(--p-teal-50), var(--p-mist));
+			background: var(--color-surface-raised);
 		}
 
 		.showcase-card__img {
@@ -145,6 +143,7 @@ const { apps } = Astro.props;
 			height: 100%;
 			object-fit: cover;
 			transition: transform var(--dur-slow) var(--ease-out);
+			will-change: transform;
 		}
 
 		.showcase-card:hover .showcase-card__img {

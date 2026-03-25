@@ -5,11 +5,21 @@ export function initReveal(): void {
 		() => {
 			document.documentElement.style.setProperty(
 				"--scroll-y",
-				`${window.scrollY}px`,
+				`${window.scrollY}`,
 			);
 		},
 		{ passive: true },
 	);
+
+	const revealTargets = document.querySelectorAll("[data-reveal]");
+
+	// ── Reduced motion: reveal immediately, skip observer ─────────────────────
+	if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+		for (const el of revealTargets) {
+			(el as HTMLElement).classList.add("revealed");
+		}
+		return;
+	}
 
 	// ── IntersectionObserver reveal ───────────────────────────────────────────
 	const observer = new IntersectionObserver(
@@ -21,7 +31,7 @@ export function initReveal(): void {
 				const delay = el.dataset.revealDelay;
 
 				if (delay) {
-					el.style.transitionDelay = delay;
+					el.style.transitionDelay = `${delay}ms`;
 				}
 
 				el.classList.add("revealed");
@@ -31,7 +41,7 @@ export function initReveal(): void {
 		{ threshold: 0.15 },
 	);
 
-	for (const el of document.querySelectorAll("[data-reveal]")) {
+	for (const el of revealTargets) {
 		observer.observe(el);
 	}
 }

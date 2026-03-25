@@ -61,6 +61,13 @@
 		top: var(--space-4);
 	}
 
+	/* Body Text Line Length */
+	p,
+	li,
+	dd {
+		max-width: 68ch;
+	}
+
 	/* Screen Reader Only */
 	.sr-only {
 		position: absolute;

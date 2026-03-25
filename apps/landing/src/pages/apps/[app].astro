@@ -78,13 +78,15 @@ const { app } = Astro.props as { app: WorksApp };
 					</div>
 				</div>
 				<div class="detail-hero__visual">
-					<img
-						src={app.detailImage}
-						alt={`${app.name} 제품 화면`}
-						class="detail-hero__img"
-						loading="eager"
-						decoding="async"
-					/>
+					<div class="detail-hero__frame">
+						<img
+							src={app.detailImage}
+							alt={`${app.name} 제품 화면`}
+							class="detail-hero__img"
+							loading="eager"
+							decoding="async"
+						/>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -224,15 +226,29 @@ const { app } = Astro.props as { app: WorksApp };
 			justify-content: center;
 		}
 
+		.detail-hero__frame {
+			position: relative;
+			background: var(--color-surface-raised);
+			padding: var(--space-2);
+			border-radius: var(--radius-lg);
+			box-shadow: var(--shadow-xl);
+			transform: rotate(2deg);
+			transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+		}
+
+		.detail-hero__frame:hover {
+			transform: rotate(0deg);
+		}
+
 		.detail-hero__img {
 			width: 100%;
 			max-width: 500px;
 			height: auto;
-			border-radius: var(--radius-lg);
-			box-shadow: var(--shadow-lg);
+			border-radius: var(--radius-md);
 			background: linear-gradient(135deg, var(--p-teal-50), var(--p-mist));
 			aspect-ratio: 4 / 3;
 			object-fit: cover;
+			display: block;
 		}
 
 		.detail-hero__meta {
@@ -474,6 +490,11 @@ const { app } = Astro.props as { app: WorksApp };
 		.cta-section__btn:hover {
 			transform: translateY(-2px);
 			box-shadow: var(--shadow-md);
+		}
+
+		.cta-section__btn:active,
+		.detail-hero__btn:active {
+			transform: scale(0.98);
 		}
 
 		/* ── Responsive tweaks ── */

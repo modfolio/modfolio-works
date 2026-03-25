@@ -21,13 +21,16 @@
 		</div>
 
 		<div class="hero-visual" data-parallax aria-hidden="true">
-			<img
-				src="/images/hero/visual.svg"
-				alt="교육 환경"
-				class="hero-visual__img"
-				loading="eager"
-				decoding="async"
-			/>
+			<div class="hero-visual__frame">
+				<img
+					src="/images/hero/visual.svg"
+					alt="교육 환경"
+					class="hero-visual__img"
+					loading="eager"
+					decoding="async"
+				/>
+				<div class="hero-visual__scrim"></div>
+			</div>
 		</div>
 	</div>
 
@@ -117,16 +120,45 @@
 			margin: 0 auto;
 		}
 
+		.hero-visual__frame {
+			position: relative;
+			background: var(--color-surface-raised);
+			padding: var(--space-3);
+			border-radius: var(--radius-xl);
+			box-shadow: var(--shadow-xl);
+			transform: rotate(3deg);
+			transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+			overflow: hidden;
+		}
+
+		.hero-visual:hover .hero-visual__frame {
+			transform: rotate(0deg);
+		}
+
 		.hero-visual__img {
 			width: 100%;
-			max-width: 560px;
 			height: auto;
-			border-radius: var(--radius-xl);
-			box-shadow: var(--shadow-lg);
-			background: var(--p-teal-100);
+			border-radius: var(--radius-lg);
 			aspect-ratio: 1;
 			object-fit: cover;
+			background: var(--p-teal-100);
 			display: block;
+			transition: transform 1s cubic-bezier(0.23, 1, 0.32, 1);
+		}
+
+		.hero-visual:hover .hero-visual__img {
+			transform: scale(0.98);
+		}
+
+		.hero-visual__scrim {
+			position: absolute;
+			bottom: var(--space-3);
+			left: var(--space-3);
+			right: var(--space-3);
+			height: 30%;
+			background: linear-gradient(to top, oklch(0.15 0.02 175 / 0.2), transparent);
+			border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+			pointer-events: none;
 		}
 
 		/* ── Title ── */
@@ -144,7 +176,7 @@
 			background-clip: text;
 			-webkit-background-clip: text;
 			-webkit-text-fill-color: transparent;
-			text-shadow: 0 2px 40px oklch(0.55 0.1 185 / 0.15);
+			text-shadow: none;
 			margin-bottom: var(--space-6);
 		}
 
@@ -193,8 +225,12 @@
 				color var(--dur-fast) var(--ease-out);
 		}
 
+		.hero-btn:active {
+			transform: scale(0.98);
+		}
+
 		.hero-btn--primary {
-			background: var(--color-interactive-primary);
+			background: linear-gradient(135deg, var(--color-interactive-primary), var(--p-teal-400));
 			color: var(--color-surface-0);
 			animation: pulse-glow 3s var(--ease-float) infinite;
 		}
@@ -207,9 +243,9 @@
 		}
 
 		.hero-btn--secondary {
-			background: transparent;
+			background: var(--color-interactive-muted);
 			color: var(--color-interactive-primary);
-			border: 1.5px solid var(--color-interactive-primary);
+			border: none;
 		}
 
 		.hero-btn--secondary:hover {
@@ -219,10 +255,10 @@
 
 		@keyframes pulse-glow {
 			0%, 100% {
-				box-shadow: 0 0 0 0 oklch(0.55 0.1 185 / 0);
+				box-shadow: 0 0 0 0 transparent;
 			}
 			50% {
-				box-shadow: 0 0 24px 4px oklch(0.55 0.1 185 / 0.12);
+				box-shadow: var(--shadow-glow);
 			}
 		}
 
@@ -252,7 +288,7 @@
 			position: absolute;
 			bottom: var(--space-8);
 			color: var(--p-teal-400);
-			animation: hero-bounce 2s ease-in-out infinite;
+			animation: hero-bounce 2s var(--ease-float) infinite;
 		}
 
 		@keyframes hero-bounce {
@@ -274,6 +310,18 @@
 			}
 			.hero-scroll-hint {
 				animation: none;
+			}
+			.hero-visual__frame {
+				transform: none;
+			}
+			.hero-visual:hover .hero-visual__frame {
+				transform: none;
+			}
+			.hero-visual__img {
+				transition: none;
+			}
+			.hero-visual:hover .hero-visual__img {
+				transform: none;
 			}
 		}
 	}

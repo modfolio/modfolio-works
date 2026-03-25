@@ -25,8 +25,8 @@ const steps = [
 	<div class="how-it-works__inner">
 		<h2 class="how-it-works__heading">시작하는 데 5분이면 됩니다.</h2>
 		<ol class="how-it-works__steps">
-			{steps.map((step) => (
-				<li class="how-it-works__step">
+			{steps.map((step, index) => (
+				<li class="how-it-works__step" data-reveal data-reveal-delay={String(index * 100)}>
 					<img
 						src={step.icon}
 						alt=""
@@ -88,7 +88,7 @@ const steps = [
 			font-family: var(--font-display);
 			font-size: var(--font-size-h1);
 			font-weight: 700;
-			color: var(--color-interactive-muted);
+			color: var(--p-teal-200);
 			margin-bottom: var(--space-4);
 			line-height: 1;
 		}
