@@ -344,24 +344,52 @@ const menuCategories = [
 
 	for (const item of menuItems) {
 		item.addEventListener("mouseenter", () => {
-			const name = item.dataset.previewName;
-			const desc = item.dataset.previewDesc;
-			const url = item.dataset.previewUrl;
+			const name = item.dataset.previewName || '';
+			const desc = item.dataset.previewDesc || '';
+			const url = item.dataset.previewUrl || '';
 			const img = item.dataset.previewImg || '';
 			if (previewPanel && defaultPreview) {
 				defaultPreview.style.display = "none";
 				previewPanel.style.display = "block";
-				previewPanel.innerHTML = `
-					<img src="${img}" alt="" class="menu-right__bg" loading="lazy" decoding="async" />
-					<div class="menu-right__scrim"></div>
-					<div class="menu-right__overlay">
-						<h3 class="preview-name">${name}</h3>
-						<p class="preview-desc">${desc}</p>
-						<a href="${url}" class="preview-link" target="_blank" rel="noopener noreferrer">
-							방문하기 <span aria-hidden="true">→</span>
-						</a>
-					</div>
-				`;
+
+				// Clear previous content
+				previewPanel.textContent = '';
+
+				// Build DOM safely
+				const bgImg = document.createElement('img');
+				bgImg.src = img;
+				bgImg.alt = '';
+				bgImg.className = 'menu-right__bg';
+				bgImg.loading = 'lazy';
+				bgImg.decoding = 'async';
+
+				const scrim = document.createElement('div');
+				scrim.className = 'menu-right__scrim';
+
+				const overlay = document.createElement('div');
+				overlay.className = 'menu-right__overlay';
+
+				const h3 = document.createElement('h3');
+				h3.className = 'preview-name';
+				h3.textContent = name;
+
+				const p = document.createElement('p');
+				p.className = 'preview-desc';
+				p.textContent = desc;
+
+				const a = document.createElement('a');
+				a.className = 'preview-link';
+				a.href = url;
+				a.target = '_blank';
+				a.rel = 'noopener noreferrer';
+				a.textContent = '방문하기 ';
+				const arrow = document.createElement('span');
+				arrow.setAttribute('aria-hidden', 'true');
+				arrow.textContent = '→';
+				a.appendChild(arrow);
+
+				overlay.append(h3, p, a);
+				previewPanel.append(bgImg, scrim, overlay);
 			}
 		});
 	}
@@ -389,7 +417,7 @@ const menuCategories = [
 			z-index: 90;
 			opacity: 0;
 			visibility: hidden;
-			transition: opacity 0.25s ease, visibility 0.25s ease;
+			transition: opacity var(--dur-fast) var(--ease-out), visibility var(--dur-fast) var(--ease-out);
 		}
 
 		.menu-overlay.active {
@@ -411,10 +439,10 @@ const menuCategories = [
 			grid-template-columns: 420px 1fr;
 			width: 100%;
 			max-width: 1000px;
-			box-shadow: 4px 0 30px rgba(0, 0, 0, 0.12);
+			box-shadow: 4px 0 30px oklch(0.15 0.01 240 / 0.12);
 			opacity: 0;
 			visibility: hidden;
-			transition: opacity 0.25s ease, visibility 0.25s ease;
+			transition: opacity var(--dur-fast) var(--ease-out), visibility var(--dur-fast) var(--ease-out);
 			overflow: hidden;
 		}
 
@@ -427,7 +455,7 @@ const menuCategories = [
 		.menu-left {
 			opacity: 0;
 			transform: translateY(8px);
-			transition: opacity 0.35s ease, transform 0.35s ease;
+			transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 			padding: var(--space-6) var(--space-8);
 			border-right: 1px solid var(--color-border-subtle);
 			overflow-y: auto;
@@ -436,7 +464,7 @@ const menuCategories = [
 		.menu-right {
 			opacity: 0;
 			transform: translateY(8px);
-			transition: opacity 0.35s ease 0.12s, transform 0.35s ease 0.12s;
+			transition: opacity var(--dur-base) var(--ease-out) 0.12s, transform var(--dur-base) var(--ease-out) 0.12s;
 			display: flex;
 			flex-direction: column;
 			position: relative;
@@ -569,7 +597,7 @@ const menuCategories = [
 			line-height: 1.1;
 			color: var(--color-surface-0);
 			letter-spacing: -0.02em;
-			text-shadow: 0 2px 20px oklch(0.1 0 0 / 0.3);
+			text-shadow: 0 2px 20px oklch(0.1 0 0 / 0.3); /* overlay decoration — intentional hardcode */
 		}
 
 		/* Preview Panel Dynamic Content */
@@ -579,13 +607,13 @@ const menuCategories = [
 			font-weight: 500;
 			color: var(--color-surface-0);
 			margin-bottom: var(--space-3);
-			text-shadow: 0 1px 10px oklch(0.1 0 0 / 0.3);
+			text-shadow: 0 1px 10px oklch(0.1 0 0 / 0.3); /* overlay decoration — intentional hardcode */
 		}
 
 		:global(.preview-desc) {
 			font-family: var(--font-ui);
 			font-size: var(--font-size-small);
-			color: oklch(0.95 0 0 / 0.85);
+			color: oklch(0.95 0 0 / 0.85); /* overlay text — intentional hardcode */
 			line-height: 1.7;
 			max-width: 35ch;
 			margin-bottom: var(--space-6);
@@ -620,7 +648,7 @@ const menuCategories = [
 			backdrop-filter: blur(20px) saturate(180%);
 			-webkit-backdrop-filter: blur(20px) saturate(180%);
 			border-bottom: 1px solid var(--color-border-subtle);
-			transition: transform 300ms var(--ease-out);
+			transition: transform var(--dur-base) var(--ease-out);
 			will-change: transform;
 		}
 
@@ -819,7 +847,7 @@ const menuCategories = [
 			backdrop-filter: blur(20px) saturate(180%);
 			-webkit-backdrop-filter: blur(20px) saturate(180%);
 			border-top: 1px solid var(--color-border-subtle);
-			transition: max-height 300ms var(--ease-out);
+			transition: max-height var(--dur-base) var(--ease-out);
 			will-change: max-height;
 		}
 

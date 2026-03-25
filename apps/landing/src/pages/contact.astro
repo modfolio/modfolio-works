@@ -15,7 +15,7 @@ import "../styles/global.css";
 		<!-- Hero -->
 		<section class="contact-hero">
 			<div class="contact-hero__inner" data-reveal>
-				<p class="contact-hero__label">Contact</p>
+				<p class="contact-hero__label">Modfolio Works</p>
 				<h1 class="contact-hero__title">Contact</h1>
 				<p class="contact-hero__sub">
 					단체 도입이나 협업에 대해 이야기하고 싶다면 편하게 연락해주세요.
@@ -159,17 +159,17 @@ import "../styles/global.css";
 
 		.contact-info__row {
 			display: grid;
-			grid-template-columns: 140px 1fr;
-			gap: var(--space-6);
+			grid-template-columns: 1fr;
+			gap: var(--space-2);
 			padding: var(--space-6) 0;
 			border-bottom: 1px solid var(--color-border-subtle);
 			align-items: baseline;
 		}
 
-		@media (max-width: 768px) {
+		@media (min-width: 769px) {
 			.contact-info__row {
-				grid-template-columns: 1fr;
-				gap: var(--space-2);
+				grid-template-columns: 140px 1fr;
+				gap: var(--space-6);
 			}
 		}
 
@@ -227,17 +227,17 @@ import "../styles/global.css";
 
 		.biz-info__row {
 			display: grid;
-			grid-template-columns: 180px 1fr;
-			gap: var(--space-6);
+			grid-template-columns: 1fr;
+			gap: var(--space-2);
 			padding: var(--space-5) 0;
 			border-bottom: 1px solid var(--color-border-subtle);
 			align-items: baseline;
 		}
 
-		@media (max-width: 768px) {
+		@media (min-width: 769px) {
 			.biz-info__row {
-				grid-template-columns: 1fr;
-				gap: var(--space-2);
+				grid-template-columns: 180px 1fr;
+				gap: var(--space-6);
 			}
 		}
 

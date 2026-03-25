@@ -30,8 +30,8 @@ const faqs = [
 <section class="faq" aria-label="자주 묻는 질문" data-reveal>
 	<h2 class="faq-heading">자주 묻는 질문</h2>
 	<div class="faq-list">
-		{faqs.map((item) => (
-			<details class="faq-item">
+		{faqs.map((item, i) => (
+			<details class="faq-item" data-reveal data-reveal-delay={String(i * 80)}>
 				<summary class="faq-question">
 					<span>{item.q}</span>
 					<svg class="faq-chevron" width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">

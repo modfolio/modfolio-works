@@ -64,30 +64,6 @@ import "../styles/global.css";
 	initReveal();
 </script>
 
-<style is:global>
-	@layer utilities {
-		.reveal-pending {
-			opacity: 0;
-			transform: translateY(16px);
-		}
-
-		.revealed {
-			opacity: 1;
-			transform: translateY(0);
-			transition:
-				opacity var(--dur-slow) var(--ease-out),
-				transform var(--dur-slow) var(--ease-out);
-		}
-
-		@media (prefers-reduced-motion: reduce) {
-			.reveal-pending {
-				opacity: 1;
-				transform: none;
-			}
-		}
-	}
-</style>
-
 <style>
 	@layer components {
 		.apps-hero {
