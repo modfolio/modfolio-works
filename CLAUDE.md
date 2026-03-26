@@ -78,6 +78,12 @@ Anti-Slop 제약 + GAN-Inspired Generator-Evaluator + Recursive Meta-Prompting +
 **헤드리스 UI**: SvelteKit→shadcn-svelte(Bits UI) | SolidStart→Kobalte | Nuxt→Nuxt UI | Qwik/Astro→커스텀.
 상세: `/component` skill 참조.
 
+## AI 메모리 아키텍처
+
+Custom build on Neon PostgreSQL + pgvector. 3-Tier (Hot: Upstash Redis / Warm: pgvector+Hyperdrive / Cold: R2).
+Temporal PKG (valid_from/to, is_latest, Update/Extend/Derive edges) + Derive Agent (LangGraph 5-node).
+상세: `knowledge/memory-architecture.md` 참조.
+
 ## Workflow
 
 - **Quality Gate** (필수): `bun run check && bun run typecheck` (커밋 전)
@@ -151,6 +157,7 @@ Anti-Slop 제약 + GAN-Inspired Generator-Evaluator + Recursive Meta-Prompting +
 - **다음**: 디자인 고도화, 하위 앱 상태 연동 (health check)
 
 <!-- ECOSYSTEM_END -->
+
 
 
 
