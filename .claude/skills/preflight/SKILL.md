@@ -1,7 +1,6 @@
 ---
+name: preflight
 description: 개발 세션 시작 전 종합 점검. MCP 연결, 의존성 최신성, lint/typecheck, git 상태, 환경 설정을 한 번에 확인하고 문제를 보고.
-effort: medium
-allowed-tools: Read, Glob, Grep, Bash
 user-invocable: true
 ---
 
@@ -114,7 +113,13 @@ grep -q "\.env" .gitignore 2>/dev/null
 harness-check의 핵심만 빠르게 체크:
 
 ```bash
-UNIVERSE="/mnt/c/Projects/modfolio-universe/modfolio-universe"
+# 크로스 플랫폼 경로 탐색 (Windows Git Bash / WSL / MSYS2)
+UNIVERSE=""
+for _p in "/c/Projects/modfolio-universe/modfolio-universe" \
+          "c:/Projects/modfolio-universe/modfolio-universe" \
+          "/mnt/c/Projects/modfolio-universe/modfolio-universe"; do
+  [ -d "$_p" ] && UNIVERSE="$_p" && break
+done
 sk=$(ls .claude/skills/*/SKILL.md 2>/dev/null | wc -l)
 ag=$(ls .claude/agents/*.md 2>/dev/null | wc -l)
 ru=$(ls .claude/rules/*.md 2>/dev/null | wc -l)
