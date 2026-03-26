@@ -1,40 +1,20 @@
 {
-	"mcpServers": {
-		"context7": {
-			"type": "stdio",
-			"command": "/home/mod/.bun/bin/context7-mcp",
-			"args": []
-		},
-		"github": {
-			"type": "http",
-			"url": "https://api.githubcopilot.com/mcp/",
-			"headers": {
-				"Authorization": "Bearer ${GITHUB_TOKEN}"
-			}
-		},
-		"cloudflare": {
-			"type": "http",
-			"url": "https://mcp.cloudflare.com/mcp"
-		},
-		"playwright": {
-			"type": "stdio",
-			"command": "/home/mod/.bun/bin/playwright-mcp",
-			"args": []
-		},
-		"neon": {
-			"type": "stdio",
-			"command": "/home/mod/.bun/bin/mcp-remote",
-			"args": ["https://mcp.neon.tech/mcp"]
-		},
-		"svelte": {
-			"type": "stdio",
-			"command": "/home/mod/.bun/bin/svelte-mcp",
-			"args": []
-		},
-		"filesystem": {
-			"type": "stdio",
-			"command": "/home/mod/.bun/bin/mcp-server-filesystem",
-			"args": ["/mnt/c/Projects/modfolio-universe"]
-		}
-	}
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${GITHUB_TOKEN}"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "/home/mod/.bun/bin/playwright-mcp",
+      "args": []
+    },
+    "astro": {
+      "type": "http",
+      "url": "https://mcp.docs.astro.build/mcp"
+    }
+  }
 }
