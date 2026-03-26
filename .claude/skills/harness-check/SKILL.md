@@ -1,5 +1,4 @@
 ---
-name: harness-check
 description: Claude Code 하네스 전체 점검 + 자동 수정. MCP, skills, agents, rules, hooks, knowledge를 modfolio-universe 소스와 대조 검증.
 user-invocable: true
 ---
