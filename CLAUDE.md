@@ -3,29 +3,26 @@
 # Modfolio 생태계 컨텍스트
 
 > 이 섹션은 modfolio-universe에서 자동 동기화됩니다. 직접 편집하지 마세요.
-> 수정: `modfolio-universe/knowledge/` 디렉토리에서 하세요.
 
----
+# Modfolio Universe — Global Knowledge
 
-# Modfolio Universe — Global Knowledge (Essential)
-
-> 이 파일은 모든 modfolio 프로젝트의 CLAUDE.md에 자동 동기화된다.
-> 수정은 modfolio-universe/knowledge/global-essential.md에서만 할 것.
+> 이 파일은 모든 modfolio 프로젝트에 동기화된다. 수정은 modfolio-universe에서만.
 > 상세 정보는 각 skill을 호출할 것.
 
 ## 생태계 개요
 
-**Modfolio Universe**는 15개 이상의 앱으로 구성된 SaaS 생태계다. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유한다.
+**Modfolio Universe**는 15개 이상의 앱으로 구성된 SaaS 생태계. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유.
 
 - **조직**: github.com/modfolio
-- **플랫폼**: 100% Cloudflare Edge Native (Workers + Pages + D1 + R2)
+- **플랫폼**: 100% Cloudflare Edge Native (Workers + D1 + R2)
 - **런타임**: Bun | **언어**: TypeScript (strict) | **린터**: Biome v2
 
 ## 3대 불변 원칙
 
-1. **House of Brands** — 앱 간 UI 라이브러리 공유 금지. 각 앱은 독립 디자인 시스템 + 독립 기술 스택.
+1. **House of Brands** — 앱 간 UI 라이브러리 공유 금지. 각 앱은 독립 디자인 시스템 + 독립 기술 스택. 각 앱은 Brand Passport (`docs/brand-passport.md`)에 디자인 결정의 근거를 기록.
 2. **Zero Physical Sharing** — 코드 공유는 SSO 토큰 / 데이터 스키마(`@modfolio/contracts`) / Webhook API로만.
-3. **100% Cloudflare Edge Native** — Vercel, AWS, GCP 배제. CF Pages + Workers만.
+3. **100% Cloudflare Edge Native** — Vercel, AWS, GCP 배제. CF Workers만.
+4. **디자인 다양성** — 구조(토큰 명명, cascade layer, 접근성)만 공유한다. 색상값, 그림자, 모션, 타이포그래피, 레이아웃의 실제 값은 각 앱이 Brand Passport에 따라 자유롭게 결정한다.
 
 ## 도메인 아키텍처 (2-프로젝트 모델)
 
@@ -33,94 +30,23 @@
 - `domain.com` = 앱 (SvelteKit / SolidStart 등)
 - `www.domain.com` = 랜딩 (Astro)
 
-**entryMode** (`app.domain.com` 폐기, naked 도메인 = 항상 앱):
-- `app-first` — `domain.com/` → 앱 홈 직접 표시
-- `landing-first` — `domain.com/` → `www.domain.com/home` 302 redirect
-
-**인프라 앱**: 서브도메인 모델 유지 (`*.modfolio.io`). 2-프로젝트 분리 적용 안 함.
-**그룹 포털**: Works, LS, Axiom, Studio 각 그룹은 독립 포털 도메인 보유.
+**entryMode**: `app-first` (앱 홈 직접) 또는 `landing-first` (302 redirect).
+**인프라 앱**: 서브도메인 모델 (`*.modfolio.io`).
 
 ## 기술 스택 요약
 
-**프레임워크 (6종)**: SvelteKit 5(9) | SolidStart(4) | Astro(3+랜딩) | Hono(1) | Qwik(2) | Nuxt 3(1)
-**DB (6종)**: Neon Postgres(9) | D1(6) | Turso(1) | R2(2) | Durable Objects(1) | Upstash Redis(1)
+## 관련 앱 (유니버설 + works)
 
-앱별 상세 스택: `/ecosystem` skill 참조.
+| App | Version | Status |
+|-----|---------|--------|
+| Modfolio Connect | 1.1.0 | active |
+| Modfolio Pay | 0.7.0-design-evolution | active |
+| Naviaca | 0.3.0-full-crm | active |
+| GistCore | 0.5.0-subscription-design | active |
+| Fortiscribe | 0.2.0-sso | landing |
+| Atelier and Folio | 0.2.0-folio-core | active |
 
-## 유니버설 서비스
-
-| 서비스 | 역할 | 프레임워크 |
-|--------|------|-----------|
-| modfolio-connect | SSO/OIDC (login.modfolio.io) | SvelteKit 5 + Better Auth |
-| modfolio-pay | 결제 게이트웨이 | SvelteKit 5 |
-
-SSO 연동 상세: `/sso-integrate` skill 참조.
-
-## Doppler 시크릿 관리
-
-| 프로젝트 타입 | Doppler 프로젝트 | 예시 |
-|-------------|-----------------|------|
-| 고유 도메인 앱 | 앱 이름 | naviaca, gistcore, modfolio-pay |
-| 인프라 앱 (*.modfolio.io) | **modfolio-universe** (공동) | modfolio-admin, modfolio-dev |
-
-## 디자인 엔진
-
-Anti-Slop 제약 + GAN-Inspired Generator-Evaluator + Recursive Meta-Prompting + Design Constitution.
-- AI Slop(통계적 안전지대 회귀) 방지를 위한 5-Layer 하네스
-- 금지: 중앙 정렬 히어로, 3-column 카드 그리드, 보라-파랑 그라데이션, 범용 폰트 단독
-- 필수: 시각적 메타포 명시, 비선형 레이아웃, 앱 고유 디자인 토큰
-
-상세: `/design` skill + `design-critic` / `design-engineer` / `visual-qa` agents.
-
-## UI 컴포넌트 전략
-
-**스타일링**: UnoCSS v66+ Wind4 프리셋 (전 프로젝트 표준, Tailwind 미사용).
-**헤드리스 UI**: SvelteKit→shadcn-svelte(Bits UI) | SolidStart→Kobalte | Nuxt→Nuxt UI | Qwik/Astro→커스텀.
-상세: `/component` skill 참조.
-
-## AI 메모리 아키텍처
-
-Custom build on Neon PostgreSQL + pgvector. 3-Tier (Hot: Upstash Redis / Warm: pgvector+Hyperdrive / Cold: R2).
-Temporal PKG (valid_from/to, is_latest, Update/Extend/Derive edges) + Derive Agent (LangGraph 5-node).
-상세: `knowledge/memory-architecture.md` 참조.
-
-## Workflow
-
-- **Quality Gate** (필수): `bun run check && bun run typecheck` (커밋 전)
-- **Git 안전**: `--force`, `--no-verify` 금지. 민감정보 커밋 금지
-- CF Pages 규칙: `pages_build_output_dir` + `nodejs_compat` + wrangler.jsonc. 상세: `/deploy`
-- Observability: CF Automatic Tracing + OTLP → SigNoz. 벤더 SDK 금지. 상세: `/observability`
-
-## 상세 정보 (Skills)
-
-| Skill | 용도 |
-|-------|------|
-| `/sso-integrate` | SSO 연동 (OIDC, JWT, SDK 설치) |
-| `/deploy` | CF Pages 배포 |
-| `/ecosystem` | 도메인 맵 + 앱별 스택 |
-| `/contracts` | 이벤트 계약 (Zod) |
-| `/ops` | 시크릿, 계정, 이메일 |
-| `/typography` | Adobe Fonts + Pretendard |
-| `/drizzle-patterns` | Drizzle ORM 규칙 |
-| `/design-tokens` | 3-tier 디자인 토큰 |
-| `/design` | 디자인 파이프라인 (Anti-Slop) |
-| `/ai-patterns` | AI 모델 라우터 + fallback |
-| `/email-patterns` | Resend 이메일 |
-| `/observability` | CF 트레이싱 + OTLP |
-
----
-
-## 관련 앱 현황 (유니버설 + works 그룹)
-
-- **Modfolio Connect** (`modfolio-connect`, v1.0.0, active): Universal SSO/Identity Platform
-- **Modfolio Pay** (`modfolio-pay`, v0.5.0-payment-platform, active): **Universal Payment Gateway**. 생태계 전체의 결제 처리 플랫폼.
-- **Naviaca** (`naviaca`, v0.3.0-full-crm, active): School/Academy CRM + LMS + SIS
-- **GistCore** (`gistcore`, v0.5.0-subscription-design, active): AI OPIc speaking practice app
-- **Fortiscribe** (`fortiscribe`, v0.2.0-sso, landing): **AI 작문 첨삭 앱**. 영어/한국어 작문 제출 → AI 첨삭 → 피드백.
-
----
-
-## 이 프로젝트의 생태계 지식
+## 프로젝트 지식
 
 # modfolio-works — 프로젝트 지식
 
@@ -157,6 +83,7 @@ Temporal PKG (valid_from/to, is_latest, Update/Extend/Derive edges) + Derive Age
 - **다음**: 디자인 고도화, 하위 앱 상태 연동 (health check)
 
 <!-- ECOSYSTEM_END -->
+
 
 
 

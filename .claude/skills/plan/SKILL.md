@@ -1,8 +1,6 @@
 ---
+name: plan
 description: 기획 품질 기준 (Plan Mode 참조). 제품 설계 수준 상세도. Product Lens + Scope 결정 포함
-effort: max
-model: opus
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 

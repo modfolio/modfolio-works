@@ -1,10 +1,12 @@
 ---
+name: fix
 description: 품질 위반 자동수정. 리뷰 보고서 기반 P0/P1 기계적 수정 + 정공법 원칙
-effort: medium
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
 user-invocable: true
 ---
 
+## Auto Context
+@knowledge/canon/design-tokens.md
+@knowledge/canon/anti-slop.md
 
 # /fix — 품질 위반 자동수정
 

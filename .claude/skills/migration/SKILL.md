@@ -1,7 +1,6 @@
 ---
+name: migration
 description: Drizzle 마이그레이션 생성. drizzle-kit generate + Neon/D1별 검증 + 롤백 안전성
-effort: high
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*), Bash(bunx drizzle-kit:*)
 user-invocable: true
 ---
 

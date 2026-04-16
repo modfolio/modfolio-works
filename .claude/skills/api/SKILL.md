@@ -1,7 +1,6 @@
 ---
+name: api
 description: API 엔드포인트 + 테스트 생성 파이프라인. 프레임워크별 라우팅 + Zod 검증 + JWT 인증
-effort: high
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
 user-invocable: true
 ---
 

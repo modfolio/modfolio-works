@@ -1,11 +1,13 @@
 ---
+name: page
 description: 페이지 레이아웃 생성 파이프라인. layout-patterns 규격 기반 + 반응형 + Figma 연동
-effort: high
-model: opus
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
 user-invocable: true
 ---
 
+## Auto Context
+@knowledge/canon/layout-patterns.md
+
+> 참고: 랜딩 카피 프레임워크(FBO/PAS/BAB/AIDA 등)는 universe `knowledge/canon/landing-copywriting.md`에 정리돼 있다. 각 앱의 브랜드 보이스는 앱 자율이므로 자동 로드하지 않는다. 필요 시 universe 레포에서 직접 참고.
 
 # /page — 페이지 레이아웃 생성
 

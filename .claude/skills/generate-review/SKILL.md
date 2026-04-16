@@ -1,9 +1,7 @@
 ---
+name: generate-review
 description: 생성→리뷰 통합 파이프라인. 생성 agent 실행 후 multi-review 자동 검증 + P0-P3 triage
-effort: max
-model: opus
 context: fork
-allowed-tools: Read, Glob, Grep, Agent
 user-invocable: true
 ---
 

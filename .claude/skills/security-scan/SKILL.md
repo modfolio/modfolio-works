@@ -1,7 +1,6 @@
 ---
+name: security-scan
 description: OWASP Top 10 보안 감사. XSS/CSRF/injection 탐지 + CSP 헤더 + 시크릿 검출 + 자동 수정
-effort: medium
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
 user-invocable: true
 ---
 

@@ -1,9 +1,11 @@
 ---
+name: drizzle-patterns
 description: Drizzle ORM 규칙 (prefix, helpers, migrations)
-effort: medium
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
+
+## Auto Context
+@knowledge/canon/drizzle-conventions.md
 
 # Drizzle ORM — 생태계 규칙
 
@@ -103,9 +105,9 @@ metadata: jsonb("metadata").default({}).$type<Record<string, unknown>>(),
 items: jsonb("items").$type<Array<{ name: string; qty: number; price: number }>>(),
 ```
 
-## 인덱스 규칙
+## 인덱스 권장 패턴
 
-- **필수**: Foreign Key 컬럼, status/type 컬럼
+- 일반적으로 Foreign Key 컬럼과 status/type 컬럼에 인덱스가 유용 (앱 자율)
 - **명명**: `{prefix}_{table}_{column}_idx`
 - **복합**: 자주 함께 조회하는 컬럼 조합
 

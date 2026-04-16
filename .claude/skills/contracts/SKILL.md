@@ -1,7 +1,6 @@
 ---
-description: Zod 이벤트 계약 스키마 가이드. ModfolioEventBase + discriminated union + 버전 관리 + breaking change 영향 분석
-effort: medium
-allowed-tools: Read, Glob, Grep
+name: contracts
+description: 앱 간 이벤트 계약 Zod 스키마 정의/변경/영향 분석 시 사용
 user-invocable: true
 ---
 

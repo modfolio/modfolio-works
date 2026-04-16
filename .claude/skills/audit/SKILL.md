@@ -1,7 +1,6 @@
 ---
+name: audit
 description: 생태계 상태 검증 — ecosystem.json vs 실제 배포 상태 비교
-effort: low
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 

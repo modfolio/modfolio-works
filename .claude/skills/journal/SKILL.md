@@ -1,7 +1,6 @@
 ---
+name: journal
 description: 개발 저널 기록 — 일자별 작업 로그 + 의사결정 맥락 + knowledge/journal/ 관리
-effort: low
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 

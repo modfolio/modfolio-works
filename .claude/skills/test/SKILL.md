@@ -1,7 +1,6 @@
 ---
-description: 테스트 스위트 생성. Vitest 4 기반 단위/통합/스키마/API 테스트 커버리지 확보
-effort: medium
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*), Bash(bun run test:*)
+name: test
+description: 테스트 스위트 생성. Vitest 기반 단위/통합/스키마/API 테스트 커버리지 확보
 user-invocable: true
 ---
 

@@ -1,7 +1,6 @@
 ---
+name: map-codebase
 description: 기존 코드베이스 분석. 스택/아키텍처/컨벤션/기술부채를 Explore Agent로 매핑. 새 앱 전환 시 사용
-effort: medium
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 
@@ -14,7 +13,7 @@ user-invocable: true
 
 - 새 앱에서 처음 작업을 시작할 때
 - 오랫동안 작업하지 않았던 레포로 복귀할 때
-- /innovation-check 전에 현재 상태 파악
+- /audit 전에 현재 상태 파악
 - 코드베이스 전체 구조 이해가 필요할 때
 
 ## 프로세스

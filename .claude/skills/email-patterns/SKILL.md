@@ -1,7 +1,6 @@
 ---
+name: email-patterns
 description: Resend 이메일 통합 패턴. fire-and-forget 전송 + 템플릿 관리 + 에러 처리
-effort: low
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 

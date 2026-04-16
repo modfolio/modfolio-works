@@ -1,8 +1,7 @@
 ---
+name: optimize
 description: Autoresearch 패턴 — 메트릭 기반 자율 반복 최적화. 번들 사이즈, 응답 시간, Lighthouse 점수, 테스트 커버리지, lint 위반 수 등 측정 가능한 메트릭을 지정하면 자율적으로 반복 개선
 disable-model-invocation: true
-effort: max
-allowed-tools: Read, Edit, Write, Bash, Glob, Grep
 context: fork
 user-invocable: true
 ---

@@ -1,7 +1,6 @@
 ---
+name: ops
 description: 시크릿 관리, 계정 전략, 이메일 운영 가이드
-effort: low
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 
@@ -12,10 +11,11 @@ user-invocable: true
 
 ## 시크릿 관리
 
-- **도구**: Doppler (활성 운영 중)
-- **Doppler 프로젝트**: 앱별 프로젝트 (dev / stg / prd 환경)
-- **로컬 개발**: `doppler run -- bun dev` 또는 `scripts/gen-env.sh` -> `.env.local`
-- **프로덕션**: CF Pages 환경변수에 직접 주입
+- **원칙**: 시크릿은 프로젝트별로 관리한다. Doppler 또는 Cloudflare Workers Secrets 중 런타임에 맞는 방식을 선택
+- **Doppler**: 앱별 프로젝트 (dev / stg / prd)로 로컬 개발, 다중 서비스 공유 시크릿, 운영 회전에 적합
+- **Workers Secrets**: 개별 Worker/서비스에 귀속된 프로덕션 런타임 시크릿에 적합
+- **로컬 개발**: `doppler run -- bun dev` 또는 안전한 로컬 env 파일 생성
+- **프로덕션**: CF Workers / Workers Builds 환경변수 또는 secret store에 직접 주입
 - **원칙**: 시크릿은 절대 코드에 커밋하지 않는다 (Tier 1 불변 원칙)
 
 ## 계정 전략 (ADR-007)

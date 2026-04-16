@@ -1,9 +1,7 @@
 ---
+name: multi-review
 description: 3-agent 병렬 리뷰 — design-critic + accessibility-auditor + architecture-sentinel. P0-P3 심각도 태깅
-effort: max
-model: opus
 context: fork
-allowed-tools: Read, Glob, Grep, Agent
 user-invocable: true
 ---
 
@@ -33,6 +31,12 @@ user-invocable: true
 - 새 앱/페이지 구현 완료 후
 - 아키텍처 변경 (새 의존성, 새 패턴 도입) 후
 - 디자인 오버홀 후
+
+## 추가 확인 포인트
+
+- raw 색상(`hex`/`rgb`/`oklch`)이 토큰 레이어 밖에 남아 있는지
+- `@layer reset, base, tokens, components, utilities` 구조가 실제 CSS에 반영됐는지
+- 같은 제품의 landing/app 사이 semantic token drift가 없는지
 
 ## 통합 보고서 형식
 

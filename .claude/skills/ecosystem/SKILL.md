@@ -1,7 +1,6 @@
 ---
+name: ecosystem
 description: 생태계 도메인 맵 + 현황 조회 — ecosystem.json 기반 앱 레지스트리
-effort: low
-allowed-tools: Read, Glob, Grep
 user-invocable: true
 ---
 

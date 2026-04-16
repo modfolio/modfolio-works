@@ -4,6 +4,7 @@
 			"Bash(bun run check:*)",
 			"Bash(bun run check)",
 			"Bash(bun run typecheck)",
+			"Bash(bun run typecheck:*)",
 			"Bash(bun run dev)",
 			"Bash(bun run dev:*)",
 			"Bash(bun run build)",
@@ -28,7 +29,11 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "bun run check 2>&1 | tail -5"
+						"command": "bun run .claude/hooks/post-biome-check.ts"
+					},
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/post-contract-touch.ts"
 					}
 				]
 			}
@@ -39,23 +44,24 @@
 				"hooks": [
 					{
 						"type": "command",
-						"command": "if echo \"$TOOL_INPUT\" | grep -q 'git commit'; then bun run check && bun run typecheck; fi"
+						"command": "bun run .claude/hooks/pre-destructive-guard.ts"
 					},
 					{
 						"type": "command",
-						"command": "if echo \"$TOOL_INPUT\" | grep -q 'git push'; then bun run check && bun run typecheck 2>&1 | tail -20; fi"
+						"command": "bun run .claude/hooks/pre-commit-guard.ts"
 					},
 					{
 						"type": "command",
-						"command": "if echo \"$TOOL_INPUT\" | grep -qE 'gh api|gh pr|gh issue|gh run'; then echo '⚠ GitHub API 호출 감지. 로컬에서 가능한 작업인지 먼저 확인하세요. rate limit 낭비 주의.'; fi"
-					},
+						"command": "bun run .claude/hooks/pre-gh-api-guard.ts"
+					}
+				]
+			},
+			{
+				"matcher": "Edit|Write",
+				"hooks": [
 					{
 						"type": "command",
-						"command": "if echo \"$TOOL_INPUT\" | grep -qE 'git .*(--no-verify|--no-gpg-sign)'; then echo '🚫 BLOCKED: --no-verify / --no-gpg-sign 사용 금지 (Tier 1 불변 원칙).' && exit 1; elif echo \"$TOOL_INPUT\" | grep -q 'git push.*--force' && ! echo \"$TOOL_INPUT\" | grep -q -- '--force-with-lease'; then echo '🚫 BLOCKED: git push --force 금지. --force-with-lease를 사용하세요.' && exit 1; elif echo \"$TOOL_INPUT\" | grep -qE 'git reset --hard'; then echo '🚫 BLOCKED: git reset --hard 금지. stash 또는 새 브랜치를 사용하세요.' && exit 1; fi"
-					},
-					{
-						"type": "command",
-						"command": "if echo \"$TOOL_INPUT\" | grep -qE 'rm -rf|DROP TABLE|DROP DATABASE|git clean -fd'; then echo '⚠ 파괴적 명령 감지. 실행 전 반드시 확인하세요.'; fi"
+						"command": "bun run .claude/hooks/pre-ui-edit-notice.ts"
 					}
 				]
 			}
@@ -63,6 +69,21 @@
 		"Stop": [
 			{
 				"hooks": [
+					{
+						"type": "agent",
+						"prompt": "End-of-turn quality gate. Detect violations in changed files. Do NOT modify any files.\n\nSTEP 1: Run `git status --porcelain`. If no changed files, respond {\"ok\": true}.\nSTEP 2: Per category, grep changed files for violations:\n  - [Hardcoded color values]: Hardcoded colors (#hex, rgb(), hsl(), oklch() outside var()). Must use CSS custom properties. (files: *.css,*.svelte,*.tsx,*.jsx,*.astro,*.vue) [error]\n  - [TypeScript suppressions]: @ts-ignore, @ts-expect-error, `as any` usage. Must fix root cause. (files: *.ts,*.tsx) [error]\n  - [Biome suppressions]: biome-ignore directives. Must fix the underlying issue. (files: *.ts,*.tsx,*.svelte,*.astro,*.vue) [error]\n  - [Missing accessibility attributes]: Interactive elements (buttons, inputs, links) missing aria-label or accessible text. (files: *.svelte,*.tsx,*.jsx,*.astro,*.vue) [warn]\n  - [Missing reduced-motion]: CSS animations/transitions without prefers-reduced-motion fallback. (files: *.css,*.svelte,*.tsx,*.jsx,*.astro,*.vue) [warn]\n  - [Unnecessary client:* directives]: Unnecessary client:* directives on static components — remove for zero-JS. (files: *.astro) [warn]\nSTEP 3: Overhaul audit — if user requested redesign but only superficial patches detected, report warning.\n\nRESPONSE FORMAT: JSON only.\nIf no violations: {\"ok\": true}\nIf violations found: {\"ok\": false, \"reason\": \"- [severity] file:line — description\"}",
+						"timeout": 45,
+						"model": "haiku",
+						"maxTurns": 3
+					},
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/stop-pattern-history.ts"
+					},
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/stop-feedback-log.ts"
+					},
 					{
 						"type": "agent",
 						"prompt": "End-of-turn quality gate for Astro monorepo (apps/landing + apps/app).\n\nSTEP 1: Run `git status --porcelain` to identify changed files. If no changed files, respond {\"ok\": true}.\nCategorize by APP and TYPE:\n- APP: landing (apps/landing/**), app (apps/app/**), root (everything else)\n- TYPE: UI (.astro/.css), Pages (pages/**/*.astro), Tokens (tokens.css), Config (astro.config.*), TS (.ts/.tsx)\n\nSTEP 2: Per category, grep changed files for violations:\n\n[DESIGN TOKENS & CSS]\n- Hardcoded colors: #hex, rgb(, hsl(, oklch( NOT inside var()\n- Hardcoded spacing: raw px values not using var(--space-*)\n- Missing @layer in new CSS files (expected: @layer reset, base, tokens, components, utilities)\n- !important usage (forbidden)\n- Hardcoded font-family not using var()\n- text-align: justify (forbidden)\n\n[ASTRO COMPONENTS]\n- client:load on non-critical components (prefer client:visible or client:idle)\n- Inline <style> without CSS custom properties/tokens\n- Missing prefers-reduced-motion on animations\n- Animating width/height/top/left (use transform/opacity)\n- Starlight: slug: '' usage (use link: '/' instead)\n\n[TYPESCRIPT]\n- @ts-ignore, biome-ignore, eslint-disable, as any (forbidden — 오류 정공법)\n- Hardcoded secrets: patterns like sk_, pk_, ghp_, API_KEY=, SECRET=, TOKEN=, password=\n\n[ARCHITECTURE — 불변 원칙]\n- Cross-app imports: apps/landing/ must NOT import from apps/app/ or vice versa\n- Non-Cloudflare platform imports: @vercel, @aws-sdk, @google-cloud, @netlify\n- Error suppression in any file type: @ts-ignore, biome-ignore, eslint-disable\n\nSTEP 3: Check AND UPDATE memory/pattern-history.md:\n- If violations found: read the table. If pattern exists, increment count + update date. If new, append row: | description | 1 | today's date | TRACKING |.\n- If any pattern reaches count 3, change status to ESCALATE.\n- If no violations: read only, do not modify.\n\nRESPONSE FORMAT: You MUST respond with ONLY a JSON object, no other text.\nIf no violations: {\"ok\": true}\nIf violations found: {\"ok\": false, \"reason\": \"## Quality Gate: FAIL\\n- [severity] file:line — description\"}",

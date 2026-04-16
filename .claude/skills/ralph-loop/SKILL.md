@@ -1,8 +1,6 @@
 ---
+name: ralph-loop
 description: Ralph Loop 기법. 측정 가능한 완료 기준으로 자율 반복 개선. 생성→검증→수정 사이클
-effort: max
-model: opus
-allowed-tools: Read, Glob, Grep, Agent
 user-invocable: true
 ---
 

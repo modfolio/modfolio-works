@@ -1,7 +1,6 @@
 ---
+name: retro
 description: Git 기반 스프린트 회고. 통계 분석 + 패턴 식별 + 자가학습 시스템 입력 (메모리 쓰기는 사용자 승인 후)
-effort: medium
-allowed-tools: Read, Glob, Grep, Bash(git *)
 user-invocable: true
 ---
 

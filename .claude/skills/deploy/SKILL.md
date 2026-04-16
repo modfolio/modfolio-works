@@ -1,7 +1,6 @@
 ---
-description: Cloudflare Pages 네이티브 GitHub 연동 배포. wrangler.jsonc 환경변수 빌드 설정 가이드
-effort: medium
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
+name: deploy
+description: Cloudflare Workers 배포 가이드. Workers Builds GitHub 연동 + wrangler.jsonc 설정 + 마이그레이션
 user-invocable: true
 ---
 
@@ -9,56 +8,162 @@ user-invocable: true
 ## Auto Context
 @wrangler.jsonc
 @package.json
+@knowledge/canon/operations.md
 !git branch --show-current
 
-# Skill: 배포
+# Skill: 배포 (CF Workers)
 
-CF Pages 네이티브 GitHub 연동 기반 배포 전략.
+> CF Pages → Workers 마이그레이션 완료. 모든 신규/기존 앱은 CF Workers로 배포.
+
+## Step 0: CF 프로젝트명 확인 (필수)
+
+배포 전 `ecosystem.json`에서 이 레포의 CF 프로젝트명을 확인:
+- `cfProject` / `cfLandingProject` → Landing 프로젝트명
+- `cfAppProject` → App 프로젝트명
+- **절대** 임의로 프로젝트명을 만들지 않음. ecosystem.json이 source of truth
+- 명명 규칙: Landing = `{name}`, App = `{name}-app` (상세: canon/operations.md)
 
 ## 원칙
 
-**GitHub Actions 배포 워크플로우 금지. CF Pages 네이티브 GitHub 연동만 사용.**
+**GitHub Actions 배포 금지. CF Workers Builds(GitHub 연동) 사용.**
 
 ### 이유
+- CF가 Pages를 Workers로 흡수 중 (2025-04 deprecated 선언)
+- Workers가 Durable Objects, Cron Triggers, Queue Consumers 등 더 많은 바인딩 지원
+- Workers Builds가 GitHub repo를 직접 감지해 자동 빌드/배포
+- Static Assets 기능으로 Pages의 정적 파일 서빙을 Workers에서 동일 지원
 
-- GitHub Actions는 월별 실행 횟수 제한 있음 (소규모 팀에 낭비)
-- CF Pages가 GitHub repo를 직접 감지해 자동 빌드/배포 — 별도 CI 파이프라인 불필요
-- Wrangler CLI + Actions 조합보다 설정이 단순하고 유지보수 부담 적음
+## wrangler.jsonc 설정 (프레임워크별)
 
-## CF Pages 설정 방식
+### Astro (랜딩 + docs + dashboard)
+
+```jsonc
+{
+  "name": "{project-name}",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./dist/client/"
+  },
+  "main": "./dist/_worker.js",
+  // 바인딩 (필요 시)
+  // "d1_databases": [{ "binding": "DB", "database_name": "...", "database_id": "..." }],
+  // "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "..." }]
+}
+```
+
+### SvelteKit 5
+
+```jsonc
+{
+  "name": "{project-name}",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".svelte-kit/cloudflare/"
+  },
+  "main": ".svelte-kit/cloudflare/_worker.js"
+}
+```
+
+어댑터: `@sveltejs/adapter-cloudflare` v7.2+ (adapter-cloudflare-workers는 deprecated)
+
+### SolidStart
+
+```jsonc
+{
+  "name": "{project-name}",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public/"
+  },
+  "main": ".output/server/index.mjs"
+}
+```
+
+Vinxi/Nitro preset: `cloudflare` (not `cloudflare-pages`)
+
+### Nuxt 3
+
+```jsonc
+{
+  "name": "{project-name}",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public/"
+  },
+  "main": ".output/server/index.mjs"
+}
+```
+
+Nitro preset: `cloudflare` in `nuxt.config.ts`
+
+### Qwik City
+
+```jsonc
+{
+  "name": "{project-name}",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "dist/"
+  },
+  "main": "server/entry.cloudflare-workers.mjs"
+}
+```
+
+### Hono (API Workers)
+
+```jsonc
+{
+  "name": "{project-name}",
+  "compatibility_date": "2026-03-31",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/index.ts"
+  // assets 없음 (API only)
+}
+```
+
+## Turbo monorepo 빌드 설정
+
+| 앱 | build_command | output |
+|----|---------------|--------|
+| Astro landing | `bun install && bun run build -- --filter=landing` | `apps/landing/dist/` |
+| SvelteKit app | `bun install && bun run build -- --filter=app` | `apps/app/.svelte-kit/cloudflare/` |
+| Nuxt app | `bun install && bun run build -- --filter=app` | `apps/app/.output/` |
+| SolidStart app | `bun install && bun run build -- --filter=app` | `apps/app/.output/` |
+
+## Pages → Workers 마이그레이션 절차
+
+### 사전 조건
+- `wrangler.jsonc` 수정 완료 (`pages_build_output_dir` → `assets.directory`)
+- 프레임워크 어댑터 업데이트 (adapter-cloudflare v7.2+, @astrojs/cloudflare v13+)
+
+### 절차
 
 ```
-CF Pages 대시보드 또는 API:
-  source.type = "github"
-  source.config.owner = "modfolio"
-  source.config.repo_name = "{레포명}"
-  source.config.production_branch = "main"
-  build_config.build_command = "bun install --frozen-lockfile && bun run build -- --filter={app}"
-  build_config.destination_dir = "apps/{app}/{output_dir}"
-  build_config.root_dir = ""  # monorepo는 루트에서 빌드
+1. CF Dashboard → Pages 프로젝트 → Settings → Custom Domains → 모든 도메인 삭제
+2. Deployments 탭 → 100개 이상이면 구 deployment 삭제 (99개 이하로)
+   bunx --bun wrangler pages deployment list --project-name={name}
+   bunx --bun wrangler pages deployment delete {deployment-id} --project-name={name}
+3. Pages 프로젝트 삭제 (Dashboard 또는 API)
+4. Workers & Pages → Create → Import from GitHub → 레포 선택
+5. Workers Builds 설정: Build command + Output directory
+6. Custom Domain 재설정: Workers → Settings → Domains & Routes
+7. 배포 확인: git push → Workers Builds 자동 실행
 ```
 
-## Turbo monorepo 앱별 빌드 설정
-
-| 앱 | build_command | destination_dir |
-|----|---------------|-----------------|
-| Nuxt 3 (SSR) | `bun install && bun run build -- --filter=app` | `apps/app/dist` |
-| Astro (landing) | `bun install && bun run build -- --filter=landing` | `apps/landing/dist` |
-| SvelteKit 5 | `bun install && bun run build -- --filter=app` | `apps/app/.svelte-kit/cloudflare` |
-| SolidStart | `bun install && bun run build -- --filter=app` | `apps/app/.output` |
-
-## CF Pages Critical Rule
-
-**Direct Upload -> GitHub 연동 불가능.**
-
-- CF Pages 프로젝트는 **반드시 생성 시점에 GitHub 연동** 설정
-- 이미 Direct Upload로 만든 프로젝트는 삭제 후 재생성 필요
-- 이 규칙은 2026-02-22에 실제 실패로 확인됨 (journal 참조)
+### 주의사항
+- Workers는 Cloudflare DNS 관리 도메인만 Custom Domain 지원 (외부 NS 불가)
+- `wrangler pages dev` (포트 8788) → `wrangler dev` (포트 8787)로 변경
+- `assets.run_worker_first: true` — 인증/로깅이 정적 에셋보다 먼저 실행되어야 할 때
+- `.assetsignore` 파일로 업로드 제외 (node_modules, .git 등)
 
 ## GitHub Actions 허용 범위
 
-**배포 목적 Actions는 금지. 다음 용도만 허용:**
-
+**배포 목적 Actions 금지. 다음 용도만 허용:**
 - Biome lint + typecheck (빌드 없는 품질 검사만)
 - `@modfolio/contracts` 패키지 publish (GitHub Packages)
 
@@ -67,16 +172,14 @@ CF Pages 대시보드 또는 API:
 | 항목 | 조회 방법 |
 |------|-----------|
 | Account ID | `doppler secrets get CF_ACCOUNT_ID --plain` |
-| All-API Token | `doppler secrets get CF_API_TOKEN --plain` |
-| Pages API Token | `doppler secrets get CF_PAGES_API_TOKEN --plain` |
-
-> ⚠ 시크릿은 Doppler에서만 관리. 코드/설정 파일에 평문 기록 금지.
+| API Token | `doppler secrets get CF_API_TOKEN --plain` |
 
 ## 새 앱 배포 체크리스트
 
-1. CF Pages 프로젝트 생성 (GitHub 연동 필수)
-2. 빌드 명령어 + 출력 디렉토리 설정
-3. 커스텀 도메인 연결 (DNS CNAME)
-4. 환경변수 설정 (Doppler에서 복사)
-5. GitHub push -> 자동 빌드/배포 확인
-6. `ecosystem.json` cfProject 필드 갱신
+1. `wrangler.jsonc` 작성 (프레임워크별 템플릿 참조)
+2. Workers Builds에서 GitHub 연동 설정
+3. 커스텀 도메인 연결 (CF DNS 필수)
+4. 환경변수/시크릿 설정 (Doppler에서 Workers에 복사)
+5. `bunx --bun wrangler secret put {NAME}` 으로 시크릿 등록
+6. GitHub push → Workers Builds 자동 배포 확인
+7. `ecosystem.json` cfProject 필드 갱신

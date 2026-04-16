@@ -1,7 +1,6 @@
 ---
+name: schema
 description: Drizzle 스키마 생성. 생태계 prefix + DB별 helper + FK 인덱스 + JSONB 타입 안전
-effort: high
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*)
 user-invocable: true
 ---
 

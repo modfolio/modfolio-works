@@ -1,7 +1,6 @@
 ---
+name: release
 description: 릴리즈 파이프라인. 테스트 실행 → P0/P1 triage → 분할 커밋 → 체인지로그 → PR 생성
-effort: high
-allowed-tools: Read, Edit, Write, Glob, Grep, Bash(bun run check:*), Bash(bun run typecheck:*), Bash(bun run test:*), Bash(bun run quality:*), Bash(git *)
 user-invocable: true
 ---
 

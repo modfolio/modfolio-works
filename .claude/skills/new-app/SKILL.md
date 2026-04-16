@@ -1,7 +1,6 @@
 ---
-description: 새 Modfolio 앱 스캐폴딩 — Cloudflare Pages + 프레임워크 템플릿
-effort: low
-allowed-tools: Read, Glob, Grep
+name: new-app
+description: 새 Modfolio 앱 스캐폴딩 — Cloudflare Workers + 프레임워크 템플릿
 user-invocable: true
 ---
 
@@ -51,9 +50,11 @@ App 도메인: [app.{domain}]
 └── wrangler.toml             # CF Workers/Pages 설정
 ```
 
-## 새 앱 추가 후 필수 작업
+## 새 앱 추가 후 권장 후속 작업 (앱 owner 판단)
 
-### 1. modfolio-connect 클라이언트 등록
+ADR-009 (자회사 합류 advisory) 참조. 아래는 참고 순서일 뿐 — 앱 특성에 따라 조정.
+
+### 1. modfolio-connect 클라이언트 등록 (SSO 사용 시)
 
 - client_id: `{repo-name}` (예: `naviaca`)
 - redirect URIs: `https://{domain}/auth/callback`, `http://localhost:*/auth/callback`
@@ -65,20 +66,23 @@ App 도메인: [app.{domain}]
   "name": "{App Name}",
   "repo": "{repo-name}",
   "domain": "{domain}",
-  "appDomain": "app.{domain}",
   "framework": "{Framework}",
   "db": "{DB}",
-  "deployment": "cf-pages",
+  "deployment": "cf-workers",
   "cfProject": "{cf-project-name}",
   "version": "0.1.0",
   "status": "planned"
 }
 ```
 
-### 3. CF Pages 프로젝트 생성
+주의: `appDomain` 필드는 ADR-008이 `app.{외부도메인}` 패턴을 폐기 대상으로 정함.
+`*.modfolio.io` 인프라 서브도메인은 허용. 외부 브랜드 앱은 생략 권장.
 
-- **반드시 GitHub 연동으로 생성** (Direct Upload 금지)
-- Landing + App 각각 별도 CF Pages 프로젝트
+### 3. CF Workers 프로젝트 생성
+
+- Workers & Pages → Create → Import from GitHub
+- Landing + App 각각 별도 Workers 프로젝트
+- `wrangler.jsonc` 설정은 `/deploy` skill 참조
 
 ### 4. Doppler 프로젝트 생성
 

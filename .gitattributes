@@ -1,0 +1,25 @@
+# Canonical line endings for modfolio-universe.
+#
+# All tracked files default to LF. Windows checkouts see LF too — we do NOT
+# let git auto-convert to CRLF on checkout, because biome + bun tooling and
+# the harness-pull manifest comparison both expect LF consistently. Reported
+# by gistcore (Issue 5) + modfolio-pay (IMPROVEMENT-5, 2026-04-16): CRLF
+# drift produced spurious "merged: 3" entries in every pull-manifest.
+#
+# Binary file types must be listed explicitly so git does not attempt to
+# touch them as text.
+
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.pdf binary
+*.zip binary

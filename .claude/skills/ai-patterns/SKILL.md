@@ -1,7 +1,6 @@
 ---
-description: AI 모델 라우터 + fallback + 프롬프트 캐싱 패턴. LangGraph/OpenRouter 통합 가이드
-effort: medium
-allowed-tools: Read, Glob, Grep
+name: ai-patterns
+description: AI 모델 라우터 구현, 멀티 프로바이더 fallback/캐싱 필요 시 사용
 user-invocable: true
 ---
 
