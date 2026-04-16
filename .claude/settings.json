@@ -5,6 +5,8 @@
 			"Bash(bun run check)",
 			"Bash(bun run typecheck)",
 			"Bash(bun run typecheck:*)",
+			"Bash(bun run harness-pull)",
+			"Bash(bun run harness-pull:*)",
 			"Bash(bun run dev)",
 			"Bash(bun run dev:*)",
 			"Bash(bun run build)",
