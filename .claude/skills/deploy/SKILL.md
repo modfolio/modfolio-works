@@ -35,12 +35,25 @@ user-invocable: true
 
 ## wrangler.jsonc 설정 (프레임워크별)
 
+> **2026-04 권장 공통 블록** (모든 프레임워크에 추가):
+>
+> ```jsonc
+> {
+>   "compatibility_date": "2026-04-15",
+>   "compatibility_flags": ["nodejs_compat"],
+>   "observability": { "enabled": true, "head_sampling_rate": 1 }
+> }
+> ```
+>
+> 상세 템플릿: `canon/wrangler-standards-2026.md`. Observability 기본값·튜닝: `canon/observability.md`.
+> Dynamic Workers / DO Facets 사용 시 `compatibility_flags`에 `"streams_enable_constructors"` 추가.
+
 ### Astro (랜딩 + docs + dashboard)
 
 ```jsonc
 {
   "name": "{project-name}",
-  "compatibility_date": "2026-03-31",
+  "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "./dist/client/"
@@ -57,7 +70,7 @@ user-invocable: true
 ```jsonc
 {
   "name": "{project-name}",
-  "compatibility_date": "2026-03-31",
+  "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".svelte-kit/cloudflare/"
@@ -73,7 +86,7 @@ user-invocable: true
 ```jsonc
 {
   "name": "{project-name}",
-  "compatibility_date": "2026-03-31",
+  "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".output/public/"
@@ -89,7 +102,7 @@ Vinxi/Nitro preset: `cloudflare` (not `cloudflare-pages`)
 ```jsonc
 {
   "name": "{project-name}",
-  "compatibility_date": "2026-03-31",
+  "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".output/public/"
@@ -105,7 +118,7 @@ Nitro preset: `cloudflare` in `nuxt.config.ts`
 ```jsonc
 {
   "name": "{project-name}",
-  "compatibility_date": "2026-03-31",
+  "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": "dist/"
@@ -119,7 +132,7 @@ Nitro preset: `cloudflare` in `nuxt.config.ts`
 ```jsonc
 {
   "name": "{project-name}",
-  "compatibility_date": "2026-03-31",
+  "compatibility_date": "2026-04-15",
   "compatibility_flags": ["nodejs_compat"],
   "main": "src/index.ts"
   // assets 없음 (API only)

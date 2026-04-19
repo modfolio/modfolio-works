@@ -1,7 +1,7 @@
 ---
 description: 지식베이스 검색/요약. 읽기 전용
-model: haiku
-effort: low
+model: claude-haiku-4-5-20251001
+effort: medium
 disallowedTools:
   - Edit
   - Write

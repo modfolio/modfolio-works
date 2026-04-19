@@ -18,9 +18,58 @@ Task Router (요청 분류)
 Provider Selection
   ├── OpenAI (primary, 유료)
   ├── OpenRouter (diversity, 유/무료 혼합)
+  ├── CF AI Gateway (Bedrock/Anthropic/OpenAI 통합 라우팅 + Unified Billing)
   └── Free Models (dev/fallback)
   ↓
 Completion + Usage Tracking
+```
+
+## CF AI Gateway Unified Billing (2026-04 신규)
+
+Bedrock/Anthropic/OpenAI/Azure를 단일 CF 계정으로 통합 청구·라우팅. 별도 계약 없이 CF 청구서에서 결제. 자동 로깅·캐시·분석·폴백·retry 제공.
+
+```typescript
+const response = await fetch(
+  `https://gateway.ai.cloudflare.com/v1/{accountId}/{gatewayId}/anthropic/v1/messages`,
+  {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.ANTHROPIC_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-opus-4-7',
+      max_tokens: 4096,
+      messages,
+    }),
+  },
+);
+```
+
+## Cloudflare Agents SDK V2 (Project Think, 2026-04)
+
+Durable Execution (crash 자동 재개) + Persistent Sessions (트리 구조) + idle cost = 0 (DO hibernation).
+
+```typescript
+import { Agent } from '@cloudflare/agents';
+
+export class AppAgent extends Agent<Env> {
+  async execute(input: string) {
+    // Durable Execution: crash 후 자동 재개
+    return await this.think({ prompt: input });
+  }
+}
+```
+
+**도입 주의**: 기존 LangGraph 운영 앱은 V2 병행 비용. ADR로 결정. 상세: `canon/agents-sdk-v2-patterns.md`.
+
+## MCP Code Mode (토큰 99.9% 절감)
+
+MCP 서버의 수백 도구를 직접 노출하는 대신 `search()` + `execute()` 2개만 노출:
+
+```typescript
+const tools = await mcp.search({ query: 'send email' });
+const result = await mcp.execute({ toolId: tools[0].id, args: { to, body } });
 ```
 
 ## Free Model Fallback Chain

@@ -38,3 +38,10 @@ user-invocable: true
 /generate-review — gistcore에 speaking session 카드 컴포넌트 만들고 검증까지
 /generate-review — modfolio-pay에 구독 API + 테스트 생성하고 풀 리뷰
 ```
+
+## Claude Code `/ultrareview` 병용 (2026-04 신규, v2.1.111+)
+
+- **`/ultrareview`** — Claude Code 빌트인. PR 전체 diff를 병렬 multi-agent로 리뷰 (Anthropic 클라우드 실행). 범용 코드 스멜·보안·버그 탐지
+- **`/generate-review`** + `multi-review` — Modfolio 도메인 특화. 디자인 토큰·생태계 불변 원칙·접근성 domain-specific
+
+**권장 2단계**: PR 단계 `/ultrareview` (범용) → 머지 직전 `/generate-review` (Modfolio 도메인). **병용이지 대체 아님**.

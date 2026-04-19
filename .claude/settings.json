@@ -68,6 +68,16 @@
 				]
 			}
 		],
+		"PreCompact": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/pre-compact-guard.ts"
+					}
+				]
+			}
+		],
 		"Stop": [
 			{
 				"hooks": [

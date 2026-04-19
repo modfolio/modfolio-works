@@ -1,7 +1,7 @@
 ---
 title: Drizzle Conventions
-version: 1.1.0
-last_updated: 2026-04-05
+version: 1.2.0
+last_updated: 2026-04-17
 source: [knowledge/references/ecosystem-drizzle-conventions.md, .claude/skills/drizzle-patterns/SKILL.md]
 sync_to_children: true
 consumers: [drizzle-patterns, schema, migration, schema-builder]
@@ -107,6 +107,29 @@ import { drizzle } from 'drizzle-orm/d1';
 
 export const db = drizzle(env.DB, { schema });
 ```
+
+#### D1 Global Read Replicas + Sessions API (2026 GA)
+
+D1은 자동 글로벌 read replica 제공 (추가 비용 X). 기본 라우팅은 fastest-replica. read-after-write 일관성이 필요하면 Sessions API로 bookmark token을 전달:
+
+```typescript
+// 요청 진입 시점: 이전 bookmark 복원 (헤더/쿠키에서)
+const bookmark = request.headers.get('x-d1-bookmark') ?? 'first-unconstrained';
+const session = env.DB.withSession(bookmark);
+const db = drizzle(session, { schema });
+
+// 쿼리 후 새 bookmark 내보내기 (클라이언트가 다음 요청에 재전송)
+const result = await db.select().from(users).where(eq(users.id, id));
+response.headers.set('x-d1-bookmark', session.getBookmark() ?? '');
+```
+
+- `'first-unconstrained'`: 가장 빠른 replica (stale 허용)
+- `'first-primary'`: primary 강제 (write-after-read 또는 latest 요구)
+- 임의 bookmark 문자열: 해당 시점 이후의 replica로만 라우팅
+
+**권고 (Hub)**: write 경로 직후 read는 bookmark 전달. 순수 read-only 조회는 default(fastest replica) 유지. 각 앱 판단. 상세: [canon/d1-read-replicas.md](d1-read-replicas.md).
+
+공식: [D1 Read Replication](https://developers.cloudflare.com/d1/best-practices/read-replication/)
 
 ## Migration Workflow
 

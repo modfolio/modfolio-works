@@ -1,6 +1,7 @@
 ---
 description: Zod 이벤트 스키마 계약 생성기. 버전 관리 + union 등록 + 영향 분석
-model: opus
+model: claude-opus-4-7
+effort: max
 skills:
   - contracts
 disallowedTools:

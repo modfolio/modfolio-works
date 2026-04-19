@@ -1,6 +1,7 @@
 ---
 description: 보안 취약점 탐지 + 자동 수정. OWASP Top 10
-model: opus
+model: claude-opus-4-7
+effort: max
 skills:
   - security-scan
   - sso-integrate

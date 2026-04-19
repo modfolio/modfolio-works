@@ -138,6 +138,26 @@ export function createDb(d1: D1Database) {
 const db = createDb(platform.env.DB);
 ```
 
+### D1 Global Read Replicas + Sessions API (2026 GA)
+
+read-after-write 일관성이 필요한 경로:
+
+```typescript
+// 요청 진입 시 bookmark 복원
+const bookmark = request.headers.get('x-d1-bookmark') ?? 'first-unconstrained';
+const session = platform.env.DB.withSession(bookmark);
+const db = drizzle(session, { schema });
+
+// 응답 전 새 bookmark 내보내기
+response.headers.set('x-d1-bookmark', session.getBookmark() ?? '');
+```
+
+- `'first-unconstrained'` — fastest replica (stale 허용, 기본)
+- `'first-primary'` — primary 강제 (latest)
+- 임의 bookmark — 해당 시점 이후 replica
+
+상세: `canon/d1-read-replicas.md`.
+
 ## 마이그레이션
 
 - **Dev**: `bunx drizzle-kit push` (빠른 프로토타이핑)

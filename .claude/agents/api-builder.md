@@ -1,6 +1,7 @@
 ---
 description: API 엔드포인트 생성기. 프레임워크별 라우팅 + Zod 검증 + JWT 인증
-model: opus
+model: claude-opus-4-7
+effort: max
 skills:
   - api
   - ai-patterns

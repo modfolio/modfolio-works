@@ -1,7 +1,7 @@
 ---
 title: Gotchas & Lessons Learned
-version: 1.0.0
-last_updated: 2026-03-30
+version: 1.1.0
+last_updated: 2026-04-17
 source: [knowledge/claude/gotchas.md]
 sync_to_children: true
 consumers: [preflight]
@@ -178,3 +178,13 @@ consumers: [preflight]
 - Pages 삭제 전 deployment 100개 이상이면 99 이하로 정리 필수
 - SvelteKit: adapter-cloudflare-workers deprecated → adapter-cloudflare v7.2+ 사용
 - Deploy command: `bunx --bun wrangler deploy`
+
+## CF 2026-04 업데이트 함정
+- **Observability 기본값 변경**: 2026-03-01 이후 신규 Worker는 `observability.enabled = true` 자동 활성. 기존 Worker는 명시 필요. 월 10M spans 초과 시 $0.60/1M 과금 — `head_sampling_rate: 0.1` 조정 고려
+- **Dynamic Workers + DO Facets**: `compatibility_flags: ["streams_enable_constructors"]` 필요. 기존 KV-backed DO는 `new_classes` 그대로, 신규만 `new_sqlite_classes` (강제 이관 금지 — `canon/cross-worker-do-pattern.md §Facets`)
+- **wrangler JSON 선호**: CF 신기능은 JSON-only (`wrangler.jsonc`) 채널로 출시. TOML은 제거 단계적 — 단, 기존 TOML 강제 변환 금지 (harness-pull identity file 보호)
+- **D1 Global Read Replicas 자동 GA**: write 직후 read는 Sessions API bookmark 전달 필수 (`canon/d1-read-replicas.md`). default 라우팅은 fastest replica (stale 허용)
+- **Browser Run** (Browser Rendering 리브랜드): 동시 세션 30→120개. Live View 공유 시 PII 노출 주의
+- **Workflows V2 limits**: 50K concurrent, 2M queued, 300/sec creation. 기존 Queue 패턴과 중복 투자 주의 — 앱별 ADR
+- **`[1m]` context variant**: Claude Opus 4.7/4.6 모두 1M 지원 (`/model claude-opus-4-7[1m]`). 새 토크나이저가 최대 +35% 토큰 소비 가능 — 실효 비용 관찰 필요
+- **`CLAUDE_CODE_EFFORT_LEVEL max` 다운그레이드 버그** (Issue #30726, #40093): agent frontmatter `effort` + env 이중 설정으로 완화. `/effort` slash 런타임 재확인 가능. Claude Code v2.1.111+ 확인 필수

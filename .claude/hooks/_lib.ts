@@ -100,6 +100,19 @@ export function findUniverseRoot(startDir: string): string | undefined {
 }
 
 /**
+ * Detector source files whose regex literals would match their own rules
+ * if naively scanned. The ts_ignore_or_any pattern hit 4 times over three
+ * weeks because the suppression-directive regex sits as a string literal
+ * inside these two files — a regex scanning for TS suppression directives
+ * matches the directive text when it appears quoted in source. Rule test
+ * functions consult this set to self-exclude.
+ */
+export const DETECTOR_SOURCE_FILES: ReadonlySet<string> = new Set([
+	"scripts/hooks/stop-pattern-history.ts",
+	"scripts/hooks/pre-commit-guard.ts",
+]);
+
+/**
  * Git diff names, excluding pattern-history so the Stop pattern hook does
  * not detect itself and loop forever.
  */

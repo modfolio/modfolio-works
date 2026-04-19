@@ -8,6 +8,8 @@ user-invocable: true
 
 ## 핵심 설정
 
+> **2026-03-01 변경**: 신규 Worker는 `observability.enabled = true`가 기본. 기존 Worker는 아래 블록을 명시해야 활성. 과금: 월 10M spans 무료분 초과 시 $0.60/1M.
+
 `wrangler.jsonc`에 추가:
 ```jsonc
 {
@@ -27,10 +29,11 @@ user-invocable: true
 
 ## 체크리스트
 
-- [ ] `wrangler.jsonc`에 observability 블록 추가
+- [ ] `wrangler.jsonc`에 observability 블록 추가 (2026-03-01 이후 신규 Worker는 자동)
 - [ ] CF Dashboard에서 destination 설정 (미설정 시 traces 버려짐)
 - [ ] 로컬 SigNoz로 개발 중 trace 확인
 - [ ] p50 < 50ms 성능 예산 준수 (canon/observability.md 참조)
+- [ ] 월 10M spans 접근 시 `head_sampling_rate: 0.1` 조정 (critical path 유지, 일반 RPC는 10% 샘플)
 
 ## 참조
 

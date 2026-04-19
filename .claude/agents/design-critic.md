@@ -1,6 +1,7 @@
 ---
 description: Anti-Slop binary FAIL/PASS 판정. negative-space + indistinguishability만 본다. 읽기 전용
-model: opus
+model: claude-opus-4-7
+effort: xhigh
 skills:
   - design
   - design-tokens

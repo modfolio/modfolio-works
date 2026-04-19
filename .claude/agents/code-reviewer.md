@@ -1,6 +1,7 @@
 ---
 description: 생태계 규칙 기반 코드 리뷰. 읽기 전용
-model: opus
+model: claude-opus-4-7[1m]
+effort: xhigh
 disallowedTools:
   - Edit
   - Write

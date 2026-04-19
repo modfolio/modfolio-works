@@ -1,7 +1,7 @@
 ---
 description: ecosystem.json vs 실제 상태 검증. 읽기 전용
-model: haiku
-effort: low
+model: claude-opus-4-7
+effort: high
 disallowedTools:
   - Edit
   - Write

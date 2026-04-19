@@ -27,3 +27,4 @@ user-invocable: true
 - 기존 마이그레이션 파일 수정 금지 — 새 마이그레이션만 생성
 - Destructive 변경 (컬럼 삭제, 타입 변경) 시 사용자 확인 필수
 - Neon: `neon` MCP로 브랜치에서 먼저 테스트 권장
+- **D1 Global Read Replicas (2026 GA)**: 마이그레이션 적용 직후 read 경로는 replication lag으로 stale 가능. write-after-read 경로는 Sessions API bookmark 전달. 상세 `canon/d1-read-replicas.md`

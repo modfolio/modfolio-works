@@ -1,6 +1,7 @@
 ---
 description: 프레임워크별 UI 컴포넌트 생성기. 디자인 토큰 제약 내 구현. Figma Canvas to Code 지원
-model: opus
+model: claude-opus-4-7
+effort: max
 skills:
   - design-tokens
   - ui-quality-gate

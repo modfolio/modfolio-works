@@ -6,7 +6,7 @@ user-invocable: true
 
 # /preflight — 세션 시작 전 종합 점검
 
-## 판정 항목 (7개 — 실패 시 blocker가 될 수 있는 것만)
+## 판정 항목 (8개 — 실패 시 blocker가 될 수 있는 것만)
 
 1. **MCP 연결** — 활성 MCP 서버 목록 확인, 실패 서버 보고
 2. **의존성** — `bun install` 상태, lockfile 정합성
@@ -15,6 +15,7 @@ user-invocable: true
 5. **Git 상태** — branch, uncommitted changes, remote 동기화
 6. **환경 변수** — `.dev.vars` 또는 Doppler 연결 확인
 7. **테스트** — `bun run test` 또는 `bun run test:unit` 실행
+8. **Claude Code 환경** — `claude --version` ≥ v2.1.111 (Opus 4.7 지원 필수), `CLAUDE_CODE_EFFORT_LEVEL` 환경변수 존재 여부 확인 (없으면 INFO로 권고만, gate 아님)
 
 ## 정보 섹션 (판정표 밖 — 참고용)
 
@@ -39,7 +40,7 @@ INFO로만 보고. 업그레이드 여부·시점은 이 앱 owner가 자율 결
 
 ## 판정 기준
 
-- 7개 항목 모두 통과 → "Preflight PASS"
+- 8개 항목 모두 통과 → "Preflight PASS"
 - 1개라도 FAIL → 실패 항목 + 수정 제안
 - WARN은 통과 처리
 
@@ -59,6 +60,7 @@ Gate 판정:
 5  Git 상태    PASS    main, remote 동기화
 6  환경 변수   PASS    .dev.vars 존재
 7  테스트      PASS    N files, M tests 통과
+8  CC 환경     PASS    v2.1.111 (Opus 4.7 지원), EFFORT=max
 
 ── 참고 정보 (gate 아님) ──
 Evergreen:
@@ -67,4 +69,4 @@ Evergreen:
   ...
 ```
 
-**7개 gate 전부 실행**. Evergreen 정보는 별도 섹션으로 출력.
+**8개 gate 전부 실행**. Evergreen 정보는 별도 섹션으로 출력.

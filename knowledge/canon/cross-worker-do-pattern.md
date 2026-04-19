@@ -1,6 +1,6 @@
 ---
 title: Cross-Worker Durable Object Binding
-version: 1.0.0
+version: 1.1.0
 last_updated: 2026-04-17
 source: [modfolio-connect 2026-04-16 handoff §4-2]
 sync_to_children: true
@@ -66,3 +66,36 @@ modfolio-connect의 `apps/auth`가 `apps/workflows`에 정의된 `RateLimiterDO`
 - `script_name` 누락
 - dual-write 없이 한 번에 authoritative 전환
 - fallback 없이 DO 실패를 사용자에게 500 error로 그대로 노출
+
+## Durable Object Facets (2026-04-13 CF 신기능)
+
+Dynamic Workers와 함께 출시. 각 DO 인스턴스가 **격리된 SQLite 데이터베이스**를 보유 (1 agent = 1 app + 1 DB 패턴). multi-tenant SaaS에서 per-tenant 상태 분리에 유리.
+
+### migration tag
+
+```jsonc
+{
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["PerTenantAgent"] }
+  ]
+}
+```
+
+**주의**: Facets는 SQLite backend 필요. 기존 KV-backed DO (`new_classes`)는 **그대로 유지**하고, 신규 클래스만 `new_sqlite_classes`로 선언. 강제 이관 금지 (Evergreen Principle 준수).
+
+### 안전한 점진 전환 (기존 KV-backed → SQLite Facets)
+
+1. 신규 DO 클래스를 `new_sqlite_classes`로 추가 — 기존 KV DO는 건드리지 않음
+2. dual-write: 기존 KV + 새 Facet 둘 다 write, divergence를 Analytics Engine/log로 모니터
+3. 읽기 토글로 점진 전환
+4. 충분한 관찰 기간 후 KV DO 은퇴 — owner 판단
+
+### 활용 후보
+
+| 앱 | 이득 | 상태 |
+|----|------|------|
+| modfolio-admin | DO 3개 — per-tenant 분리 시 Facets 고려 | candidate |
+| amberstella | D1+DO 실시간 shuttle, per-route 격리 | candidate |
+| modfolio-connect | RateLimiterDO per-client 격리 | optional (현재 동작 정상) |
+
+공식: [Durable Object Facets — CF Blog](https://blog.cloudflare.com/durable-object-facets-dynamic-workers/)

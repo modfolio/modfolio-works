@@ -1,6 +1,7 @@
 ---
 description: 5-Gate 자동 품질 파이프라인. Playwright + axe-core + 토큰 준수 + 시각적 구분 가능성
-model: opus
+model: claude-opus-4-7
+effort: high
 skills:
   - design-tokens
   - ui-quality-gate
