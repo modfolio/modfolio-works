@@ -1,0 +1,11 @@
+{
+  "terminal.integrated.defaultProfile.windows": "Ubuntu (WSL)",
+  "terminal.integrated.profiles.windows": {
+    "Ubuntu (WSL)": {
+      "path": "wsl.exe",
+      "args": ["-d", "Ubuntu"]
+    }
+  },
+  "files.eol": "\n",
+  "remote.WSL.fileWatcher.polling": false
+}
