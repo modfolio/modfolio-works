@@ -1,8 +1,16 @@
 ---
 title: Adoption Debt Patterns
-version: 1.1.0
-last_updated: 2026-04-18
-source: [v2.3.2 canary 확산 실측, v2.4 20-member Dev Container 확산]
+version: 1.5.0
+last_updated: 2026-04-22
+source:
+  [
+    v2.3.2 canary 확산,
+    v2.4 20-member Dev Container 확산,
+    v2.5 독립화 리팩터링,
+    v2.6 npm publish 경로,
+    v2.9 biome musl glibc workaround,
+    v2.10 exact-pin 주입의 함정,
+  ]
 sync_to_children: true
 consumers: [harness-pull, preflight, ops]
 ---
@@ -15,7 +23,7 @@ consumers: [harness-pull, preflight, ops]
 
 하네스 자체는 pull 시 100% PASS했지만, member의 **이전 상태 debt**가 `pre-commit-guard` 실행 단계에서 드러나 commit이 막히는 사례가 여럿 나왔다. universe는 hub이므로 member debt를 직접 수정하지 않지만, 어떤 debt가 "adoption을 막는가"를 기록하고 **`bun run harness-pull -- --cleanup`** 자동 수정 가능한 것을 모아둔다.
 
-## 7가지 패턴
+## 16가지 패턴
 
 ### 1. Biome v1 legacy config
 
@@ -189,6 +197,122 @@ universe 자신도 같은 우회를 적용함 (`check:dashboard` 분리 — univ
 **현재 상태**: naviaca v2.4 adoption 이월. member owner가 (a) nuxt 버전 조정, (b) Node로 실행 (c) upstream patch 중 선택해 해결.
 
 **식별**: `check`나 `typecheck` 스크립트가 `nuxt typecheck`를 직접 호출하면서 oxc-walker 호출 스택이 보이면 동일 이슈.
+
+---
+
+### 13. Bind mount cross-member contamination (v2.5 해결)
+
+**증상**: universe Dev Container 1개가 22 member를 `/workspaces/modfolio-members` bind mount로 관리할 때, member별 infra gap(NPM_TOKEN / mise shim / safe.directory / esbuild 버전 / 호환성)이 누적 탐지됨. 각각의 hotfix가 또 다른 증상을 유발.
+
+**원인**: "하나의 컨테이너에 여러 독립 프로젝트"라는 구조 결정. 각 member의 환경 요구가 다른 member의 실행에 영향을 미치는 cross-contamination.
+
+**정공법 (v2.5 리팩터)**:
+- universe Dev Container에서 bind mount 제거 — universe는 hub 역할만
+- 각 member는 자기 Dev Container로 독립 작동 — member 소유자 자율
+- `syncToolkitConfig` → `observeToolkitConfig` — universe는 member의 toolkit 상태를 **파악**만 하고 덮어쓰지 않음 (`pull-manifest.json.toolkitObservation`)
+- `findUniverseRoot` 3-way 전략 — env / sibling / bunx-published
+
+**교훈**: 증상이 5개 이상 누적되면 구조 결정 자체를 의심. "한 번의 정공법 리팩터가 다섯 번의 증상 패치보다 짧다."
+
+참조: `docs/releases/2026-04-19-harness-v2.5.md`, `knowledge/journal/20260419-harness-v2.5-independence.md`
+
+---
+
+### 14. Private registry 환상 — 장벽은 토큰에 귀속 (v2.6)
+
+**증상**: v2.5에서 "외부 기여자 진입 장벽 제거"를 목표로 `bunx github:modfolio/modfolio-universe#<tag>` 경로를 예고했으나, v2.6 PoC에서 404. universe 레포가 `private: true`이기 때문.
+
+**원인**: universe가 private인 한 어떤 packaging 경로를 써도 **외부 기여자는 modfolio org 접근 토큰이 필요**. npm publish든, bunx github:든, git clone이든 결과는 동일하다. "publish하면 외부 기여자가 바로 쓸 수 있다"는 건 public 레포일 때만 성립.
+
+**bun 1.3.5 실측 한계** (2026-04-19 PoC):
+- `bunx github:owner/repo#<ref>` → `GET https://api.github.com/repos/.../tarball/<ref> - 404` (private repo 미지원)
+- `GITHUB_TOKEN`, `GITHUB_ACCESS_TOKEN` env 전부 무시 — bun이 tarball API 호출에 Authorization 싣지 않음
+- `git+https://github.com/...` prefix, git credential helper 구성도 같은 엔드포인트로 라우팅되어 모두 404
+- 공식 auth 지원 경로는 `[install.scopes]` scoped npm registry 뿐 ([oven-sh/bun/guides/install/registry-scope](https://github.com/oven-sh/bun/blob/main/docs/guides/install/registry-scope.mdx))
+
+**정공법 v2.6 — Option A**:
+- `@modfolio/harness`를 GitHub Packages (`https://npm.pkg.github.com`, access: restricted)에 publish
+- 각 member의 `.npmrc`에 이미 존재하는 `@modfolio:registry=https://npm.pkg.github.com` + `_authToken=${GITHUB_TOKEN}` 설정을 재활용
+- consumer flow: `bun add -D @modfolio/harness@<version>` → `bunx modfolio-harness-pull ...` (local node_modules 해석)
+- "clone 없이 one-shot bunx"는 성립 안 함 (bun의 bunx 전역 캐시가 cwd의 `.npmrc`/bunfig를 읽지 않음) — member는 devDep으로 add 후 실행
+
+**교훈**:
+1. **"private registry = 장벽 제거"는 환상**. 장벽은 registry 기술이 아니라 token scope에 있다.
+2. **bunx ≠ bun add**. bunx 전역 캐시는 cwd config를 읽지 않는다. scoped private package는 반드시 `bun add` 선행 후 실행.
+3. **실험 없이 "예고"하지 말라**. v2.5는 Option C를 "예고"했지만 v2.6 PoC에서 막혔다. 다음 major 릴리즈 플랜에서는 core mechanism PoC를 릴리즈 전에 완료.
+
+참조: `docs/releases/2026-04-19-harness-v2.6.md`, `knowledge/journal/20260419-harness-v2.6-npm-publish.md`
+
+### 15. Biome musl false-positive on glibc Dev Container (v2.9)
+
+**증상**: VS Code Biome extension 이 3연타로 알림을 던지고 LSP 가 올라오지 않음.
+- `biome client: couldn't create connection to server`
+- `Server initialization failed`
+- `Pending response rejected since connection got disposed`
+
+동시에 `bun install` 이 `@biomejs/cli-linux-x64-musl` 추출 단계에서 13분+ hang. modfolio, modfolio-connect 등 여러 member 에서 같은 양상 재현 (2026-04-22).
+
+**원인**: bun 1.3.5 이 member Dev Container (Ubuntu 24.04, glibc) 에서 Biome 선택적 바이너리를 해석할 때 `linux-x64-musl` 변종까지 다운로드를 시도한다. Ubuntu 는 glibc 이라 애초에 필요 없는 바이너리인데, bun 이 libc 를 구분하지 못해 두 변종 모두 요청 → musl tarball 추출이 bun 내부에서 hang. biome CLI binary 가 준비되지 않은 상태에서 VS Code Biome extension 이 LSP 초기화를 시도해 위 3 에러로 이어진다.
+
+과거 기록: universe 자체는 `8660394 fix(devcontainer): 정공법 — musl hang 근본 해결` 커밋에서 `overrides` 로 gnu 변종을 강제 리다이렉트했다. 하지만 v2.6~v2.8 의 `harness-pull` 은 이 `overrides` 를 member 로 전파하지 않아 (Identity file 원칙) 각 member 마다 개별 재발.
+
+**정공법 v2.9 수정**:
+```jsonc
+// 각 member 의 package.json
+"overrides": {
+  "@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@2.4.8"
+}
+```
+
+**자동화**: `scripts/harness-pull/resolve.ts` 의 `resolvePackageJsonAction()` 이 member `package.json.overrides` 에 해당 key 가 **없을 때만** 주입. child 가 의도적으로 다른 값을 두었으면 보존 (Hub-not-enforcer). `.claude/harness-lock.json` 에 `package.json` path 를 잠그면 자동 주입 자체를 차단할 수 있다.
+
+**즉시 해결 (v2.9 배포 전 긴급)**:
+```bash
+npm pkg set overrides.@biomejs/cli-linux-x64-musl="npm:@biomejs/cli-linux-x64@2.4.8"
+rm -rf node_modules bun.lock
+bun install
+# VS Code: Developer: Reload Window → Biome LSP 재가동 확인
+```
+
+**교훈**:
+1. **Identity vs Infrastructure 구분**: `package.json` 전체는 child identity 이지만 `overrides` 의 libc workaround 같은 *컨테이너 환경 귀속* field 는 infrastructure debt 에 해당. harness 가 이미 `scripts.harness-pull` 을 주입하는 선례와 동일 범주로 처리한다.
+2. **공급자 측 fix 가 consumer 로 전파되지 않으면 debt 는 반복 재발**. 같은 증상이 3+ member 에서 확인되면 개별 수정이 아니라 resolve-단계 자동화로 승격한다.
+3. **LSP 3연타 패턴은 CLI binary 부재 신호**. "server initialization failed" 단독이 아니라 세 에러가 순서대로 뜨면 대체로 선행 단계의 설치 hang/실패가 원인이다.
+
+참조: `knowledge/journal/20260422-harness-v2.9-biome-musl.md`, `scripts/harness-pull/resolve.ts` (`resolvePackageJsonAction`), `scripts/harness-pull/tests/resolve-package-json.test.ts`
+
+### 16. Exact-pin 주입의 함정 — Hub-not-enforcer 위반 (v2.10)
+
+**증상** (2026-04-22 modfolio 재발):
+- universe 가 v2.9 에서 "패턴 15 자동화" 를 자랑했으나 실제로는 `npm:@biomejs/cli-linux-x64@2.4.8` 을 **exact-pin 으로 하드코딩 주입**. child 가 `@biomejs/biome@^2.4.8` 을 `2.4.12` 로 resolve 하면 override 는 `2.4.8` 만 가리킴 → biome LSP 가 optional native binary version skew 로 "I/O error 2" exit code 1.
+- `bun add -D @modfolio/harness@${harnessLatest}` 도 exact 버전 주입 → `"@modfolio/harness": "2.8.1"` 형태로 package.json 에 박힘 → `bun install` 으로 2.9.x 자동 업그레이드 불가.
+- 사용자 진단: "우리가 주는 가이드는 무언가를 고정하는 게 아니라 항상 최신 state 를 유지할 수 있도록… ecosystem 은 참고서 같은 거지 대장 같은 게 아니야".
+
+**원인**:
+- Hub-not-enforcer 원칙을 **명목상** 내세우면서 실제 로직은 enforcer 처럼 동작. `knowledge/canon/evergreen-principle.md` 가 선언한 "child 주권" 과 `resolve.ts` 의 mutation 코드가 모순.
+- "부재 시만 추가 (Hub-not-enforcer)" 주석을 달았지만 **추가하는 값 자체가 exact-pin** 이라 child 가 실제로 업그레이드하면 skew 발생.
+- exact-pin 은 유지부담 최악. 업스트림 minor/patch 가 나올 때마다 universe 에서 bump + re-publish 필요.
+
+**정공법 v2.10 수정**:
+1. `overrides['@biomejs/cli-linux-x64-musl']` 값을 **child 의 `@biomejs/biome` devDep range 에서 동적 생성**:
+   ```jsonc
+   // child 가 "^2.4.12" 이면
+   "overrides": { "@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@^2.4.12" }
+   // child 에 biome 이 없으면 override 주입 자체 skip (강제 금지)
+   ```
+2. `scripts.harness-pull` 은 항상 `modfolio-harness-pull` (npm bin) — 버전 독립.
+3. `@modfolio/harness` exact pin (예: `"2.8.1"`) 을 발견하면 **caret range (`"^2.8.1"`) 로 정규화**. `bun install` 으로 2.x 패치 자동 따라감.
+4. Phase 0.5 bootstrap 의 `bun add -D @modfolio/harness` 에서 **버전 생략** — bun 이 latest 조회 후 caret 저장.
+
+**자동화 (resolve.ts `resolvePackageJsonAction`)**: 변경은 child 가 이미 원하는 값을 두고 있으면 skip (Hub-not-enforcer), `.claude/harness-lock.json` 으로 package.json path 잠금 가능.
+
+**교훈**:
+1. **Exact-pin 은 enforcer 의 증상**. 참고서 모델에서는 range 만 권고, pin 은 child lockfile 에서만 발생해야 한다.
+2. **"부재 시만" 안전장치는 주입 값이 range 일 때만 유효**. exact-pin 을 "부재 시만" 주입해도 child 가 나중에 업그레이드하면 skew.
+3. **Hub-not-enforcer 는 동작까지 일치해야 진짜**. 선언만 두고 코드가 반대로 가면 사용자 신뢰 손실.
+4. **Evergreen = child 자유 선택 + universe 최신 권고**. universe 가 박아넣으면 evergreen 아님.
+
+참조: `knowledge/journal/20260422-harness-v2.10-dynamic-sync.md`, `knowledge/canon/evergreen-principle.md` (Range-first 원칙), `scripts/harness-pull/resolve.ts` L596+.
 
 ---
 

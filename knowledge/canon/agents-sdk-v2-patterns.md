@@ -1,8 +1,8 @@
 ---
 title: Cloudflare Agents SDK V2 Patterns
-version: 1.0.0
-last_updated: 2026-04-17
-source: [knowledge/canon/agents-sdk-v2-patterns.md]
+version: 1.1.0
+last_updated: 2026-04-24
+source: [knowledge/canon/agents-sdk-v2-patterns.md, CF blog "Project Think"]
 sync_to_children: true
 consumers: [ai-patterns, new-app]
 ---
@@ -90,6 +90,47 @@ async invokeTool(toolId: string, args: unknown) {
   return await this.mcp.execute({ toolId, args });
 }
 ```
+
+## Code Mode 도입 기준 (v1.1.0 추가)
+
+전체 MCP tool 을 inline 으로 노출할지, Code Mode (search/execute 2-tool 추상화) 로 갈지는 **tool 개수 × tool 정의의 token 비중** 으로 판단.
+
+| 조건 | 권장 |
+|------|------|
+| tool ≥20개 + tool 정의가 input token budget 의 ≥30% | **Code Mode 채택** — 99%+ token 절감 |
+| 10 ≤ tool < 20 + frequent tool churn (세션 중 추가/제거) | **case-by-case** — tool 리스트가 안정적이면 네이티브 MCP, churn 심하면 Code Mode (cache 재활용 우위) |
+| tool < 10 + 세션 내 모든 tool 항시 유용 | **네이티브 MCP 유지** — Code Mode 의 search() round-trip overhead 가 절감분 초과 |
+
+**측정 레시피** (before/after token 비교):
+
+```typescript
+// 1. Pre-adoption: tools 배열 전체 inline
+const resp = await client.messages.create({
+  model: 'claude-opus-4-7',
+  tools: [...allTools],  // N개 tool 정의
+  messages: [...],
+});
+console.log('input_tokens (before):', resp.usage.input_tokens);
+console.log('cache_read_input_tokens (before):', resp.usage.cache_read_input_tokens);
+
+// 2. Post-adoption: Code Mode search() + execute() 2개만
+const resp2 = await client.messages.create({
+  model: 'claude-opus-4-7',
+  tools: [searchTool, executeTool],  // 2개만
+  messages: [...],
+});
+// 세션 내 여러 ext 호출 후 집계
+```
+
+**실측 기대값** (CF blog 2026-04 Project Think):
+- 3000+ CF API tool → 2 tool 로 추상화 시 tool definition token 99.9% 절감
+- 단, 첫 search() 에 latency +1 round-trip 추가 (prompt cache hit 시 무시 가능)
+- cache invalidation 반감 — tool 리스트 바뀌어도 search/execute 인터페이스 자체는 고정이므로 prompt prefix 유지
+
+**반-패턴**:
+- tool 개수 적은데 "신기술이니까" Code Mode 도입 → search() round-trip 만 낭비
+- tool 정의가 token budget 소수인데 도입 → 절감 효과 체감 어려움, 추상화 비용만 증가
+- search() 결과를 seed 없이 호출 → 비결정적, cache miss 유발. `gen_ai.request.seed` 고정 권장
 
 ## Modfolio 적용 후보 (candidate)
 

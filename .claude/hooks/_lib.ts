@@ -15,6 +15,16 @@ import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { stdin } from "node:process";
 
+// hooks/_lib 는 hook 프로세스가 spawnSync stdin pipe 로 실행돼 boot-sensitive.
+// relative import 가 stdin race 를 유발했던 회귀 (release-gate pre-destructive-guard
+// exit 0 회귀, 2026-04-22 v2.10) 를 피하기 위해 ecosystem-paths 의
+// FOLDER_CANDIDATES 를 **여기서는 리터럴로 유지**. 다른 scripts 는
+// `lib/ecosystem-paths.ts` 에서 동일 리스트를 import 한다.
+const ECOSYSTEM_FOLDER_CANDIDATES_INLINE = [
+	"modfolio-ecosystem",
+	"modfolio-universe",
+] as const;
+
 export interface HookInput {
 	tool_name?: string;
 	tool_input?: Record<string, unknown>;
@@ -83,15 +93,17 @@ export function gitRoot(): string {
 }
 
 /**
- * Walk up from startDir looking for a sibling `modfolio-universe/` with
- * ecosystem.json. Returns `undefined` when not found — callers decide whether
- * that is fatal. ESM top-level imports only (no require interop).
+ * Walk up from startDir looking for any ecosystem sibling alias (current name
+ * first, then legacy `modfolio-universe`). Returns `undefined` when not found
+ * — callers decide whether that is fatal.
  */
-export function findUniverseRoot(startDir: string): string | undefined {
+export function findEcosystemRoot(startDir: string): string | undefined {
 	let current = resolve(startDir);
 	for (let i = 0; i < 10; i++) {
-		const candidate = join(current, "modfolio-universe");
-		if (existsSync(join(candidate, "ecosystem.json"))) return candidate;
+		for (const folderName of ECOSYSTEM_FOLDER_CANDIDATES_INLINE) {
+			const candidate = join(current, folderName);
+			if (existsSync(join(candidate, "ecosystem.json"))) return candidate;
+		}
 		const parent = dirname(current);
 		if (parent === current) break;
 		current = parent;

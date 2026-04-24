@@ -1,10 +1,10 @@
 /**
  * scripts/hooks/stop-feedback-log.ts
  *
- * Stop hook. Writes a terse session log into the universe feedback tree so
- * aggregation and retro scripts see what happened. Deterministic — no agent.
+ * Stop hook. Writes a terse session log into the modfolio-ecosystem feedback tree
+ * so aggregation and retro scripts see what happened. Deterministic — no agent.
  *
- * Output: <universe>/feedback/<repo>/logs/<YYYY>/<MM>/<YYYY-MM-DD>_<sessionId>.log
+ * Output: <ecosystem>/feedback/<repo>/logs/<YYYY>/<MM>/<YYYY-MM-DD>_<sessionId>.log
  * The nested date directories keep feedback/<repo>/ from accumulating hundreds
  * of flat log files (modfolio-pay IMPROVEMENT-5, gistcore Issue 12).
  */
@@ -13,14 +13,17 @@ import { execSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { findUniverseRoot, gitRoot } from "./_lib.ts";
+import { findEcosystemRoot, gitRoot } from "./_lib.ts";
 
 const cwd = gitRoot();
 const repo = basename(cwd);
-if (repo === "modfolio-universe") process.exit(0);
+// Self-skip: don't log when running inside the ecosystem repo itself.
+// Match both current (`modfolio-ecosystem`) and legacy (`modfolio-universe`) names.
+if (repo === "modfolio-ecosystem" || repo === "modfolio-universe")
+	process.exit(0);
 
-const universeRoot = findUniverseRoot(cwd);
-if (!universeRoot) process.exit(0);
+const ecosystemRoot = findEcosystemRoot(cwd);
+if (!ecosystemRoot) process.exit(0);
 
 const now = new Date();
 const yyyy = String(now.getFullYear());
@@ -28,7 +31,7 @@ const mm = String(now.getMonth() + 1).padStart(2, "0");
 const dd = String(now.getDate()).padStart(2, "0");
 const date = `${yyyy}-${mm}-${dd}`;
 
-const logDir = join(universeRoot, "feedback", repo, "logs", yyyy, mm);
+const logDir = join(ecosystemRoot, "feedback", repo, "logs", yyyy, mm);
 if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
 
 const sessionId = randomBytes(4).toString("hex");

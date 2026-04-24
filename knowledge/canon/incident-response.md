@@ -30,7 +30,7 @@ consumers: [preflight]
 | `modfolio-pay` | 결제 실패율 > 2%, Toss 웹훅 처리 실패 |
 | `modfolio-admin` | 관리 콘솔 다운 (운영 마비) |
 | `gistcore` / `anf` / 기타 앱 | 로그인 실패, 유료 기능 차단 |
-| `modfolio-universe` 자체 | harness-pull 전 레포에서 실패 |
+| `modfolio-ecosystem` 자체 | harness-pull 전 레포에서 실패 |
 
 ## 표준 단계
 
@@ -52,7 +52,7 @@ consumers: [preflight]
 
 - `modfolio-connect` 장애 → 22 앱 SSO 영향. Connect 자체 rollback이 항상 우선.
 - `modfolio-pay` 장애 → 결제 의존 앱에 maintenance banner 동시 배포.
-- `modfolio-universe` harness-pull 장애 → member repo에서 `--rollback`으로 직전 lock 복원 ([Harness v2.4 Phase 1a](../../scripts/harness-pull/rollback.ts)).
+- `modfolio-ecosystem` harness-pull 장애 → member repo에서 `--rollback`으로 직전 lock 복원 ([Harness v2.4 Phase 1a](../../scripts/harness-pull/rollback.ts)).
 
 ## 기록
 

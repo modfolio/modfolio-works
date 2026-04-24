@@ -17,7 +17,7 @@ user-invocable: true
 
 - **이름**: `@modfolio/contracts` (GitHub Packages)
 - **레지스트리**: `https://npm.pkg.github.com`
-- **소스**: `modfolio-universe/contracts/`
+- **소스**: `modfolio-ecosystem/contracts/`
 
 ## 기본 구조
 

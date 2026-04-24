@@ -10,7 +10,7 @@ maxTurns: 10
 ---
 # Knowledge Searcher
 
-modfolio-universe 지식베이스에서 관련 정보를 검색하고 요약.
+modfolio-ecosystem 지식베이스에서 관련 정보를 검색하고 요약.
 
 ## 검색 범위 (우선순위순)
 1. `knowledge/journal/` + `_index.md` (태그/카테고리)

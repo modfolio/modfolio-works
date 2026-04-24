@@ -98,11 +98,26 @@ export CLAUDE_CODE_EFFORT_LEVEL=max
 | 16 | knowledge-searcher | claude-haiku-4-5-20251001 | medium | 검색/요약 |
 | 17 | innovation-scout | claude-haiku-4-5-20251001 | medium | context7 조회·비교 |
 
+## Prompt caching 연계 (1M variant + tokenizer 영향)
+
+Opus 4.7 로 전환 시 prompt caching 의 비중이 커진다. 두 가지 근거:
+
+1. **신 tokenizer (+35% token)**: 동일 텍스트가 4.6 대비 최대 1.35배 토큰을 소비한다 ([tokenizer 측정](https://www.claudecodecamp.com/p/i-measured-claude-4-7-s-new-tokenizer-here-s-what-it-costs-you)). 따라서 cold-start cache write 자체가 더 비싸다. cache hit 비율을 유지해야 절대 비용이 과하게 늘지 않는다.
+2. **1M context variant**: `claude-opus-4-7[1m]` 은 대형 codebase/diff 를 한 번에 담을 수 있지만, 그 큰 prefix 를 매 호출마다 재처리하면 비용이 선형 증가한다. `cache_control` breakpoint 를 frozen 부분 끝에 명시해야 효율이 나온다.
+
+실무:
+- 모델 전환 (4.6 → 4.7) 시 **cache 는 model-scoped** 이므로 전부 rebuild. 첫 호출은 write premium 을 예상할 것
+- 1M variant agent (`design-engineer` / `page-builder` / `code-reviewer`) 는 Figma metadata / 큰 diff 를 system 에 싣는 경우가 많다 — 이들 agent 는 caching breakpoint 명시 효과가 가장 크다
+- Claude Code 는 harness 레벨에서 자동 caching 하지만 (`.claude/settings.json` 의 `ENABLE_PROMPT_CACHING_1H=1` 확인), **member repo 가 Anthropic SDK 를 직접 호출할 때는** 수동 설정 필수
+
+자세한 배치 원칙/비용 모델/측정 지표는 [prompt-caching.md](prompt-caching.md) canon 참조. harness 레벨 1h vs 5m TTL 운영 정책은 [prompt-caching-strategy.md](prompt-caching-strategy.md).
+
 ## 비용 guard
 
 - `max` 남용 시 token 소비 급증. `/effort high`로 런타임 하향 가능
 - `preflight` skill이 Claude Code 버전 + `CLAUDE_CODE_EFFORT_LEVEL` 환경변수 존재 여부 확인
 - 월별 `knowledge/journal/` 비용 관찰 권고
+- **Caching hit rate 관찰**: `response.usage.cache_read_input_tokens / total ≥ 70%` 목표. 50% 미만이면 silent invalidator 조사 (자세한 기준 → [prompt-caching.md](prompt-caching.md))
 
 ## 참조
 

@@ -1,17 +1,17 @@
-<!-- ECOSYSTEM_START: auto-synced from modfolio-universe, do not edit -->
+<!-- ECOSYSTEM_START: auto-synced from modfolio-ecosystem, do not edit -->
 
 # Modfolio 생태계 컨텍스트
 
-> 이 섹션은 modfolio-universe에서 자동 동기화됩니다. 직접 편집하지 마세요.
+> 이 섹션은 modfolio-ecosystem에서 자동 동기화됩니다. 직접 편집하지 마세요.
 
-# Modfolio Universe — Global Knowledge
+# modfolio-ecosystem — Global Knowledge
 
-> 이 파일은 모든 modfolio 프로젝트에 동기화된다. 수정은 modfolio-universe에서만.
+> 이 파일은 모든 modfolio 프로젝트에 동기화된다. 수정은 modfolio-ecosystem에서만.
 > 상세 정보는 각 skill을 호출할 것.
 
 ## 생태계 개요
 
-**Modfolio Universe**는 15개 이상의 앱으로 구성된 SaaS 생태계. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유.
+**Modfolio 생태계**는 15개 이상의 앱으로 구성된 SaaS 생태계. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유.
 
 - **조직**: github.com/modfolio
 - **플랫폼**: 100% Cloudflare Edge Native (Workers + D1 + R2)
@@ -83,6 +83,7 @@
 - **다음**: 디자인 고도화, 하위 앱 상태 연동 (health check)
 
 <!-- ECOSYSTEM_END -->
+
 
 
 

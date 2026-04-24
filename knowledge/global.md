@@ -1,11 +1,11 @@
-# Modfolio Universe — Global Knowledge
+# modfolio-ecosystem — Global Knowledge
 
-> 이 파일은 모든 modfolio 프로젝트에 동기화된다. 수정은 modfolio-universe에서만.
+> 이 파일은 모든 modfolio 프로젝트에 동기화된다. 수정은 modfolio-ecosystem에서만.
 > 상세 정보는 각 skill을 호출할 것.
 
 ## 생태계 개요
 
-**Modfolio Universe**는 15개 이상의 앱으로 구성된 SaaS 생태계. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유.
+**Modfolio 생태계**는 15개 이상의 앱으로 구성된 SaaS 생태계. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유.
 
 - **조직**: github.com/modfolio
 - **플랫폼**: 100% Cloudflare Edge Native (Workers + D1 + R2)

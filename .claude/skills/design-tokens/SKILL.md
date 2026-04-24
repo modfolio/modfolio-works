@@ -35,3 +35,7 @@ Primitives → Semantic → Accent
 ## 상세 레퍼런스
 
 명명 규칙, cascade layer, alpha variant, same-product alignment 등 상세는 `knowledge/canon/design-tokens.md` 참조.
+
+## DTCG 2025.10 교환 포맷 (선택적)
+
+Figma Variables / Tokens Studio / Supernova 와 코드의 양방향 싱크가 필요한 앱은 DTCG JSON (`.tokens.json`)으로 교환. Style Dictionary v4+ 로 `tokens.css` 생성. 상세는 canon §"DTCG 2025.10 정합 가이드" + `contracts/design-tokens/README.md`. 단방향(코드→UI)이면 DTCG 생략하고 `tokens.css` 손편집 유지가 정공법.
