@@ -13,11 +13,12 @@
 		"check": "biome check .",
 		"check:fix": "biome check --write .",
 		"typecheck": "cd apps/landing && bun run typecheck && cd ../../apps/app && bun run typecheck",
-		"harness-pull": "modfolio-harness-pull"
+		"harness-pull": "modfolio-harness-pull",
+		"modfolio": "modfolio-check"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.4",
-		"@modfolio/harness": "^2.14.3",
+		"@modfolio/harness": "^2.14.4",
 		"typescript": "^5.9.3"
 	},
 	"overrides": {
