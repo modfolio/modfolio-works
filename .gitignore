@@ -3,3 +3,7 @@ dist
 .astro
 .wrangler
 .claude/settings.local.json
+
+# secrets-policy + wrangler — added by modfolio-harness-pull (canon: secrets-dotenvx.md)
+.env.keys
+.env.local

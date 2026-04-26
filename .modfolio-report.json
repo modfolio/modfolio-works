@@ -1,0 +1,269 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-04-26T11:28:15.824Z",
+  "mode": "sibling",
+  "repo": "modfolio-works",
+  "cwd": "/home/mod/code/modfolio-works",
+  "harnessVersion": "^2.14.4",
+  "ecosystemHarnessLatest": "unknown",
+  "tracks": [
+    {
+      "trackId": "harness-coherence",
+      "mode": "sibling",
+      "durationMs": 0.6388110000000005,
+      "findings": [],
+      "status": "ok"
+    },
+    {
+      "trackId": "knowledge-coverage",
+      "mode": "sibling",
+      "durationMs": 2.0243810000000018,
+      "findings": [
+        {
+          "trackId": "knowledge-coverage",
+          "id": "knowledge-coverage/memory-missing",
+          "severity": "info",
+          "summary": "knowledge/claude/MEMORY.md 누락",
+          "evidence": [
+            "expected-path=/home/mod/code/modfolio-works/knowledge/claude/MEMORY.md"
+          ],
+          "suggestedAction": "harness-pull 로 자동 동기, 또는 수동 작성",
+          "autoFixable": true
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "trackId": "skill-agent",
+      "mode": "sibling",
+      "durationMs": 5.98301,
+      "findings": [],
+      "status": "ok"
+    },
+    {
+      "trackId": "stack-evergreen",
+      "mode": "sibling",
+      "durationMs": 0.29452500000000015,
+      "findings": [
+        {
+          "trackId": "stack-evergreen",
+          "id": "stack-evergreen/typescript-behind",
+          "severity": "info",
+          "summary": "TypeScript 5.9.3 — v6+ 권고",
+          "evidence": [
+            "typescript=^5.9.3"
+          ],
+          "autoFixable": false
+        },
+        {
+          "trackId": "stack-evergreen",
+          "id": "stack-evergreen/claude-code-version-info",
+          "severity": "info",
+          "summary": "Claude Code 권고 버전: latest (evergreen) (Opus 4.7 + effort frontmatter 지원)",
+          "evidence": [
+            "ecosystem.harnessClaudeCodeVersion=latest"
+          ],
+          "autoFixable": false
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "trackId": "effort-policy",
+      "mode": "sibling",
+      "durationMs": 0.23732600000000303,
+      "findings": [
+        {
+          "trackId": "effort-policy",
+          "id": "effort-policy/settings-env-missing",
+          "severity": "warning",
+          "summary": ".claude/settings.json env.CLAUDE_CODE_EFFORT_LEVEL=absent ≠ 권고 max",
+          "evidence": [
+            "actual=absent",
+            "recommended=max"
+          ],
+          "suggestedAction": ".claude/settings.json 에 env.CLAUDE_CODE_EFFORT_LEVEL: max 추가",
+          "autoFixable": true
+        }
+      ],
+      "status": "warning"
+    },
+    {
+      "trackId": "feedback-cycle",
+      "mode": "sibling",
+      "durationMs": 0.013033999999997548,
+      "findings": [],
+      "status": "skipped",
+      "skipReason": "feedback/ 디렉토리 없음"
+    },
+    {
+      "trackId": "secrets-ops",
+      "mode": "sibling",
+      "durationMs": 0.26421300000000514,
+      "findings": [
+        {
+          "trackId": "secrets-ops",
+          "id": "secrets-ops/gitignore-missing-entries",
+          "severity": "warning",
+          "summary": ".gitignore 누락: .env.keys, .env.local",
+          "evidence": [
+            "missing=.env.keys, .env.local",
+            "path=/home/mod/code/modfolio-works/.gitignore"
+          ],
+          "suggestedAction": ".gitignore 에 누락된 항목 추가",
+          "autoFixable": true
+        }
+      ],
+      "status": "warning"
+    },
+    {
+      "trackId": "temporal",
+      "mode": "sibling",
+      "durationMs": 0.052436999999997624,
+      "findings": [
+        {
+          "trackId": "temporal",
+          "id": "temporal/first-run",
+          "severity": "info",
+          "summary": "modfolio first run — temporal 비교 데이터 없음",
+          "evidence": [
+            "expected-dir=/home/mod/code/modfolio-works/.modfolio-history"
+          ],
+          "suggestedAction": "다음 실행부터 추세 분석 활성",
+          "autoFixable": false
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "trackId": "meta-diagnosis",
+      "mode": "sibling",
+      "durationMs": 0.08443499999999915,
+      "findings": [],
+      "status": "skipped",
+      "skipReason": "Langfuse 환경 변수 없음 — toolkit 미가동 (정상, opt-in)"
+    },
+    {
+      "trackId": "external-signal",
+      "mode": "sibling",
+      "durationMs": 1469.939814,
+      "findings": [],
+      "status": "ok"
+    },
+    {
+      "trackId": "ecosystem-rollup",
+      "mode": "sibling",
+      "durationMs": 0.0031039999998938583,
+      "findings": [],
+      "status": "skipped",
+      "skipReason": "ecosystem 모드 전용 트랙 (sibling 모드는 자기 repo 만 진단)"
+    },
+    {
+      "trackId": "hook-integration",
+      "mode": "sibling",
+      "durationMs": 0.024148999999852094,
+      "findings": [],
+      "status": "ok"
+    }
+  ],
+  "triage": {
+    "newSinceLast": [
+      {
+        "trackId": "knowledge-coverage",
+        "id": "knowledge-coverage/memory-missing",
+        "severity": "info",
+        "summary": "knowledge/claude/MEMORY.md 누락",
+        "evidence": [
+          "expected-path=/home/mod/code/modfolio-works/knowledge/claude/MEMORY.md"
+        ],
+        "suggestedAction": "harness-pull 로 자동 동기, 또는 수동 작성",
+        "autoFixable": true,
+        "priority": "P3"
+      },
+      {
+        "trackId": "stack-evergreen",
+        "id": "stack-evergreen/typescript-behind",
+        "severity": "info",
+        "summary": "TypeScript 5.9.3 — v6+ 권고",
+        "evidence": [
+          "typescript=^5.9.3"
+        ],
+        "autoFixable": false,
+        "priority": "P3"
+      },
+      {
+        "trackId": "stack-evergreen",
+        "id": "stack-evergreen/claude-code-version-info",
+        "severity": "info",
+        "summary": "Claude Code 권고 버전: latest (evergreen) (Opus 4.7 + effort frontmatter 지원)",
+        "evidence": [
+          "ecosystem.harnessClaudeCodeVersion=latest"
+        ],
+        "autoFixable": false,
+        "priority": "P3"
+      },
+      {
+        "trackId": "effort-policy",
+        "id": "effort-policy/settings-env-missing",
+        "severity": "warning",
+        "summary": ".claude/settings.json env.CLAUDE_CODE_EFFORT_LEVEL=absent ≠ 권고 max",
+        "evidence": [
+          "actual=absent",
+          "recommended=max"
+        ],
+        "suggestedAction": ".claude/settings.json 에 env.CLAUDE_CODE_EFFORT_LEVEL: max 추가",
+        "autoFixable": true,
+        "priority": "P1"
+      },
+      {
+        "trackId": "secrets-ops",
+        "id": "secrets-ops/gitignore-missing-entries",
+        "severity": "warning",
+        "summary": ".gitignore 누락: .env.keys, .env.local",
+        "evidence": [
+          "missing=.env.keys, .env.local",
+          "path=/home/mod/code/modfolio-works/.gitignore"
+        ],
+        "suggestedAction": ".gitignore 에 누락된 항목 추가",
+        "autoFixable": true,
+        "priority": "P1"
+      },
+      {
+        "trackId": "temporal",
+        "id": "temporal/first-run",
+        "severity": "info",
+        "summary": "modfolio first run — temporal 비교 데이터 없음",
+        "evidence": [
+          "expected-dir=/home/mod/code/modfolio-works/.modfolio-history"
+        ],
+        "suggestedAction": "다음 실행부터 추세 분석 활성",
+        "autoFixable": false,
+        "priority": "P3"
+      }
+    ],
+    "persistent": [],
+    "resolvedSinceLast": [],
+    "nextBestAction": {
+      "finding": {
+        "trackId": "effort-policy",
+        "id": "effort-policy/settings-env-missing",
+        "severity": "warning",
+        "summary": ".claude/settings.json env.CLAUDE_CODE_EFFORT_LEVEL=absent ≠ 권고 max",
+        "evidence": [
+          "actual=absent",
+          "recommended=max"
+        ],
+        "suggestedAction": ".claude/settings.json 에 env.CLAUDE_CODE_EFFORT_LEVEL: max 추가",
+        "autoFixable": true,
+        "priority": "P1"
+      },
+      "command": "Edit .claude/settings.json env.CLAUDE_CODE_EFFORT_LEVEL=max",
+      "estimatedTimeMin": 1,
+      "estimatedTokens": 100,
+      "cascadeResolves": [],
+      "requiresUserDecision": false
+    },
+    "timeBudgetMin": 30
+  },
+  "totalDurationMs": 1492.236028
+}

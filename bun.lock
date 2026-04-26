@@ -6,7 +6,7 @@
       "name": "modfolio-works",
       "devDependencies": {
         "@biomejs/biome": "^2.4.4",
-        "@modfolio/harness": "2.14.4",
+        "@modfolio/harness": "2.14.5",
         "typescript": "^5.9.3",
       },
     },
@@ -228,7 +228,7 @@
 
     "@modfolio/connect-sdk": ["@modfolio/connect-sdk@5.1.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/5.1.0/0e0704cc24366cf11ea5370161431d450f91c782", { "dependencies": { "jose": "^6.2.1" } }, "sha512-xEXGqLq1764C/cHHAmd2wlzVUEaw1e6vjuNt/6dDshnmbKEy6wrJ1L+10iQcIa4n5j9p564VT+NoA7XrRrO2QQ=="],
 
-    "@modfolio/harness": ["@modfolio/harness@2.14.4", "https://npm.pkg.github.com/download/@modfolio/harness/2.14.4/5a8f3950ef18623fb91137e13eeea37f1790be06", { "dependencies": { "zod": "^4.3.6" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts" } }, "sha512-diwtOpLJPOcYURqnEhyoXP+edp7uS/ViDylfB6RnUI9frVjrO32hMhtfcBJC20N8kJyaNNm+VURGk49DW87q5A=="],
+    "@modfolio/harness": ["@modfolio/harness@2.14.5", "https://npm.pkg.github.com/download/@modfolio/harness/2.14.5/dd2b2a212d5c78879db34bc3ee16730d46232dce", { "dependencies": { "zod": "^4.3.6" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts" } }, "sha512-vB+r/6II1c30Lf2wDiDbJHM3vWZv3Rk79D0gKXIf94XnnA+hKsCaATu8Pwcc8eMaUM/ZR5seN9NfM2M3nwmjTQ=="],
 
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
