@@ -3,7 +3,8 @@ title: Typography — Structural Convention
 version: 3.0.0
 last_updated: 2026-04-15
 source: [docs/design/typography-master-combinations.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [design, page, design-engineer]
 ---
 

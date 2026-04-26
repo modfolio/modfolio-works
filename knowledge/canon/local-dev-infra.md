@@ -3,7 +3,8 @@ title: Local Dev Infra — mod-ai-toolkit v2 Tier 1
 version: 1.0.0
 last_updated: 2026-04-17
 source: [Harness v2.4 Phase 4, C:/Projects/mod-ai-toolkit]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight]
 ---
 

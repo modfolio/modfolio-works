@@ -3,7 +3,8 @@ title: Incident Response — P0/P1 Triage SOP
 version: 1.0.0
 last_updated: 2026-04-17
 source: [Harness v2.4 Phase 3, incident-handler agent]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight]
 ---
 

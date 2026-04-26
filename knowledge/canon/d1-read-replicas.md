@@ -3,7 +3,8 @@ title: D1 Global Read Replicas & Sessions API
 version: 1.0.0
 last_updated: 2026-04-17
 source: [knowledge/canon/d1-read-replicas.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [drizzle-patterns, deploy, schema-builder, migration]
 ---
 

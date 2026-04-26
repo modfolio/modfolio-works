@@ -1,6 +1,7 @@
 ---
 name: security-scan
 description: OWASP Top 10 보안 감사. XSS/CSRF/injection 탐지 + CSP 헤더 + 시크릿 검출 + 자동 수정
+effort: xhigh
 user-invocable: true
 ---
 

@@ -3,7 +3,8 @@ title: Operations — 운영 지식
 version: 1.1.0
 last_updated: 2026-04-17
 source: [knowledge/claude-code-bible.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight, harness-pull, deploy, migration]
 ---
 

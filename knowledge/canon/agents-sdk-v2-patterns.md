@@ -3,7 +3,8 @@ title: Cloudflare Agents SDK V2 Patterns
 version: 1.1.0
 last_updated: 2026-04-24
 source: [knowledge/canon/agents-sdk-v2-patterns.md, CF blog "Project Think"]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [ai-patterns, new-app]
 ---
 

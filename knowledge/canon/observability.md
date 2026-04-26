@@ -3,7 +3,8 @@ title: Observability
 version: 1.4.0
 last_updated: 2026-04-24
 source: [.claude/skills/observability/SKILL.md, templates/observability/signoz-llm-dashboard.json]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [observability, deploy]
 ---
 
@@ -270,7 +271,7 @@ service:
 
 **핵심 결정**:
 - **두 pipeline** — SigNoz 본선 + Langfuse 복제. `filter/genai_only` 로 Langfuse 는 GenAI span 만 받게 해 Langfuse 저장 비용 최소화.
-- **auth 는 env 주입** — `LANGFUSE_OTLP_BASIC_AUTH=base64(pk-lf-xxx:sk-lf-xxx)` 를 Doppler/dotenvx 에서 주입. Collector 설정 파일에 평문 금지.
+- **auth 는 env 주입** — `LANGFUSE_OTLP_BASIC_AUTH=base64(pk-lf-xxx:sk-lf-xxx)` 를 dotenvx (canon `secrets-dotenvx` v2.0+) 또는 잔존 Doppler 에서 주입. Collector 설정 파일에 평문 금지.
 - **gzip 압축** — GenAI span 은 messages 포함 시 payload 큼. gzip 으로 대역폭/비용 절감.
 - **CF Workers 직접 export 회피** — Collector 를 중간에 둠. CF Workers `fetch` 한계 (subrequest quota), 인증 갱신 중앙화, fan-out 정책 변경 시 앱 재배포 불필요.
 
@@ -294,4 +295,4 @@ curl -s http://otelcol:8888/metrics | grep otelcol_exporter_sent_spans
 - **Error rate** — `error.type` 이 set 된 span count / total span count
 - **Cost by operation** — `gen_ai.operation.name` 별 input/output 토큰 × 단가 (Collector 에서 transform processor 로 `gen_ai.cost.usd` attribute 추가 권장)
 
-각 panel 은 `gen_ai.provider.name` filter 지원 (anthropic/openai/azure 분리 보기). member repo 는 자체 Doppler/dotenvx 의 Langfuse/SigNoz endpoint 로 adjust 만 하면 재사용 가능.
+각 panel 은 `gen_ai.provider.name` filter 지원 (anthropic/openai/azure 분리 보기). member repo 는 자체 dotenvx `.env` (또는 잔존 Doppler) 의 Langfuse/SigNoz endpoint 로 adjust 만 하면 재사용 가능.

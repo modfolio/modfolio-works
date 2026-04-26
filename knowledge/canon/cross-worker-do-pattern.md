@@ -3,7 +3,8 @@ title: Cross-Worker Durable Object Binding
 version: 1.1.0
 last_updated: 2026-04-17
 source: [modfolio-connect 2026-04-16 handoff §4-2]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [deploy, observability]
 ---
 

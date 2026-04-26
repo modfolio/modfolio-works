@@ -3,7 +3,8 @@ title: GitHub Actions — 최소화 정책
 version: 1.0.0
 last_updated: 2026-04-17
 source: [modfolio-connect 2026-04-16 handoff §4-3]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [deploy, ops]
 ---
 

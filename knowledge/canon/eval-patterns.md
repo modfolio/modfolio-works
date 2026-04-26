@@ -3,7 +3,8 @@ title: Eval Patterns — 6-Layer Test Stack + LLM-Judge
 version: 1.0.0
 last_updated: 2026-04-17
 source: [Atlan 6-layer guide, Braintrust/Langfuse 2026, Harness v2.4 Phase 3]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [preflight]
 ---
 

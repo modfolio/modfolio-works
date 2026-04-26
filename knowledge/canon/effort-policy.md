@@ -3,7 +3,8 @@ title: Effort Policy — low / medium / high / xhigh / max
 version: 1.0.0
 last_updated: 2026-04-17
 source: [Anthropic Claude Opus 4.7 effort system, Harness v2.4]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight, context-isolation-setup]
 ---
 

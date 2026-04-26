@@ -125,6 +125,72 @@ export const DETECTOR_SOURCE_FILES: ReadonlySet<string> = new Set([
 ]);
 
 /**
+ * Record a hook execution duration to the OTLP collector when reachable.
+ * Silent fail when the toolkit is offline — hook latency must not regress
+ * (caps at 500ms timeout). Used by post-* hooks to trace timing for
+ * agentic-engineering canon §2.3 untrusted-verification chain.
+ *
+ * Convention: `service.name=modfolio-ecosystem-hooks`, metric name
+ * `hook.duration_ms` with attribute `hook.name=<id>`. Aggregation as gauge
+ * (collector converts to histogram on ingest if configured).
+ */
+export async function recordHookDuration(
+	hookName: string,
+	durationMs: number,
+): Promise<void> {
+	const endpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
+	if (!endpoint) return;
+	try {
+		const url = new URL("/v1/metrics", endpoint);
+		await fetch(url, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				resourceMetrics: [
+					{
+						resource: {
+							attributes: [
+								{
+									key: "service.name",
+									value: { stringValue: "modfolio-ecosystem-hooks" },
+								},
+							],
+						},
+						scopeMetrics: [
+							{
+								metrics: [
+									{
+										name: "hook.duration_ms",
+										unit: "ms",
+										gauge: {
+											dataPoints: [
+												{
+													attributes: [
+														{
+															key: "hook.name",
+															value: { stringValue: hookName },
+														},
+													],
+													asDouble: durationMs,
+													timeUnixNano: String(Date.now() * 1_000_000),
+												},
+											],
+										},
+									},
+								],
+							},
+						],
+					},
+				],
+			}),
+			signal: AbortSignal.timeout(500),
+		});
+	} catch {
+		// silent — toolkit unreachable. Hook must not regress when OTEL is offline.
+	}
+}
+
+/**
  * Git diff names, excluding pattern-history so the Stop pattern hook does
  * not detect itself and loop forever.
  */

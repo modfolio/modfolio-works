@@ -1,22 +1,60 @@
 ---
 title: Secrets — dotenvx 기반 파일 암호화 워크플로
-version: 1.0.0
-last_updated: 2026-04-24
-source: [modfolio-ecosystem dotenvx PoC 2026-04-24, https://dotenvx.com]
-sync_to_children: true
+version: 2.0.0
+last_updated: 2026-04-25
+source: [modfolio-ecosystem dotenvx PoC 2026-04-24, atelier-and-folio production adoption 2026-04-25, https://dotenvx.com]
+sync_to_siblings: true
 consumers: [ops, new-app, preflight]
+applicability: always
 ---
 
 <!--
-모든 member repo 가 Doppler 대신 dotenvx 로 dev/prod 시크릿을 관리하는 공통 경로.
-ecosystem 은 canon + 헬퍼 스크립트만 제공하고, 각 repo 가 필요 시점에 자율 이관한다.
+v2.0.0 (2026-04-25): universe 전체 방향 확정 — Doppler 를 완전히 폐기하고
+모든 repo 가 repo-독립 dotenvx 로 전환한다. ecosystem 자신도 동등 sibling
+으로 동일 경로를 향한다 (사용자 재확인 2026-04-25).
+
+- Applicability 는 `always`: universe 의 모든 repo 가 결과적으로 이 canon 을 따른다.
+- 각 repo 의 전환 시점은 자율 (evergreen-principle / Hub-not-enforcer 유지).
+- 전환 완료 repo 는 `ecosystem.json` 에 `secrets: "dotenvx"` 필드로 기록.
+- 1 호 실 채택: atelier-and-folio (2026-04-25 rename 과 함께 migration).
+
+Doppler 가 처음 도입된 이유 (2026-02) = 중앙 secret 관리. 이제 문제:
+- Free tier 10-project 한계 (23 repo 수용 불가)
+- 중앙화 자체가 universe sibling 원칙과 충돌 (각 repo 가 독립 secret 소유)
+- dev 경로에서만 사용 (prod 는 이미 CF Workers Secrets native) — 중앙화 가치 약함
 -->
 
 # Secrets — dotenvx 기반 파일 암호화 워크플로
 
-**기본 원칙**: 암호화된 `.env` 는 **git commit 가능**, `.env.keys` (private key) 는 절대 commit 금지. 1Password 에 repo 별 document 로 저장해 여러 머신 간 동기화.
+**기본 원칙**: 암호화된 `.env` 는 **git commit 가능**, `.env.keys` (private key) 는 절대 commit 금지. 백업은 사용자 자율 (OneDrive/iCloud/USB/별도 private repo 등 — helper script `scripts/ops/backup-env-keys.sh` / `restore-env-keys.sh` 참조).
 
-**Doppler 관계**: dotenvx 가 dev 환경 기본값. 프로덕션 런타임 시크릿 (Workers Secrets, CF secret store) 은 여전히 CF 네이티브 경로. Doppler 는 이번 전환으로 **dev 경로에서만** 제거 대상.
+**Doppler 관계 (v2.0)**: **Doppler 는 universe 에서 폐기된다**. dev 경로는 dotenvx 로 완전 대체. 프로덕션 런타임 시크릿은 여전히 CF Workers Secrets (wrangler secret put) 네이티브 — 이건 계속 유지. Doppler 10-project 한계 + 중앙화가 sibling 자율 원칙과 충돌한다는 것이 폐기 결정의 배경.
+
+## 전환 로드맵 (universe-wide, 2026-04-25 확정)
+
+**단계적 전환 — 각 repo 가 자기 시점에 실행**:
+
+| 단계 | 작업 | 지점 |
+|---|---|---|
+| 1 | Doppler 에서 secrets export (`doppler secrets download --no-file --format env`) | repo 소유자 |
+| 2 | 평문 `.env` 작성 + `chmod 600` | repo 소유자 |
+| 3 | `bunx --bun dotenvx encrypt -f .env --no-ops` → `.env` + `.env.keys` 생성 | 자동 |
+| 4 | `.env.keys` 백업 (1Password 권장) + `.gitignore` 에 추가 | repo 소유자 |
+| 5 | `package.json` scripts 교체 (`doppler run …` → `dotenvx run …`) | 자동 or 수동 |
+| 6 | `ecosystem.json` 해당 repo 엔트리에 `secrets: "dotenvx"` 기록 | ecosystem PR |
+| 7 | Doppler project 30 일 보관 후 삭제 | repo 소유자 |
+
+**helper**: `scripts/ops/dotenvx-migrate-from-doppler.sh <project> <config>` 가 1-4 자동화.
+
+## 전환 진행 상태 (universe 레지스트리)
+
+각 repo 의 전환 상태는 `ecosystem.json` 의 해당 엔트리 `secrets` 필드로 추적:
+
+- `"secrets": "dotenvx"` — 전환 완료 (atelier-and-folio, 2026-04-25 시점 1/23)
+- `"secrets": "doppler"` — 미전환 (기본값 — 필드 미지정 시 동일 취급)
+- `"secrets": "transitioning"` — 진행 중 (export + encrypt 완료, Doppler 보관 기간)
+
+ecosystem 도 이 레지스트리의 일원으로 포함된다 — 동등 sibling 원칙.
 
 ## 설치
 
@@ -97,28 +135,34 @@ rm -f .env .env.keys
 # 3. encrypt 1회
 bunx --bun dotenvx encrypt -f .env --no-ops
 
-# 4. .env.keys chmod 600 + 1Password 재업로드
+# 4. .env.keys chmod 600 + 백업 (선택)
 chmod 600 .env.keys
-op document create .env.keys --title "dotenvx-<repo>-keys" --vault "modfolio-secrets" --force
+bash ../modfolio-ecosystem/scripts/ops/backup-env-keys.sh   # 아래 § 백업/복원 참조
 ```
 
-## 1Password 동기화
+## 백업 / 복원 (선택)
 
-**업로드** (초기 또는 갱신):
+`.env.keys` 는 gitignore 이므로 여러 머신 간 동기화하려면 **외부 백업** 필요. 방식은 자율:
+
+- **OneDrive / iCloud / Dropbox 동기화 폴더**: `KEYS_BACKUP_DIR` 을 해당 경로로
+- **USB 드라이브**: 물리 매체 수동 이동
+- **별도 private git repo**: `modfolio-secrets-backup` 같은 이름으로 따로
+- **암호화 파일** (age, gpg) → 어디든 저장
+- **백업 안 함**: 유실 시 `dotenvx encrypt` 재실행으로 새 keypair 생성 + `.env` 재암호화
+
+### Helper script (로컬 디렉토리 기반, 자동 sync 는 사용자 선택)
 
 ```bash
-op document create .env.keys \
-  --title "dotenvx-$(basename $(pwd))-keys" \
-  --vault "modfolio-secrets"
+# 모든 repo 의 .env.keys → backup dir
+bash scripts/ops/backup-env-keys.sh
+# 기본: $HOME/modfolio-secrets-backup/
+# 커스텀: KEYS_BACKUP_DIR="/mnt/c/Users/$USER/OneDrive/modfolio-keys" bash ...
+
+# 새 머신에서: backup dir → 모든 repo
+bash scripts/ops/restore-env-keys.sh
 ```
 
-**다른 머신에서 복구**:
-
-```bash
-cd ~/code/<repo>
-op document get "dotenvx-<repo>-keys" --out-file .env.keys
-chmod 600 .env.keys
-```
+`KEYS_BACKUP_DIR` 을 OneDrive/iCloud 경로로 두면 OS 가 알아서 클라우드 동기화.
 
 **확인** (plaintext 노출 없이):
 
@@ -141,7 +185,7 @@ bash scripts/ops/dotenvx-migrate-from-doppler.sh <doppler_project> <doppler_conf
 3. 기존 `.env` 존재 시 중단 (덮어쓰기 금지)
 4. `.env` 로 이동 + encrypt
 5. 주입 가능한 KEY 개수 보고
-6. `.env.keys` 1Password 업로드 안내
+6. `.env.keys` 백업 안내 (helper script 참조)
 
 ## 반-패턴
 
@@ -174,9 +218,8 @@ bunx --bun dotenvx run -f .env -- bunx --bun wrangler whoami
 1. `.env` decrypt → 기존 plaintext 로 복구
 2. `.env.keys` 삭제
 3. `dotenvx encrypt -f .env` → 새 keypair 생성
-4. 새 `.env.keys` 1Password 재업로드
-5. 이전 `.env.keys` 1Password 에서 제거
-6. CI secret (`DOTENVX_PRIVATE_KEY_*`) 갱신
+4. 백업 사용 중이면 새 `.env.keys` 를 백업 디렉토리에 덮어쓰기 (`backup-env-keys.sh`)
+5. CI secret (`DOTENVX_PRIVATE_KEY_*`) 갱신
 
 ## 관련 파일 / 스킬
 

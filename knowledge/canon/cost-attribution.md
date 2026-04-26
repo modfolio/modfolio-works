@@ -3,7 +3,8 @@ title: Cost Attribution — LiteLLM + Langfuse + CF Workers
 version: 1.1.0
 last_updated: 2026-04-22
 source: [Harness v2.4 Tier 1, LiteLLM spend API, Langfuse datasets, OTel GenAI semconv v1.37+]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight]
 ---
 

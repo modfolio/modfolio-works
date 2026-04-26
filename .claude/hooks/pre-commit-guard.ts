@@ -141,9 +141,46 @@ if (scripts.has("quality:all")) {
 
 if (steps.length === 0) process.exit(0);
 
+// WSL 호스트의 PATH 에서 Windows mount (`/mnt/c/...`) 항목 제거.
+// `bun run` 이 bun 의 child process spawn 시 두 번째 PATH 의 Windows bun
+// shim 을 잡아 cmd.exe 를 trigger 하는 회귀 방지 (2026-04-26 WSL 발견).
+// process.platform === "linux" 일 때만 적용 — Windows native 환경 영향 없음.
+function sanitizePath(): NodeJS.ProcessEnv {
+	if (process.platform !== "linux") return process.env;
+	const filtered = (process.env.PATH ?? "")
+		.split(":")
+		.filter(
+			(p) =>
+				p.length > 0 && !p.startsWith("/mnt/c/") && !p.startsWith("/mnt/d/"),
+		)
+		.join(":");
+	return { ...process.env, PATH: filtered };
+}
+
+const sanitizedEnv = sanitizePath();
+
+// Windows host 가 WSL repo 를 UNC path (`\\wsl.localhost\...`) 로 접근 시,
+// Windows bun 은 cmd.exe 를 child shell 로 사용해 UNC path 를 거부한다.
+// wsl.exe 위임도 PATH translation 실패 (Windows PATH 가 그대로 전달).
+// 이 환경에서는 hook 이 quality:all 을 실행할 수 없는 platform 한계 →
+// informational SKIP. 사용자는 WSL native shell 에서 사전 quality:all
+// 실행을 권고 (CLAUDE.md 의 정공법 워크플로우).
+const isWindowsWslRepo =
+	process.platform === "win32" && /^\\\\wsl/i.test(process.cwd());
+
+if (isWindowsWslRepo) {
+	console.error(
+		"[pre-commit-guard] Windows host + WSL UNC path 감지 — quality:all 자동 실행 platform 한계. 사용자가 WSL native shell 에서 `bun run quality:all` 사전 실행 권고. exit 0.",
+	);
+	process.exit(0);
+}
+
 for (const step of steps) {
-	const run = spawnSync(step[0] as string, step.slice(1), {
+	// Bun 명령은 process.execPath (현재 hook 실행 중인 bun 자체) 로 강제.
+	const cmd = step[0] === "bun" ? process.execPath : (step[0] as string);
+	const run = spawnSync(cmd, step.slice(1), {
 		stdio: "inherit",
+		env: sanitizedEnv,
 		// Windows needs shell:true so the OS resolves `bun` via PATHEXT /
 		// where lookups rather than failing on native cmd.exe.
 		shell: process.platform === "win32",

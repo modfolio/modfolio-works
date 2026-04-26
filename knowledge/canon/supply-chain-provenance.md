@@ -1,6 +1,7 @@
 ---
 title: Supply-chain provenance — Trusted Publishing / Sigstore / GitHub Attestations
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 version: 1.0.0
 last_updated: 2026-04-22
 consumers: ["modfolio-ecosystem", "modfolio-connect", "modfolio-contracts", "modfolio-connect-sdk"]

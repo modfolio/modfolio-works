@@ -3,7 +3,8 @@ title: Prompt Caching Strategy — 1h vs 5m TTL
 version: 1.0.0
 last_updated: 2026-04-17
 source: [Claude Code v2.1.108 ENABLE_PROMPT_CACHING_1H, Harness v2.4]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [preflight]
 ---
 

@@ -2,21 +2,23 @@
 name: generate-review
 description: 생성→리뷰 통합 파이프라인. 생성 agent 실행 후 multi-review 자동 검증 + P0-P3 triage
 context: fork
+effort: xhigh
 user-invocable: true
 ---
 
 
 # /generate-review — 생성→리뷰 통합 파이프라인
 
-생성 agent 실행 → multi-review 3-agent 병렬 → FAIL시 quality-fixer → 최대 2회 반복 → 에스컬레이션
+생성 agent 실행 → multi-review 4-agent 병렬 → FAIL시 quality-fixer → 최대 2회 반복 → 에스컬레이션
 
 ## 프로세스
 
 1. **생성 agent 실행** (component-builder, api-builder, schema-builder 등 — 사용자 요청에 따라)
-2. **multi-review 실행**: 3개 에이전트 병렬
+2. **multi-review 실행**: 4개 에이전트 병렬
    - **design-critic**: 디자인 토큰/레이아웃/모션 검증
    - **accessibility-auditor**: WCAG AA/접근성 검증
    - **architecture-sentinel**: 불변 원칙/생태계 규칙 검증
+   - **security-hardener**: OWASP Top 10 + 시크릿 노출 + 인증/인가 검증 (v2.13.0 추가)
 3. **결과 처리**:
    - **ALL PASS** → 완료
    - **FAIL (기계적)** → quality-fixer agent로 자동수정 → 재검증
@@ -45,3 +47,7 @@ user-invocable: true
 - **`/generate-review`** + `multi-review` — Modfolio 도메인 특화. 디자인 토큰·생태계 불변 원칙·접근성 domain-specific
 
 **권장 2단계**: PR 단계 `/ultrareview` (범용) → 머지 직전 `/generate-review` (Modfolio 도메인). **병용이지 대체 아님**.
+
+## 관련 canon
+
+- [agentic-engineering.md](../../../knowledge/canon/agentic-engineering.md) — 본 skill 의 메타 frame (Prompt → **Generate** → **Review** → Feedback → Iterate). §2.1 skill ↔ 단계 매핑 표 참조.

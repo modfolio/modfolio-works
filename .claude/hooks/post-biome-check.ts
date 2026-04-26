@@ -3,11 +3,13 @@
  *
  * PostToolUse Edit|Write hook. Runs `bun run check` after a file edit and
  * prints the last few lines of output so the model sees immediate feedback.
+ * Records hook duration to OTLP collector (silent when offline).
  */
 
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { recordHookDuration } from "./_lib.ts";
 
 function hasCheckScript(): boolean {
 	try {
@@ -24,6 +26,8 @@ function hasCheckScript(): boolean {
 
 if (!hasCheckScript()) process.exit(0);
 
+const start = performance.now();
+
 const result = spawnSync("bun", ["run", "check"], {
 	encoding: "utf-8",
 	// Windows needs shell:true so the OS resolves `bun` via PATHEXT rather
@@ -38,5 +42,7 @@ const lastLines = combined
 	.slice(-5)
 	.join("\n");
 if (lastLines) console.log(lastLines);
+
+await recordHookDuration("post-biome-check", performance.now() - start);
 
 process.exit(0);

@@ -3,7 +3,8 @@ title: Context Isolation — Worktree-per-Subagent
 version: 1.0.0
 last_updated: 2026-04-17
 source: [Anthropic "Effective context engineering", Claude Code v2.1.105 EnterWorktree, Harness v2.4]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight, context-isolation-setup]
 ---
 

@@ -3,7 +3,8 @@ title: Prompt Caching — Anthropic cache_control Canonical Reference
 version: 1.0.0
 last_updated: 2026-04-22
 source: [Anthropic platform docs, WebFetch/WebSearch 2026-04-22, claude-api skill v2.1.117]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [ai-patterns, plan]
 ---
 

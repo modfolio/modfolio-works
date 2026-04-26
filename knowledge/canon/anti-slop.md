@@ -3,7 +3,8 @@ title: Anti-Slop
 version: 3.0.0
 last_updated: 2026-04-14
 source: [knowledge/references/260321-AI-Slop.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [design, component, page, fix, design-critic, design-engineer]
 ---
 

@@ -3,7 +3,8 @@ title: Layout Patterns — Structural Principles
 version: 3.0.0
 last_updated: 2026-04-14
 source: [.claude/skills/layout-patterns/SKILL.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [layout-patterns, page, design, fix]
 ---
 

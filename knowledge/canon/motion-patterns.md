@@ -3,7 +3,8 @@ title: Motion Patterns
 version: 1.0.0
 last_updated: 2026-03-27
 source: [.claude/skills/motion-patterns/SKILL.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [motion-patterns, component, design, design-critic]
 ---
 

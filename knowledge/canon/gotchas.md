@@ -3,7 +3,8 @@ title: Gotchas & Lessons Learned
 version: 1.1.0
 last_updated: 2026-04-17
 source: [knowledge/claude/gotchas.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight]
 ---
 

@@ -3,7 +3,8 @@ title: Opus 4.7 & Effort Policy
 version: 1.0.0
 last_updated: 2026-04-17
 source: [knowledge/canon/opus-4-7-effort-policy.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight, plan, generate-review]
 ---
 

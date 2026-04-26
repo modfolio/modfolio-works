@@ -3,7 +3,8 @@ title: D1 Schema Single Source
 version: 1.0.0
 last_updated: 2026-04-17
 source: [modfolio-connect 2026-04-16 handoff §4-1]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [schema, migration, drizzle-patterns]
 ---
 

@@ -11,7 +11,8 @@ source:
     v2.9 biome musl glibc workaround,
     v2.10 exact-pin 주입의 함정,
   ]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [harness-pull, preflight, ops]
 ---
 

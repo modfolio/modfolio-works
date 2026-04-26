@@ -1,6 +1,7 @@
 ---
 name: ralph-loop
 description: Ralph Loop 기법. 측정 가능한 완료 기준으로 자율 반복 개선. 생성→검증→수정 사이클
+effort: xhigh
 user-invocable: true
 ---
 
@@ -46,3 +47,7 @@ slot → {@render}, on:click → onclick 변환.
 - 성공 기준이 명확하지 않으면 사용하지 마라
 - 디자인 판단이 필요한 작업에는 부적합
 - 각 반복의 피드백을 주의 깊게 모니터링
+
+## 관련 canon
+
+- [agentic-engineering.md](../../../knowledge/canon/agentic-engineering.md) — 본 skill 의 메타 frame (Prompt → **Generate** → Review → Feedback → **Iterate**). §1.1 atomic task — ralph-loop 가 N=3 이상 무한 루프 시 task 분해 부족 신호.

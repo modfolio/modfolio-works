@@ -3,7 +3,8 @@ title: Drizzle Conventions
 version: 1.2.0
 last_updated: 2026-04-17
 source: [knowledge/references/ecosystem-drizzle-conventions.md, .claude/skills/drizzle-patterns/SKILL.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [drizzle-patterns, schema, migration, schema-builder]
 ---
 

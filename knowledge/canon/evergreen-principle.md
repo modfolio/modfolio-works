@@ -3,7 +3,8 @@ title: Evergreen Principle — 권고 + 정보 공유
 version: 2.2.0
 last_updated: 2026-04-22
 source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [preflight, harness-pull, sso-integrate, ecosystem]
 ---
 
@@ -56,7 +57,8 @@ consumers: [preflight, harness-pull, sso-integrate, ecosystem]
 - GitHub Packages: `https://npm.pkg.github.com`, access `restricted`
 - consumer flow (member에서):
   ```bash
-  doppler run --project modfolio-ecosystem --config dev -- \
+  # secrets-dotenvx canon v2.0 채택 repo: dotenvx run -f .env --
+  # 잔존 Doppler 사용 repo (예: ecosystem 자체 — 전환 대기): doppler run --project modfolio-ecosystem --config dev -- \
     bun add -D @modfolio/harness
   bun run harness-pull           # v2.10+ 기본 report-only (diff 출력)
   bun run harness-pull -- --apply  # 검토 후 child 가 명시 동의

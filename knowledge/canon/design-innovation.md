@@ -3,7 +3,8 @@ title: Design Innovation — Detection & Self-Check Tools
 version: 2.0.0
 last_updated: 2026-04-14
 source: [knowledge/canon/design-innovation.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [design, component, page]
 ---
 

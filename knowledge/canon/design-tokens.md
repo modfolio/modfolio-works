@@ -3,7 +3,8 @@ title: Design Tokens — Structural Convention
 version: 3.1.0
 last_updated: 2026-04-22
 source: [.claude/skills/design-tokens/SKILL.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: always
 consumers: [design-tokens, component, page, design, fix, design-critic, component-builder]
 spec_refs:
   - https://www.designtokens.org/tr/2025.10/format/

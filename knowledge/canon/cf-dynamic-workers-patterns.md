@@ -3,7 +3,8 @@ title: CF Dynamic Workers Patterns
 version: 1.0.0
 last_updated: 2026-04-17
 source: [knowledge/canon/cf-dynamic-workers-patterns.md]
-sync_to_children: true
+sync_to_siblings: true
+applicability: per-app-opt-in
 consumers: [new-app, deploy, ai-patterns]
 ---
 
