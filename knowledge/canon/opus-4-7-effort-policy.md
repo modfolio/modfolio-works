@@ -1,7 +1,7 @@
 ---
 title: Opus 4.7 & Effort Policy
-version: 1.0.0
-last_updated: 2026-04-17
+version: 1.0.1
+last_updated: 2026-04-26
 source: [knowledge/canon/opus-4-7-effort-policy.md]
 sync_to_siblings: true
 applicability: always
@@ -77,7 +77,9 @@ export CLAUDE_CODE_EFFORT_LEVEL=max
 /effort high    # 기본 reasoning
 ```
 
-## Modfolio Universe Agent 분류 (2026-04-17 기준)
+## Modfolio Universe Agent 분류 (2026-04-26 기준)
+
+`max` 카테고리는 **코딩 + 위급/높은-stake 판정** (incident triage 포함). 단순히 "코드를 쓴다"가 기준이 아니라 "오답 비용이 높다"가 기준.
 
 | # | Agent | 모델 | effort | 근거 |
 |---|-------|------|--------|------|
@@ -89,15 +91,22 @@ export CLAUDE_CODE_EFFORT_LEVEL=max
 | 6 | contract-builder | claude-opus-4-7 | max | 코딩: contracts breaking 영향 |
 | 7 | quality-fixer | claude-opus-4-7 | max | 코딩: 기계 수정, 정공법 |
 | 8 | security-hardener | claude-opus-4-7 | max | 코딩: OWASP 취약점 |
-| 9 | code-reviewer | claude-opus-4-7[1m] | xhigh | 리뷰: 대규모 diff 1M 필요 |
-| 10 | design-critic | claude-opus-4-7 | xhigh | 리뷰: Anti-Slop 판정 |
-| 11 | architecture-sentinel | claude-opus-4-7 | xhigh | 리뷰: 불변 원칙 교차확인 |
-| 12 | accessibility-auditor | claude-opus-4-7 | xhigh | 리뷰: WCAG AA |
-| 13 | test-builder | claude-opus-4-7 | high | 테스트 생성 |
-| 14 | visual-qa | claude-opus-4-7 | high | Playwright + axe 5-gate |
-| 15 | ecosystem-auditor | claude-opus-4-7 | high | ecosystem.json 검증 |
-| 16 | knowledge-searcher | claude-haiku-4-5-20251001 | medium | 검색/요약 |
-| 17 | innovation-scout | claude-haiku-4-5-20251001 | medium | context7 조회·비교 |
+| 9 | incident-handler | claude-opus-4-7 | max | P0 장애 triage + 포스트모템 (오답 비용 높음, 코드 수정은 별도 agent) |
+| 10 | code-reviewer | claude-opus-4-7[1m] | xhigh | 리뷰: 대규모 diff 1M 필요 |
+| 11 | design-critic | claude-opus-4-7 | xhigh | 리뷰: Anti-Slop 판정 |
+| 12 | architecture-sentinel | claude-opus-4-7 | xhigh | 리뷰: 불변 원칙 교차확인 |
+| 13 | accessibility-auditor | claude-opus-4-7 | xhigh | 리뷰: WCAG AA |
+| 14 | migrations-auditor | claude-opus-4-7[1m] | xhigh | 리뷰: Drizzle 마이그레이션 롤백 안전성 (Neon/D1 별, 읽기 전용) |
+| 15 | test-builder | claude-opus-4-7 | high | 테스트 생성 |
+| 16 | visual-qa | claude-opus-4-7 | high | Playwright + axe 5-gate |
+| 17 | ecosystem-auditor | claude-opus-4-7 | high | ecosystem.json 검증 |
+| 18 | perf-profiler | claude-opus-4-7 | high | CF Workers cost/latency 프로파일, N+1 / R2 / D1 비용 (읽기 전용) |
+| 19 | knowledge-searcher | claude-haiku-4-5-20251001 | medium | 검색/요약 |
+| 20 | innovation-scout | claude-haiku-4-5-20251001 | medium | context7 조회·비교 |
+
+**분포 합계 (20 agent)**: max=9, xhigh=5, high=4, medium=2
+
+> diagnostic 의 `effort-policy/agent-distribution-drift` 트랙은 위 값을 expected 로 사용. 새 agent 추가 시 이 표 + `scripts/modfolio/diagnostic.ts` 의 `expected` 객체를 함께 갱신해야 drift 알림이 정확하다.
 
 ## Prompt caching 연계 (1M variant + tokenizer 영향)
 
