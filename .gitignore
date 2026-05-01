@@ -7,3 +7,7 @@ dist
 # secrets-policy + wrangler — added by modfolio-harness-pull (canon: secrets-dotenvx.md)
 .env.keys
 .env.local
+
+# modfolio skill transient artifacts — added by cleanup-modfolio-transient.sh
+.modfolio-report.json
+.modfolio-history/
