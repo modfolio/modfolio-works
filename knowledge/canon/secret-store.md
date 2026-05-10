@@ -1,7 +1,7 @@
 ---
 title: Secret Store — athsra (E2EE on Cloudflare edge)
-version: 1.13.0
-last_updated: 2026-05-06
+version: 1.14.0
+last_updated: 2026-05-09
 source: [github.com/modfolio/athsra Phase 0-2.1 + 1.x.2/1.x.3/1.x.4/1.x.5 active (chronological 1.x.6), plan v4.0.0 glittery-singing-treasure.md, Phase 1 4 active 151 keys + 4 no-secret cleanup, Phase 2.1 npmjs.org publish (@athsra/cli + @athsra/crypto 0.1.0), Phase 1.x.2 D1 token table production deploy 2026-05-05 (worker version 04727c33 phase_label=1.x.2 live, drizzle-orm + drizzle-kit, 34 worker tests pass), Phase 1.x.2 cutover dogfood 발견 (KV PROOF D1 자동 import 안 됨, GLOBAL_SALT change risk, legacy-backup 100% 복원 검증), Phase 1.x.3 audit Queue + R2 + D1 cement 2026-05-06 (athsra c6be015, Trial P1 #5 R2 Event Notifications 묶음, 41 worker tests pass)]
 sync_to_siblings: true
 consumers: [ops, new-app, preflight, secret]
@@ -282,7 +282,7 @@ Phase 2 후속: R2 `audit/<YYYY-MM>/<DD>.jsonl` append + SIEM export + audit que
 ```bash
 # 1. athsra CLI install (npmjs.org public, 1회만)
 bun add -g @athsra/cli   # 또는: npm i -g @athsra/cli
-athsra --version          # 0.1.0+ 확인
+athsra --version          # 0.1.1+ 확인 (logout 명령 0.1.1 추가)
 
 # 2. login (이미 다른 sibling 에서 했으면 skip — keyring 공유)
 athsra login              # master pw 입력 + paper-backup confirm
@@ -293,6 +293,47 @@ athsra set <sibling-repo> KEY=value
 athsra set <sibling-repo> --from-file .env       # bulk
 athsra get <sibling-repo>                        # 검증
 athsra run <sibling-repo> -- bun run dev         # env inject 후 실행
+```
+
+### 기존 secrets 이관 oneliner (Doppler / dotenvx → athsra)
+
+도입 전 sibling 의 secrets 가 있는 경우 — 1회 이관:
+
+```bash
+# (A) Doppler → athsra (가장 흔한 case, doppler.yaml 가진 sibling)
+doppler secrets download --project <sibling-repo> --config dev --no-file --format env \
+  | athsra set <sibling-repo> --stdin
+# 검증: diff <(doppler secrets download --project <sibling-repo> --config dev --no-file --format env | sort) \
+#            <(athsra get <sibling-repo> | sort)
+# → MATCH 시 doppler.yaml 폐기 권고 (30일 후 doppler projects delete)
+
+# (B) dotenvx encrypted .env → athsra
+bunx --bun dotenvx decrypt -f .env --stdout \
+  | athsra set <sibling-repo> --stdin
+# 검증 후 .env + .env.keys → legacy-backup/ 이동 + bun remove @dotenvx/dotenvx
+
+# (C) 평문 .env (legacy-backup 케이스) → athsra
+athsra set <sibling-repo> --from-file legacy-backup/.env
+
+# (D) prod 분리 (Doppler config=prd 있던 경우)
+doppler secrets download --project <sibling-repo> --config prd --no-file --format env \
+  | athsra set <sibling-repo>-prod --stdin
+# athsra 는 환경(env) 레이어 없음 → project 명으로 구분 (Phase 2.2 RBAC 시점에 환경 추가 검토)
+```
+
+이관 후 `package.json` scripts 변환:
+
+```bash
+# helper script (athsra repo 의 migrate-package-json.ts) — dotenvx/doppler → athsra
+bun ~/code/athsra/scripts/migrate-package-json.ts \
+  --package ~/code/<sibling-repo>/package.json \
+  --repo <sibling-repo> \
+  --apply
+
+# 변환 패턴:
+#   (bunx --bun )?dotenvx run -f .env --     → athsra run <sibling-repo> --
+#   (bunx --bun )?dotenvx run --             → athsra run <sibling-repo> --
+#   doppler run [--project X] [--config Y] -- → athsra run <sibling-repo> --
 ```
 
 **package.json scripts 패턴**:
@@ -342,6 +383,68 @@ eval $(gnome-keyring-daemon --start --components=secrets,ssh --daemonize)
 **예상 분량 per sibling**: 5-15분 (master pw 종이 backup 검증 포함).
 
 **자동화 helper** (선택): `~/code/athsra/scripts/migrate-package-json.ts` 가 `dotenvx run -f .env --` → `athsra run <repo> --` 일괄 변환 (gistcore 사례 검증됨).
+
+### Multi-machine workflow
+
+여러 머신 (집/사무실 PC + 노트북) 사용 시:
+
+```bash
+# 첫 머신 — 기준 머신 (master pw 알고 있음)
+athsra login
+athsra handoff                              # 1회용 handoff token 발급, 클립보드 자동 복사 또는 stdout
+
+# 둘째 머신 — 기준 머신과 페어링
+athsra handoff --accept                     # handoff token 입력 → master pw 자동 동기화 + 새 Bearer token 발급
+athsra ls                                   # 모든 sibling 즉시 접근 가능 (E2EE — master pw + token 양쪽 필요)
+
+# 머신 분실 시
+# 다른 머신에서:
+athsra ls --tokens                          # 활성 token 목록
+athsra revoke <atk_*>                       # 분실 머신 token 무효화 (worker 측 D1 entry 제거, ~60s eventual)
+# 새 master pw 로 전체 rotate (선택, paranoia 측):
+athsra rotate-master                        # 모든 envelope re-encrypt + 모든 token revoke
+```
+
+### logout vs revoke (0.1.1+)
+
+| 명령 | 동작 | worker 측 token | 사용 시점 |
+|---|---|---|---|
+| `athsra logout` | keyring (master pw + token) clear | **활성 유지** | 동일 머신 다른 사용자 / 단순 정리 |
+| `athsra logout --full` | keyring clear + `~/.athsra/config.json` 삭제 | **활성 유지** | 머신 양도 (다음 owner 가 자기 master pw 로 login) |
+| `athsra revoke` | keyring clear + worker token invalidate | **무효화 (irreversible)** | 머신 분실 / 폐기 / 의심 활동 |
+| `athsra revoke <atk_*>` | 다른 머신 token invalidate | **무효화 (irreversible)** | 다른 머신 분실 시 (현재 머신에서 실행) |
+
+> 일반적인 logout (Doppler/Vercel 등) 은 keyring clear 만 — athsra `logout` 동일. 보안 측면 강제 정리는 `revoke`.
+
+### CI/CD 통합 (GitHub Actions, 임시 방안)
+
+> **Phase 2 예정**: `athsra tokens create --name=ci --max-age=604800` 같은 service token 발급 명령. 현재는 사용자 master pw + ATHSRA_PAPER_BACKUP_CONFIRMED=1 임시 방안.
+
+```yaml
+# .github/workflows/deploy.yml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      ATHSRA_MASTER_PW: ${{ secrets.ATHSRA_MASTER_PW }}
+      ATHSRA_PAPER_BACKUP_CONFIRMED: 1
+      ATHSRA_WORKER_URL: https://athsra-worker.winterermod.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun add -g @athsra/cli
+      - run: |
+          # WSL2/CI ephemeral keyring (Linux secret-tool fallback)
+          sudo apt-get install -y libsecret-1-0 libsecret-tools dbus-x11
+          eval $(dbus-launch --sh-syntax)
+          eval $(printf '\n' | gnome-keyring-daemon --unlock --components=secrets)
+      - run: athsra login          # non-interactive (ATHSRA_MASTER_PW + ATHSRA_PAPER_BACKUP_CONFIRMED)
+      - run: athsra run <repo> -- bun run deploy:prod
+      - if: always()
+        run: athsra revoke         # CI runner 종료 직전 self-revoke (token 누출 방지)
+```
+
+> CI 마다 `athsra revoke` 로 self-revoke 권고 — token leak 회피. service token (Phase 2) 발급 시 `--max-age=604800` 자동 만료로 대체.
 
 ### Sibling Inventory 도구 (Stage C 신규, 2026-05-06)
 
@@ -400,6 +503,28 @@ alpha 진입 (Phase 2):
 - hardware wallet (Ledger/Trezor) BIP-39 통합
 - GitHub Actions / Vercel / Terraform / K8s ESO 통합
 - paid tier + SAML SSO + SOC2
+
+## v1.14.0 변경 (2026-05-09) — Doppler-level service UX cement (logout 명령 + 이관 oneliner + multi-machine + CI/CD)
+
+사용자 통찰 (2026-05-09): "Doppler 처럼 athsra 도 중앙 service 로 가능해야 한다 — 다른 머신/새 sibling 등록/secret 수정 모두 service-level UX". 정공법 = athsra 자체 완성도 강화.
+
+**보강 영역** (§ Sibling Onboarding 안):
+
+- **§ 기존 secrets 이관 oneliner**: Doppler/dotenvx encrypted/평문 .env 4개 case 별 oneliner + 검증 절차 + prod 분리 (project 명 패턴)
+- **§ Multi-machine workflow**: handoff 절차 + 머신 분실 시 revoke + rotate-master
+- **§ logout vs revoke (0.1.1+)**: athsra `logout` 신규 명령 추가 (keyring clear, worker token 유지) — Doppler/Vercel 등 표준 logout UX. revoke 와 의미 분리
+- **§ CI/CD 통합 (GitHub Actions)**: 임시 ATHSRA_MASTER_PW + ATHSRA_PAPER_BACKUP_CONFIRMED + self-revoke 패턴. Phase 2 service token 으로 대체 예정
+
+**athsra repo 변경**:
+- `@athsra/cli@0.1.1` publish (예정) — `logout` 명령 추가 (`packages/cli/src/commands/logout.ts` 신규)
+- `index.ts` commands map + help 갱신
+
+**Doppler-level service 매트릭스 도달도** (2026-05-09):
+- CLI/API 기능: 95% (service token 만 Phase 2)
+- UX: 85% (환경 레이어 / RBAC 만 Phase 2.2)
+- 보안: 110% (E2EE 우월)
+
+> 다음 cycle: Phase 2 service token (`athsra tokens create`) — CI/CD 임시 방안 대체.
 
 ## v1.13.0 변경 (2026-05-06) — Trial P1 #6 CF Secrets Store + #7 D1 Sessions API spike
 

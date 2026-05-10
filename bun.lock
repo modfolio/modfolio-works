@@ -6,7 +6,7 @@
       "name": "modfolio-works",
       "devDependencies": {
         "@biomejs/biome": "^2.4.4",
-        "@modfolio/harness": "2.32.1",
+        "@modfolio/harness": "2.32.2",
         "typescript": "^5.9.3",
       },
     },
@@ -234,7 +234,7 @@
 
     "@modfolio/connect-sdk": ["@modfolio/connect-sdk@5.1.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/5.1.0/0e0704cc24366cf11ea5370161431d450f91c782", { "dependencies": { "jose": "^6.2.1" } }, "sha512-xEXGqLq1764C/cHHAmd2wlzVUEaw1e6vjuNt/6dDshnmbKEy6wrJ1L+10iQcIa4n5j9p564VT+NoA7XrRrO2QQ=="],
 
-    "@modfolio/harness": ["@modfolio/harness@2.32.1", "https://npm.pkg.github.com/download/@modfolio/harness/2.32.1/1a67bce9bf59b1ff77cc6bedba679efcdc3e21d0", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.3.6" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts" } }, "sha512-i0vYSbPm5SDFOW8D31FqwVBSooOzuhGR6MQQi8vEOfRJc2dfrmBvAk/nhpsSBMBiSpVsAlM+2JSsJARW0LYI8Q=="],
+    "@modfolio/harness": ["@modfolio/harness@2.32.2", "https://npm.pkg.github.com/download/@modfolio/harness/2.32.2/92dadbf8d0450bcc42850ea122cdaa3e58c88092", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.3.6" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts" } }, "sha512-7de/RzFe3httL47P9xn3dLrHPkYaY6lXa7WE4aZsmWV7NgO1wVCANSaMXpUb73ABO9zCpP1yvdVhwZ4tKB1PHw=="],
 
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
