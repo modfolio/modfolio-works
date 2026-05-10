@@ -38,6 +38,57 @@ INFO로만 보고. 업그레이드 여부·시점은 이 앱 owner가 자율 결
 
 출력: Package | Installed | Latest | Δ (참고 정보). **PASS/FAIL 판정 아님.**
 
+### Athsra Status (gate 아님 — Phase 0+ 도입)
+
+athsra CLI (modfolio universe v3.0+ secret 표준) 의 환경 검증. canon `secret-store.md` 참조.
+
+`athsra doctor` 출력 요약:
+- config: `~/.athsra/config.json` 존재 + worker URL + machine_id
+- session: 8h cache 유효 또는 expired
+- worker reachable: GET `/healthz` 200 응답
+- projects: R2 list 결과 갯수 + 첫 5개
+
+INFO only (gate 아님):
+```
+Athsra Status:
+  config:       ✓ ~/.athsra/config.json
+  worker:       https://athsra-worker.<account>.workers.dev (or http://localhost:8787)
+  session:      ✓ valid (or ✗ expired — 다음 명령 시 prompt)
+  reachable:    ✓ (or ✗ → wrangler dev/deploy 필요)
+  projects:     N (modfolio-ecosystem, modfolio-connect, ...)
+```
+
+athsra 미설치 시 INFO: "athsra 미설치 — 새 머신 셋업 = `gh repo clone modfolio/athsra && skill secret`".
+
+### Sibling Sync (gate 아님 — modfolio-ecosystem 에서만)
+
+현재 repo 가 `modfolio-ecosystem` 일 때만 실행. 다른 repo 에서는 skip.
+
+`bash scripts/ops/sync-all.sh` (dry-run) 결과를 INFO 로 요약:
+- 23 repo 중 behind > 0 인 것 카운트 (pull 필요)
+- ahead > 0 인 것 카운트 (push 필요)
+- wip > 0 인 것 카운트 (uncommitted)
+
+출력 예:
+```
+Sibling Sync (23 repo):
+  NOOP:           23 (모두 동기화)
+  또는
+  BEHIND:        3 (gistcore, modfolio-pay, …) — bun run sync-all:apply 권고
+  AHEAD:         1 (modfolio-axiom) — git push 권고
+  WIP:           2 (atelier-and-folio, modfolio) — commit/stash 결정
+```
+
+권고 명령: `bun run sync-all:apply` (pull + install) 또는 `bun run handoff:restore`
+(머신 도착 후 종합 복원).
+
+### Handoff Age (gate 아님 — modfolio-ecosystem 에서만)
+
+`knowledge/journal/*-session-handoff-from-*.md` 의 가장 최근 mtime 검사:
+- 7일 이내: ✓ 최근 핸드오프
+- 7일 초과: INFO (이동이 잦은 사용자라면 `bun run handoff:prepare:apply` 권고)
+- 부재: INFO ("아직 handoff journal 없음 — 첫 머신")
+
 ## 판정 기준
 
 - 8개 항목 모두 통과 → "Preflight PASS"

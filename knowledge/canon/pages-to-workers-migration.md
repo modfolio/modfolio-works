@@ -29,7 +29,7 @@ member repo 가 자체 Pages 이관 필요 시 이 문서 순서로 실행.
 - [ ] WSL2 native 환경 (Dev Container bind-mount issue 회피)
 - [ ] `wrangler` 4.84+ (4.82 telemetry prompt hang bug 회피)
 - [ ] `bunx --bun wrangler telemetry disable` 전역 실행
-- [ ] `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` 주입 경로 확보 (dotenvx `.env` 권장, canon `secrets-dotenvx.md`)
+- [ ] `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` 주입 경로 확보 (athsra `<repo>` 권장, canon `secret-store.md` v1.13+)
 - [ ] 해당 repo 의 DNS zone `modfolio.io` 가 CF 에 있음 (custom domain auto-CNAME 조건)
 - [ ] `modfolio-connect` OAuth client 의 `redirect_uris` 편집 권한 (SSO 쓰는 앱이면)
 
@@ -78,7 +78,7 @@ member repo 가 자체 Pages 이관 필요 시 이 문서 순서로 실행.
 ### 2. KV SESSION namespace ID 확보
 
 ```bash
-dotenvx run -f .env -- bunx --bun wrangler kv namespace list > /tmp/kv-list.json
+athsra run <repo> -- bunx --bun wrangler kv namespace list > /tmp/kv-list.json
 # SESSION 관련 namespace id 를 수동 확인 (값은 secret 아님, commit 가능)
 ```
 
@@ -119,7 +119,7 @@ redirect_uris: [
 ### 5. Dry-run deploy
 
 ```bash
-dotenvx run -f .env -- bash -c "cd apps/<app> && bun run build && bunx --bun wrangler deploy --dry-run"
+athsra run <repo> -- bash -c "cd apps/<app> && bun run build && bunx --bun wrangler deploy --dry-run"
 ```
 
 검증: `0 errors` + bindings 목록에 SESSION / IMAGES / 기타 필요 binding 전부 표시.
@@ -127,7 +127,7 @@ dotenvx run -f .env -- bash -c "cd apps/<app> && bun run build && bunx --bun wra
 ### 6. 실제 deploy (custom domain 미부여)
 
 ```bash
-dotenvx run -f .env -- bash -c "cd apps/<app> && bunx --bun wrangler deploy"
+athsra run <repo> -- bash -c "cd apps/<app> && bunx --bun wrangler deploy"
 ```
 
 검증: `curl -I https://<worker>.<account-subdomain>.workers.dev/` → HTTP 200. hang 시 Ctrl-C + telemetry 재확인. workers.dev URL 200 이 확보될 때까지 다음 단계 금지.
@@ -137,7 +137,7 @@ dotenvx run -f .env -- bash -c "cd apps/<app> && bunx --bun wrangler deploy"
 ### 7. 새 도메인 Worker 에 부여
 
 ```bash
-dotenvx run -f .env -- bunx --bun wrangler domains add <new-domain> --name <worker>
+athsra run <repo> -- bunx --bun wrangler domains add <new-domain> --name <worker>
 ```
 
 검증: `dig <new-domain> CNAME` + `curl -I https://<new-domain>/` → 200 (응답 헤더에 `cf-worker` 확인).
@@ -152,7 +152,7 @@ Rollback: `wrangler domains remove <new-domain>` (사용자 트래픽 아직 없
 ### 9. (rename 시) 기존 도메인 Pages 에서 detach
 
 ```bash
-dotenvx run -f .env -- bunx --bun wrangler pages domain remove <project> <old-domain>
+athsra run <repo> -- bunx --bun wrangler pages domain remove <project> <old-domain>
 ```
 
 **다운타임 창 5~30초 시작** — 다음 단계 즉시 실행.
@@ -160,7 +160,7 @@ dotenvx run -f .env -- bunx --bun wrangler pages domain remove <project> <old-do
 ### 10. 기존 도메인 Worker 에 attach
 
 ```bash
-dotenvx run -f .env -- bunx --bun wrangler domains add <old-domain> --name <worker>
+athsra run <repo> -- bunx --bun wrangler domains add <old-domain> --name <worker>
 ```
 
 검증: 두 도메인 모두 200. Rollback: `wrangler pages domain add <project> <old-domain>` (<60s 복구).
@@ -179,7 +179,7 @@ redirect_uris: [
 ### 12. (rename 완전 제거 시) old 도메인 Worker 에서도 제거
 
 ```bash
-dotenvx run -f .env -- bunx --bun wrangler domains remove <old-domain>
+athsra run <repo> -- bunx --bun wrangler domains remove <old-domain>
 ```
 
 이후 `<old-domain>` 은 NXDOMAIN 또는 default CF 404. alias 로 유지할지는 per-app 결정.
@@ -191,7 +191,7 @@ dotenvx run -f .env -- bunx --bun wrangler domains remove <old-domain>
 **Bulk deployment cleanup 절차** (API 기반):
 
 ```bash
-dotenvx run -f .env -- bash -c '
+athsra run <repo> -- bash -c '
   PROJECT="<project>"
   page=1
   while true; do
@@ -219,7 +219,7 @@ dotenvx run -f .env -- bash -c '
 **프로젝트 삭제**:
 
 ```bash
-dotenvx run -f .env -- bunx --bun wrangler pages project delete <project>
+athsra run <repo> -- bunx --bun wrangler pages project delete <project>
 ```
 
 검증: `wrangler pages project list` 에서 미출현.
@@ -278,7 +278,7 @@ dotenvx run -f .env -- bunx --bun wrangler pages project delete <project>
 
 ## 관련 파일
 
-- `knowledge/canon/secrets-dotenvx.md` — CF creds 주입 경로
+- `knowledge/canon/secret-store.md` v1.13+ — CF creds 주입 경로 (athsra)
 - `knowledge/canon/wrangler-standards-2026.md` — wrangler.jsonc 표준 (있는 경우)
 - `knowledge/canon/observability.md` — Workers observability 설정
 - `scripts/ops/cf-*-migrate.sh` — 프로젝트별 migrate 스크립트 (각 repo 에서 작성)

@@ -1,7 +1,7 @@
 ---
 title: Canon INDEX
-version: 1.2.0
-last_updated: 2026-04-26
+version: 1.3.2
+last_updated: 2026-05-04
 sync_to_siblings: true
 applicability: always
 consumers: [preflight]
@@ -42,7 +42,10 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [modern-orchestration-evaluation.md](modern-orchestration-evaluation.md) — Docker/PaaS/mise/Devcontainer 2026-04 평가.
 - [wrangler-standards-2026.md](wrangler-standards-2026.md) — Cloudflare Workers 배포 표준.
 - [operations.md](operations.md) — 계정/운영 전반.
-- [secrets-dotenvx.md](secrets-dotenvx.md) — 시크릿 관리 표준 (Doppler 폐기 후 universe-wide 전환). `applicability: always`.
+- [secret-store.md](secret-store.md) — 시크릿 관리 표준 (athsra v3 — CF Worker + R2 + E2EE). **Phase 2.1 active (npmjs.org `@athsra/cli@0.1.0` public)**. `applicability: always`.
+- [email-domain-aliases.md](email-domain-aliases.md) — 도메인 alias (CF Email Routing + GW Send-as). `applicability: per-app-opt-in`.
+- [totp-microsoft-authenticator.md](totp-microsoft-authenticator.md) — 23 dev 서비스 TOTP 통합 가이드 (M365 Authenticator). `applicability: per-app-opt-in`.
+- [m365-graph-integration.md](m365-graph-integration.md) — Microsoft Graph SDK 통합 표준 (Personal MSA + OAuth refresh token). `applicability: per-app-opt-in`.
 
 ## AI · Context · Cost
 
@@ -74,6 +77,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 
 - [drizzle-conventions.md](drizzle-conventions.md) — Drizzle ORM 규약.
 - [adoption-debt-patterns.md](adoption-debt-patterns.md) — 하네스 adoption 부채 패턴.
+- [db-endpoints.md](db-endpoints.md) — sibling 별 DB endpoint mapping (Neon host + database name + athsra key). 작명 혼동 방지. `applicability: always`.
 
 ## 디자인
 
@@ -145,3 +149,7 @@ CF Workers 비용/지연 분석? → perf-profiler
 - 2026-04-22: design-tokens 한 줄에 DTCG 2025.10 정합 표기 추가 (canon v3.1.0 반영).
 - 2026-04-26: v1.1.0. agentic-engineering.md (Karpathy 프레임) 신규 entry — 원칙/거버넌스 섹션. 43개 canon 전부 `applicability` 분류 완료 (always/per-app-opt-in/doc-only).
 - 2026-04-26: v1.2.0. Skill Decision Tree 에 `/modfolio` 추가 (v2.14.0 신설 — 14 트랙 종결급 진단·계획 메타 skill).
+- 2026-05-03: v1.3.0. secrets-dotenvx → archive (Phase 1 완료). secret-store v1.1 (athsra Phase 1 active, 8 repo dogfood).
+- 2026-05-04: v1.3.1. secret-store v1.5 (athsra Phase 1.x.1 — soft-delete + version history. R2 3-tier layout. 5 신규 명령. 운영 무결성 마지막 hole 메움).
+- 2026-05-04: v1.3.2. secret-store v1.6 (athsra Phase 2.1 — npmjs.org publish `@athsra/cli@0.1.0` + `@athsra/crypto@0.1.0` MIT public. 외부 alpha 진입 hurdle 제거).
+- 2026-05-07: v1.4.0. **db-endpoints.md** 신규 — sibling 별 DB endpoint mapping 표 (작명 혼동 방지). modfolio (parent) 의 Neon DB 명이 `press` 로 작명 → repo `modfolio-press` 와 시각 충돌 사용자 보고. canon + ecosystem.json `infrastructure[].db` 객체 schema 동시 cement (P0.0 cycle).

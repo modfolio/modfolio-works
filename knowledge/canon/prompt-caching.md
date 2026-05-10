@@ -397,6 +397,27 @@ def summarize_in_fork(parent_system, parent_tools, messages):
     )
 ```
 
+### 7.5 Sibling 별 적용 위치 매핑 (Stage A.2 B-1)
+
+modfolio universe 의 어느 sibling 이 어느 path 에서 Anthropic SDK 를 호출하는지 추적. `prompt-cache-audit.ts` 의 INFO advisory 가 sibling 의 정확한 path 를 가리킴 (Stage A.2 B-2 의 placement 분류 후):
+
+| sibling | path | 권장 패턴 | 비고 |
+|---|---|---|---|
+| gistcore | `src/lib/tts/**` | **A** (system prompt) | TTS 발음 평가 rubric 15KB+ — `PRONUNCIATION_RUBRIC` system caching |
+| fortiscribe | `src/lib/grading/**` | **A** (system prompt) | grading rubric + few-shot examples |
+| modfolio-pay | `src/lib/invoice/**` | **C** (긴 document) | invoice 텍스트 RAG, image base64 + extraction prompt |
+| keepnbuild | (LLM 도입 시점) | **D** (tool 끝) | tool-heavy workflow 예상 |
+| modfolio-axiom | (LLM 도입 시점) | (TBD) | dashboard summary 등 후보 |
+| 잔존 sibling | (LLM 도입 시점) | (TBD) | canon § "Sibling Onboarding" (secret-store v1.8.0) 의 athsra 가이드와 합성 |
+
+**주의**: 본 표는 ecosystem 차원의 추적용이며, sibling 의 실제 코드 경로 변경은 sibling owner 자율 (Hub-not-enforcer). `prompt-cache-audit.ts` 의 INFO advisory 가 placement (inSystem / inMessages / inTools / topLevel) 분포로 패턴 추정 → 위 표와 cross-check.
+
+**해석 가이드**:
+- `inSystem` 우세 → Pattern A 사용 중 (system prompt 캐싱)
+- `inMessages` 우세 → Pattern B (멀티턴) 또는 C (긴 RAG)
+- `inTools` 우세 → Pattern D (tool 정의 끝)
+- `topLevel` > 0 → 자동 배치 (마지막 cacheable block 에 부착, 4 breakpoint 중 1 슬롯 자동 소모)
+
 ---
 
 ## 8. Anti-patterns (반드시 피할 것)
@@ -424,6 +445,36 @@ Claude API SDK 를 직접 호출하는 member repo (gistcore, fortiscribe, modfo
 - [ ] `cache_read / total ≥ 70%` 목표 달성 중인가?
 - [ ] fork/subagent 호출 시 parent prefix 를 바이트 수준 재사용하는가?
 - [ ] Opus 4.7 로 모델 변경 시 첫 호출 premium 을 감안한 cost 재계산이 되었는가?
+- [ ] `prompt-caching.md` §7 패턴 (A 큰 system / B 멀티턴 / C 긴 RAG / D Tool 끝) 중 어느 것을 사용 중인지 declare 가능한가?
+
+## 9.1 modfolio-ecosystem 자체 `.claude/` 자산 체크리스트 (Stage A.2 신규)
+
+`.claude/agents/*.md` (20) + `.claude/rules/*.md` (14) + `.claude/skills/*/SKILL.md` (42) + `knowledge/canon/*.md` (47) 는 Claude Code 가 자동 caching 한다 (§5). 자동 caching 이 정상 작동하려면 본 자산 본문이 "stable" (변동 token 없음) 해야 한다.
+
+**Stability 위반 패턴** (각 매 호출 변동 = cache invalidate 트리거):
+
+- [ ] `Date.now()`, `new Date()`
+- [ ] `crypto.randomUUID()`, `uuid()`, `Math.random()`
+- [ ] `process.env.SESSION_*`, `${SESSION_ID}`, `${REQUEST_ID}`
+- [ ] `${...timestamp...}` 같은 template literal
+
+**검증 명령**:
+
+```bash
+bun run scripts/evolve/diagnose-current.ts --json | jq '.agents.stabilityFlags'
+# 또는 grep:
+grep -rEn "Date\.now\(\)|new Date\(|Math\.random\(\)|crypto\.randomUUID\(\)" .claude/agents/ .claude/rules/ CLAUDE.md
+```
+
+→ **모두 0 이어야 정상**. > 0 이면 해당 자산 본문 검토 + 변동 token 제거.
+
+**모범 패턴**:
+- 변동 데이터 (timestamp, request id, session token) 는 **본문 inline 금지** — agent 호출 시 Tool 결과로 받음
+- canon/rule reference 는 file path 만 기록 (inline 복사 금지) → §3.1 stability-order 정합
+
+**Stage A.2 (2026-05-06) 첫 dogfood 검증 결과**: 20 agent + 14 rule + CLAUDE.md 모두 `stabilityFlags: { dateNow: 0, uuid: 0, perSessionToken: 0 }` ✓ (`scripts/evolve/diagnose-current.ts` 출력 기준).
+
+`attention-budget.md` § "modfolio universe 의 attention budget 위반 패턴" 과 직접 정합.
 
 ---
 

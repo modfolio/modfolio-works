@@ -2,6 +2,8 @@
 description: 5-Gate 자동 품질 파이프라인. Playwright + axe-core + 토큰 준수 + 시각적 구분 가능성
 model: claude-opus-4-7
 effort: high
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 skills:
   - design-tokens
   - ui-quality-gate

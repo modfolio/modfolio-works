@@ -10,7 +10,7 @@
  * commands silently failed on member projects using a native Windows shell.
  */
 
-import { execSync } from "node:child_process";
+import { execSync, type SpawnSyncOptions, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { stdin } from "node:process";
@@ -218,4 +218,54 @@ export function changedFiles(cwd: string): string[] {
 	} catch {
 		return [];
 	}
+}
+
+/**
+ * Bun 동기 sleep — Atomics.wait spec 으로 모든 runtime (Bun, Node.js, Deno) 호환.
+ * SharedArrayBuffer 의 Int32Array 0 위치를 0 과 비교 → 항상 timeout 분기 → ms 후 반환.
+ * setTimeout 은 microtask 큐에 등록 → for-loop 동기 흐름 차단 X (race 잔존).
+ * spawnSync child 와 deadlock 무관 (자기 worker 의 wait, child 와 별개).
+ */
+function sleepSync(ms: number): void {
+	const buf = new SharedArrayBuffer(4);
+	const view = new Int32Array(buf);
+	Atomics.wait(view, 0, 0, ms);
+}
+
+/**
+ * spawnSync + 1 회 retry. svelte-kit `.svelte-kit/types/...` race 발생 시
+ * (typecheck 가 .svelte-kit/types 가 아직 build 중인데 stat → ENOENT) 100ms 대기
+ * 후 1 회 재시도. 일반 ENOENT (e.g. node_modules 부재) 는 retry 무의미 → 명시
+ * svelte-kit 패턴만 매치. max retry 1 — 무한 루프 방지.
+ *
+ * 정공법 — race 해소 root cause = svelte-kit sync 가 비동기 file 생성 중. 짧은
+ * wait 으로 충분. 100ms 후에도 잔존하면 실 build 에러 → typecheck 가 자체 진단.
+ */
+export function spawnSyncWithSvelteKitRetry(
+	cmd: string,
+	args: readonly string[],
+	options: SpawnSyncOptions,
+) {
+	const result = spawnSync(cmd, args, options);
+	if (result.status === 0) return result;
+	const stderr = result.stderr?.toString() ?? "";
+	const isSvelteKitRace =
+		/\.svelte-kit\/.*ENOENT|ENOENT.*\.svelte-kit\/|svelte-kit.*not found|Cannot find module.*\.svelte-kit/.test(
+			stderr,
+		);
+	if (!isSvelteKitRace) return result;
+	sleepSync(100);
+	return spawnSync(cmd, args, options);
+}
+
+/**
+ * svelte-kit 사용 sibling 검출 — typecheck 직전 svelte-kit sync 사전 호출 시 사용.
+ * svelte.config.{js,ts} 존재 = svelte-kit project (Astro 등 sibling 은 svelte
+ * 만 dep, config 없음).
+ */
+export function isSvelteKitProject(projectRoot: string): boolean {
+	return (
+		existsSync(join(projectRoot, "svelte.config.js")) ||
+		existsSync(join(projectRoot, "svelte.config.ts"))
+	);
 }

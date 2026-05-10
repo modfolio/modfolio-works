@@ -2,6 +2,8 @@
 description: 페이지 레이아웃 생성기. Brand Passport + 토큰 팔레트 기반. 에스컬레이션 — design-engineer
 model: claude-opus-4-7[1m]
 effort: max
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 skills:
   - layout-patterns
   - design-tokens

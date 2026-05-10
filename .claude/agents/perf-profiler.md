@@ -2,6 +2,8 @@
 description: CF Workers cost/latency 프로파일. N+1 쿼리 + R2/D1 비용 분석. 읽기 전용
 model: claude-opus-4-7
 effort: high
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 disallowedTools:
   - Edit
   - Write

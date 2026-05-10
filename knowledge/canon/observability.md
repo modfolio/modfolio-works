@@ -1,8 +1,8 @@
 ---
 title: Observability
-version: 1.4.0
-last_updated: 2026-04-24
-source: [.claude/skills/observability/SKILL.md, templates/observability/signoz-llm-dashboard.json]
+version: 1.5.0
+last_updated: 2026-05-06
+source: [.claude/skills/observability/SKILL.md, templates/observability/signoz-llm-dashboard.json, Phase 4.2 Trial P1 #10 OTel GenAI semconv spike (tech-trends-2026-05.md)]
 sync_to_siblings: true
 applicability: per-app-opt-in
 consumers: [observability, deploy]
@@ -12,6 +12,55 @@ consumers: [observability, deploy]
 
 > 앱 코드에 벤더 SDK 금지. wrangler.jsonc + CF Automatic Tracing만 사용. OTLP 표준.
 > LLM 호출을 가진 Worker 는 예외 — `@microlabs/otel-cf-workers` 를 써서 OTel GenAI semconv 로 `gen_ai.*` 를 span 에 붙인다 (아래 §GenAI Semantic Conventions).
+
+## v1.5.0 변경 (2026-05-06) — GenAI semconv dual-emit 명시
+
+OpenTelemetry GenAI Semantic Conventions 가 experimental 상태이지만 Datadog v1.37 / SigNoz native 지원 시작. 안정화 전 **dual-emit** 채택 (정공법 4원칙 — 신기술 포텐셜 감안).
+
+### 환경변수 (Worker)
+
+```jsonc
+// wrangler.jsonc
+"vars": {
+  "OTEL_SEMCONV_STABILITY_OPT_IN": "gen_ai_latest_experimental",
+  // dual-emit: 기존 "ai.*" + 신규 "gen_ai.*" 동시 발행 → vendor 호환
+  "OTEL_EXPORTER_OTLP_ENDPOINT": "http://otel.mod-ai.localhost"  // 예시
+}
+```
+
+### Span attributes (LLM 호출 시)
+
+| 속성 | 예시 | 비고 |
+|---|---|---|
+| `gen_ai.system` | `"anthropic"` / `"openai"` / `"vertex_ai"` | provider |
+| `gen_ai.request.model` | `"claude-opus-4-7"` | request model |
+| `gen_ai.response.model` | `"claude-opus-4-7"` | actual responding model (variant 포함) |
+| `gen_ai.usage.input_tokens` | `1234` | request tokens |
+| `gen_ai.usage.output_tokens` | `567` | response tokens |
+| `gen_ai.request.temperature` | `0.7` | request param |
+| `gen_ai.response.finish_reasons` | `["stop"]` | array — 다중 stream 지원 |
+| `gen_ai.tool.call.id` | `"call_abc123"` | tool use id |
+| `gen_ai.cache.input_tokens` | `512` | prompt caching hit (Anthropic 확장) |
+
+### Sibling 적용 권고
+
+| sibling | LLM 호출 위치 | 우선순위 |
+|---|---|---|
+| modfolio-connect | AI assistant (SSO copilot) | 높음 — user-facing latency |
+| modfolio-pay | pricing-optimizer agent | 중간 — billing impact |
+| modfolio-ecosystem | 14 agent LLM 호출 | 중간 — dev observability |
+| modfolio-app | conversational hub | 높음 — UX 직격 |
+| 기타 sibling | 본 LLM 호출 sibling 자율 | Hub-not-enforcer |
+
+### 마이그 path
+
+1. `@microlabs/otel-cf-workers` 또는 `@opentelemetry/instrumentation-anthropic-vertex` 도입
+2. wrangler.jsonc 에 `OTEL_SEMCONV_STABILITY_OPT_IN=gen_ai_latest_experimental` 추가
+3. SDK 호출 시 span attribute 추가 (instrumentation 자동 또는 수동 attribute)
+4. SigNoz / Datadog dashboard 에서 `gen_ai.*` filter 검증
+5. 안정화 후 `OTEL_SEMCONV_STABILITY_OPT_IN` 제거 (default = stable)
+
+**status (2026-05-06)**: Trial P1 #10 → **Adopt-1-sketched** (tech-trends-2026-05.md). 실 dual-emit cement 는 LLM 호출 sibling 별 자율 시점.
 
 ## 아키텍처
 
@@ -271,7 +320,7 @@ service:
 
 **핵심 결정**:
 - **두 pipeline** — SigNoz 본선 + Langfuse 복제. `filter/genai_only` 로 Langfuse 는 GenAI span 만 받게 해 Langfuse 저장 비용 최소화.
-- **auth 는 env 주입** — `LANGFUSE_OTLP_BASIC_AUTH=base64(pk-lf-xxx:sk-lf-xxx)` 를 dotenvx (canon `secrets-dotenvx` v2.0+) 또는 잔존 Doppler 에서 주입. Collector 설정 파일에 평문 금지.
+- **auth 는 env 주입** — `LANGFUSE_OTLP_BASIC_AUTH=base64(pk-lf-xxx:sk-lf-xxx)` 를 athsra (canon `secret-store.md` v1.13+) 또는 wrangler secret prod 에서 주입. Collector 설정 파일에 평문 금지.
 - **gzip 압축** — GenAI span 은 messages 포함 시 payload 큼. gzip 으로 대역폭/비용 절감.
 - **CF Workers 직접 export 회피** — Collector 를 중간에 둠. CF Workers `fetch` 한계 (subrequest quota), 인증 갱신 중앙화, fan-out 정책 변경 시 앱 재배포 불필요.
 
@@ -295,4 +344,4 @@ curl -s http://otelcol:8888/metrics | grep otelcol_exporter_sent_spans
 - **Error rate** — `error.type` 이 set 된 span count / total span count
 - **Cost by operation** — `gen_ai.operation.name` 별 input/output 토큰 × 단가 (Collector 에서 transform processor 로 `gen_ai.cost.usd` attribute 추가 권장)
 
-각 panel 은 `gen_ai.provider.name` filter 지원 (anthropic/openai/azure 분리 보기). member repo 는 자체 dotenvx `.env` (또는 잔존 Doppler) 의 Langfuse/SigNoz endpoint 로 adjust 만 하면 재사용 가능.
+각 panel 은 `gen_ai.provider.name` filter 지원 (anthropic/openai/azure 분리 보기). member repo 는 자체 athsra (canon `secret-store.md` v1.13+) 의 Langfuse/SigNoz endpoint 로 adjust 만 하면 재사용 가능.

@@ -11,12 +11,23 @@
  * in `.claude/harness-lock.json`. Default mode is `warn` (log only).
  *
  * On gate failure we exit 2 so Claude Code cancels the commit.
+ *
+ * OWASP Agentic 2026 매핑:
+ *   - ASI02 Tool Misuse — quality gate 강제 + --no-verify 차단 (canon agent-governance.md ASI02)
+ *   - ASI04 Supply Chain — ts_ignore_or_any PATTERN 차단으로 정공법 정합
+ *   - ASI06 Memory Poisoning — 패턴 history 추적 (PATTERN_HISTORY_MODE) 으로 anomaly 검출
  */
 
 import { execSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { bashCommand, DETECTOR_SOURCE_FILES, readHookInput } from "./_lib.ts";
+import {
+	bashCommand,
+	DETECTOR_SOURCE_FILES,
+	isSvelteKitProject,
+	readHookInput,
+	spawnSyncWithSvelteKitRetry,
+} from "./_lib.ts";
 
 const input = await readHookInput();
 const cmd = bashCommand(input);
@@ -175,10 +186,25 @@ if (isWindowsWslRepo) {
 	process.exit(0);
 }
 
+// svelte-kit sibling 이면 typecheck 단계 직전에 svelte-kit sync 사전 호출 (race 회피).
+// .svelte-kit/types/src/routes/proxy+layout.server.ts 가 아직 build 중인데 typecheck
+// 가 stat → ENOENT 회귀 (modfolio-pay / modfolio-press WSL2 보고).
+const projectRoot = process.cwd();
+const isSvelteKit = isSvelteKitProject(projectRoot);
+
 for (const step of steps) {
 	// Bun 명령은 process.execPath (현재 hook 실행 중인 bun 자체) 로 강제.
 	const cmd = step[0] === "bun" ? process.execPath : (step[0] as string);
-	const run = spawnSync(cmd, step.slice(1), {
+	const isTypecheck = step.includes("typecheck") || step.includes("check");
+	if (isSvelteKit && isTypecheck) {
+		// svelte-kit sync — `.svelte-kit/types/` 생성 wait. exit !== 0 면 진행 (typecheck 가 자체 진단).
+		spawnSync(process.execPath, ["x", "svelte-kit", "sync"], {
+			stdio: "inherit",
+			env: sanitizedEnv,
+			shell: process.platform === "win32",
+		});
+	}
+	const run = spawnSyncWithSvelteKitRetry(cmd, step.slice(1), {
 		stdio: "inherit",
 		env: sanitizedEnv,
 		// Windows needs shell:true so the OS resolves `bun` via PATHEXT /

@@ -1,8 +1,8 @@
 ---
 title: Local Dev Infra — mod-ai-toolkit v2 Tier 1
-version: 1.0.0
-last_updated: 2026-04-17
-source: [Harness v2.4 Phase 4, C:/Projects/mod-ai-toolkit]
+version: 1.1.0
+last_updated: 2026-04-27
+source: [Harness v2.4 Phase 4, C:/Projects/mod-ai-toolkit, ecosystem-level dev port 할당 보강 2026-04-27 (m365-auth-init signoz 8080 충돌 정공법 해소)]
 sync_to_siblings: true
 applicability: always
 consumers: [preflight]
@@ -84,6 +84,22 @@ MEILISEARCH_API_KEY=<from .env master key>
 | Meilisearch | `http://meili.mod-ai.localhost` | full-text search | master key |
 | MCP Gateway | `http://mcp.mod-ai.localhost` | MCP aggregator | (config.yaml) |
 | Temporal UI | `http://temporal.mod-ai.localhost` | workflow 관찰 | (none) |
+| SigNoz | `localhost:8080` | observability self-host (toolkit observability profile) | (none) |
+
+## ecosystem-level dev port 할당 (member repo CLI/dev server 용, 2026-04-27 v1.1.0)
+
+mod-ai-toolkit 의 docker compose 가 `8080`/`5432`/`6379`/`1025`/`8025` 같은 흔한 port 를 차지하므로, ecosystem 의 member repo CLI/dev server 는 **18000 대역 high port** 를 사용한다 (toolkit dashboard `18180` 와 같은 영역). 충돌 방지 + grep 으로 식별 용이.
+
+| Port | 용도 | 출처 |
+|------|------|------|
+| 18180 | mod-ai-toolkit dashboard | toolkit (Phase 4) |
+| **18181** | **m365-auth-init OAuth callback** | `scripts/ops/m365-auth-init.ts` (Phase 3 prereq) |
+| 18182~18189 | reserved (향후 ecosystem CLI 용) | — |
+
+**규칙**:
+- 신규 dev server / OAuth callback / inspector 등은 `18180` 영역에서 다음 빈 번호 채택 + 본 표 갱신
+- 8080 / 3000 / 5000 / 5173 같은 conventional port 는 채택 금지 (mod-ai-toolkit 또는 다른 dev tool 충돌 잦음)
+- Azure App Registration 의 redirect URI 도 본 표와 정합 (canon `m365-graph-integration` § Microsoft Entra App Registration)
 
 ## 프로덕션 매핑
 

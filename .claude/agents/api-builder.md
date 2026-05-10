@@ -2,6 +2,8 @@
 description: API 엔드포인트 생성기. 프레임워크별 라우팅 + Zod 검증 + JWT 인증
 model: claude-opus-4-7
 effort: max
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 skills:
   - api
   - ai-patterns

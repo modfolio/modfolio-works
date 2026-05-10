@@ -80,4 +80,4 @@ SSO 연동 상세: `/sso-integrate` skill 참조.
 - **Quality Gate** (필수): `bun run check && bun run typecheck` (커밋 전)
 - **Git 안전**: `--force`, `--no-verify` 금지. 민감정보 커밋 금지
 - **CF 배포**: Workers Builds (GitHub 연동). Pages → Workers 마이그레이션 완료. 상세: `/deploy`
-- **시크릿**: 프로젝트별 독립. **dev = dotenvx** (암호화 `.env` + `.env.keys` 1Password 백업, canon `secrets-dotenvx` v2.0+), **prod = CF Workers Secrets / Pages env / Secret Store** (네이티브 binding). Doppler 는 2026-04-25 폐기, 전환 대기 repo 만 일시 유지. 상세: `/ops` skill.
+- **시크릿**: 프로젝트별 독립. **dev = athsra v3** (CF Worker R2 ciphertext + master phrase + Bearer token, canon `secret-store.md` v1.13+), **prod = CF Workers Secrets / Pages env / Secret Store** (네이티브 binding). Doppler/dotenvx 는 2026-05-02 폐기 (historical), 잔존 미전환 repo 만 일시 호환. 상세: `/ops` skill.

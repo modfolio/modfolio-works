@@ -2,6 +2,8 @@
 description: Drizzle ORM 스키마/마이그레이션 생성기. 생태계 prefix + helper 준수
 model: claude-opus-4-7
 effort: max
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 skills:
   - schema
   - drizzle-patterns

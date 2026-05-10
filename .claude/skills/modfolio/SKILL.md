@@ -49,7 +49,7 @@ ExitPlanMode → 자동 실행 (분할 commit 까지)
 4. **stack-evergreen** — Bun/TS/Biome/Zod/wrangler 버전
 5. **effort-policy** — `CLAUDE_CODE_EFFORT_LEVEL=max` + agent effort 분포
 6. **feedback-cycle** — 마지막 send 시점 + pending 변경
-7. **secrets-ops** — dotenvx + `.env.keys` 0600 + `.gitignore` 정합
+7. **secrets-ops** — athsra `<repo>` 등록 + `.gitignore` 정합 + 평문 `.env` 부재 (canon `secret-store.md` v1.13+)
 
 ### 추가 7
 
@@ -60,6 +60,17 @@ ExitPlanMode → 자동 실행 (분할 commit 까지)
 12. **external-signal** — CF 배포, bun outdated, gh issue/PR (GH Actions 제외)
 13. **ecosystem-rollup** — 22 sibling 채택률 + 가장 뒤쳐진 repo (ecosystem 모드)
 14. **hook-integration** — SessionEnd 자동 호출, 24h 미실행 알림
+
+### 추가 트랙 (canon `attention-budget.md` v1.0+ 기반)
+
+15. **context-budget** — agent system prompt 평균 길이 / cache_control 적용률 / canon 누적 read 패턴. 정공법 3원칙 ("장기 시야") 의 정량 측정.
+    - 측정: `cache_control 적용률` (현 0/20 = P0 위반) / `agent prompt 평균 token` / `canon 분할 권장` (5KB+ canon)
+    - 권장 한계 (canon `attention-budget.md` § "측정 메트릭"):
+      - cache hit rate > 50% (장시간) / > 80% (multi-agent reuse)
+      - agent prompt < 5K (작은 agent) / < 15K (전문 agent)
+      - canon < 5 회 read/세션 (초과 시 분할 또는 cache)
+    - 위반 발견 시 → P0 plan 자동 작성 (plan mode 안)
+    - 측정 도구: `scripts/evolve/diagnose-current.ts` 의 `cache_control` 적용률 (Phase 2 별도 plan 으로 `scripts/budget/*` 추가)
 
 ## 위치 감지
 

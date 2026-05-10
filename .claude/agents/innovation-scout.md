@@ -2,6 +2,8 @@
 description: 기술 스택 최신성 + 혁신성 감사. Stability Filter + deprecated API 탐지
 model: claude-haiku-4-5-20251001
 effort: medium
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 skills:
   - audit
   - ecosystem

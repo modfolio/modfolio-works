@@ -1,8 +1,8 @@
 ---
-title: Cost Attribution — LiteLLM + Langfuse + CF Workers
-version: 1.1.0
-last_updated: 2026-04-22
-source: [Harness v2.4 Tier 1, LiteLLM spend API, Langfuse datasets, OTel GenAI semconv v1.37+]
+title: Cost Attribution — LiteLLM + Langfuse + CF Workers + Excel monthly dashboard
+version: 1.2.0
+last_updated: 2026-04-27
+source: [Harness v2.4 Tier 1, LiteLLM spend API, Langfuse datasets, OTel GenAI semconv v1.37+, Phase 3 B-5 Excel cost dashboard 자동화 2026-04-27]
 sync_to_siblings: true
 applicability: always
 consumers: [preflight]
@@ -266,6 +266,38 @@ export default instrument({ fetch: handler }, config);
 - 단일 앱 월 > $50 → 조사
 - 전체 생태계 월 > $200 → 최적화 스프린트
 
+## B-5 Excel cost dashboard 자동화 (v1.2.0, 2026-04-27)
+
+위 매트릭스를 매월 1회 자동 fetch + Excel 워크북 update — Phase 3 B-5 구현.
+
+**구조**:
+- 워크북: OneDrive `Apps/modfolio/cost-dashboard.xlsx`
+- 시트:
+  - `monthly` Table — long-format 시계열 (PK = month + source + metric). upsert
+  - `summary` 시트 — 사용자 측 pivot/formula
+  - `errors` Table — 부분 실패 시 row append
+- contracts: `contracts/cost/source.ts` (`CostRowSchema`, `CostErrorSchema`)
+- runner: `apps/cost-dashboard/src/runner.ts` — Worker scheduled handler / Bun 로컬 entry 둘 다 호출
+- Bun 로컬: `athsra run modfolio-ecosystem -- bun run scripts/ops/cost-dashboard.ts [--month=YYYY-MM] [--dry-run]`
+- CF Worker scheduled (B-5.6): 월 1회 1일 03:00 UTC. 누락 허용도 낮음 + host on/off 무관
+
+**Sources** (3 + 향후 확장):
+- `cf` — Cloudflare GraphQL Analytics (`/client/v4/graphql`). Workers requests + subrequests + errors + cpu_time P99 quantile
+- `neon` — Neon REST `/api/v2/projects/{id}` (cumulative). monthly delta 는 Excel formula 로 직전 row 와 차이 계산. account-level `consumption_history` 는 `NEON_ORG_ID` 명시 시 향후 채택
+- `resend` — Resend REST `/emails` (paginated). 발송 수 + Free/Pro tier 단가 적용
+
+**Idempotency**: `month + source + metric` PK 로 upsert. CF cron at-least-once 보장 + 재실행 누적 방지.
+
+**부분 실패 정책**: source 별 try/catch — 한 source 실패해도 다른 source 진행. 실패는 `errors` 시트에 누적 + (향후) Resend 알림.
+
+**가격 hardcode**: 각 source 모듈 (`cf.ts`/`neon.ts`/`resend.ts`) 의 가격 상수. **가격 정책 변동 시 source 모듈 + 본 canon 동시 갱신**.
+
+**미해결 (B-5.6 + 후속)**:
+- CF Worker scheduled deploy 는 별도 commit (B-5.6) — wrangler.jsonc + scheduled handler + secret put
+- Neon `consumption_history` 정확한 monthly break-down — `NEON_ORG_ID` 사용자 추가 후 endpoint 변경
+- CF CPU time sum (현재 P99 quantile 만) — `cpuTimeAdaptiveGroups` dataset 채택 검토
+- Resend 가격 정책 fine-tune — Pro tier 초과 단가 ($1/K 추정) 확인
+
 ## 비용 delta 조사
 
 월간 비용 급증 발견 시 perf-profiler agent 호출:
@@ -293,4 +325,6 @@ export default instrument({ fetch: handler }, config);
 ## 갱신 이력
 
 - 2026-04-17: v1.0.0 초판. LiteLLM virtual key + Langfuse metadata 전략 명문화.
+- 2026-04-22: v1.1.0. CF Workers 비용 매핑 + 비용 delta 조사 + Anti-patterns 추가.
+- 2026-04-27: v1.2.0. § B-5 Excel cost dashboard 자동화 추가 (Phase 3 B-5 구현). CF/Neon/Resend monthly fetch + Excel upsert + idempotency.
 - 2026-04-22: v1.1.0 — OTel GenAI semconv v1.37+ 기반 비용 계산 섹션 추가. `gen_ai.system` → `gen_ai.provider.name` breaking change 반영. `gen_ai.usage.cost` 는 표준 속성이 아님을 명시하고 consumer-side 계산 함수 + CF Worker 예시 코드 추가.

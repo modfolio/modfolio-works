@@ -2,6 +2,8 @@
 description: 지식베이스 검색/요약. 읽기 전용
 model: claude-haiku-4-5-20251001
 effort: medium
+cache_control: { type: "ephemeral", ttl: "1h" }
+governance: owasp-agentic-2026
 disallowedTools:
   - Edit
   - Write

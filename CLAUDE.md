@@ -45,6 +45,7 @@
 | GistCore | 0.5.0-subscription-design | active |
 | Fortiscribe | 0.2.0-sso | landing |
 | Atelier and Folio | 0.2.0-folio-core | active |
+| PD Guide | 0.1.0 | scaffolded |
 
 ## 프로젝트 지식
 
@@ -83,6 +84,7 @@
 - **다음**: 디자인 고도화, 하위 앱 상태 연동 (health check)
 
 <!-- ECOSYSTEM_END -->
+
 
 
 
