@@ -1,11 +1,11 @@
 ---
 title: Prompt Caching Strategy — 1h vs 5m TTL
-version: 1.1.0
-last_updated: 2026-05-06
-source: [Claude Code v2.1.108 ENABLE_PROMPT_CACHING_1H, Harness v2.4, Stage A.2 cache_control rollout 2026-05-06 (modfolio-ecosystem 자산 매핑 + 측정 path)]
+version: 1.2.0
+last_updated: 2026-05-13
+source: [Claude Code v2.1.108 ENABLE_PROMPT_CACHING_1H, Harness v2.4, Stage A.2 cache_control rollout 2026-05-06 (modfolio-ecosystem 자산 매핑 + 측정 path), harness v2.34 P0.2 (context-engineering 정합 + Multi-Agent Research 연계)]
 sync_to_siblings: true
 applicability: per-app-opt-in
-consumers: [preflight, harness-evolve, modfolio]
+consumers: [preflight, harness-evolve, modfolio, multi-review, generate-review, context-engineering]
 ---
 
 <!--
@@ -111,11 +111,36 @@ LiteLLM proxy 에서 cost delta 로 확인 가능 (cache read 는 90% 저렴). A
 - `lastUpdated` 필드만 바꾸려고 canon 매일 touch → 1h cache 무력화. 실제 내용 변경 없을 때는 `last_updated` 갱신 자제.
 - session 시작 직전 skill/agent 대량 수정 → 첫 turn cache 전부 miss.
 
+## Context Engineering 정합 (v1.2 추가)
+
+본 canon 의 "1h 후보 = stable token, 5m = 변동 token" 분류는 [context-engineering.md](context-engineering.md) §"System Prompt 설계" 의 **stability-order 원칙** 과 직접 정합:
+
+- system prompt 가 stable 해야 1h cache 작동 (per-session token interpolate 금지)
+- tool 정의가 startup lock 이어야 cache hit (§3.3 silent invalidator 회피)
+- canonical example 이 명시 정렬되어야 prefix 결정성 유지
+
+즉 caching 정책 위반 = context engineering 설계 위반의 외부 증상. 두 canon 은 같은 원칙의 두 시점 (caching = 운영, context-engineering = 설계).
+
+### Multi-Agent Research pattern 연계 (v2.35 P1.5 frame)
+
+Multi-Agent Research 3-tier (Lead Planner → Generator → Evaluator) 각각이 자기 sub-agent system prompt 를 가짐. 본 canon 의 1h TTL 정책이 sub-agent system 에도 적용:
+
+- **Lead Planner** system prompt — frozen, 1h TTL (orchestration role 변경 빈도 < 분기)
+- **Generator** system prompt — 1h TTL (task domain 별 고정)
+- **Evaluator** system prompt — 1h TTL (critique criteria 고정)
+
+3-tier 각 sub-agent fork 시 parent prefix 의 바이트 동일 재사용 ([prompt-caching.md](prompt-caching.md) §7.4 fork/subagent pattern) 준수 필수.
+
 ## 관련 문서
 
+- [context-engineering.md](context-engineering.md) — system / tool / examples 설계 패턴 (본 canon = 운영, context-engineering = 설계)
+- [attention-budget.md](attention-budget.md) — 측정 메트릭 (cache hit rate 가 핵심 메트릭)
 - [context-isolation.md](context-isolation.md) — 격리된 세션 간에도 canon cache는 공유됨
 - [cost-attribution.md](cost-attribution.md) — cache hit rate × 요금 모델 = 실제 비용
+- [multi-agent-research-pattern.md](multi-agent-research-pattern.md) — 3-tier 패턴 (v2.35 신설 예정)
 
 ## 갱신 이력
 
 - 2026-04-17: v1.0.0 초판. `ENABLE_PROMPT_CACHING_1H` 정책 명문화. cache_read ≥ 70% 목표 수치 설정.
+- 2026-05-06: v1.1.0. Stage A.2 cache_control rollout — modfolio-ecosystem 자산 매핑 (1h 약 120 항목) + 측정 path (cache-hit-report.ts 신설).
+- 2026-05-13: v1.2.0. context-engineering canon 분리 정합 + Multi-Agent Research 3-tier sub-agent caching 가이드 추가 (P1.5 frame). harness v2.34 P0.2.

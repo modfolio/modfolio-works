@@ -97,3 +97,28 @@ bun run health-check
 
 - **수동**: 큰 마일스톤 후 (새 앱 추가, 마이그레이션 완료 등)
 - **자동**: ecosystem-auditor sub agent로 실행 가능
+
+## /goal 모드 — 자율 반복 정합화 (2026-05+, v2.0 dogfood Adopt P0 #6)
+
+ecosystem.json 정합성 위반 0 을 binary 종료 조건으로 자율 반복:
+
+```
+/goal ecosystem.json 정합성 위반 0건 (bun run audit:delta 통과)
+```
+
+- 매 turn `bun run audit:delta` 평가
+- 위반 발견 시 자동 fix (정공법 — feedback-collect / version-sync / 직접 수정)
+- 0 위반 도달 시 자동 종료
+
+### 자율 반복 4 도구 조합 (v2.35 P1.4, 2026-05-13)
+
+| 시나리오 | 도구 |
+|---|---|
+| 일회성 binary 정합화 (위반 0 도달) | `/goal ecosystem.json 위반 0건` |
+| 매일 09시 정기 audit | `/schedule create daily` (cron-prompts.ts daily) |
+| 인터벌 audit polling | `/loop 30m bun run audit:delta` |
+| 7-step audit recovery ritual | `/ralph-loop "audit + fix + verify ..." --max-iterations 7` |
+
+canon `agentic-engineering.md` §2.1 의 책임 분리 표 참조.
+
+source: `~/.claude/plans/20260513-evolve-goal-command.md`, `~/.claude/plans/crystalline-sparking-sky.md` (P1.4)

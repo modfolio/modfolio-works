@@ -48,6 +48,19 @@ user-invocable: true
 
 **권장 2단계**: PR 단계 `/ultrareview` (범용) → 머지 직전 `/generate-review` (Modfolio 도메인). **병용이지 대체 아님**.
 
+## Multi-Agent Research 3-tier 통합 (v2.35 P1.5, 2026-05-13)
+
+본 skill 은 **Lead Planner → Generator → Evaluator 3-tier** 의 가장 가벼운 instance:
+
+1. **Tier 1** — 사용자 prompt 가 곧 Lead Planner role (또는 `lead-planner` agent fork)
+2. **Tier 2** — Generator agent (component-builder / api-builder / 등) 가 작업 수행
+3. **Tier 3** — `multi-review` 4-agent 분산 또는 `evaluator` 통합 verdict
+
+복잡한 다단계 작업 → `lead-planner` agent 명시 호출. 단순 generate→review → 본 skill 직접 사용.
+
+상세: `knowledge/canon/multi-agent-research-pattern.md` v1.0+.
+
 ## 관련 canon
 
 - [agentic-engineering.md](../../../knowledge/canon/agentic-engineering.md) — 본 skill 의 메타 frame (Prompt → **Generate** → **Review** → Feedback → Iterate). §2.1 skill ↔ 단계 매핑 표 참조.
+- [multi-agent-research-pattern.md](../../../knowledge/canon/multi-agent-research-pattern.md) — Lead Planner → Generator → Evaluator 3-tier (v2.35 P1.5)

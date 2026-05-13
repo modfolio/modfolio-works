@@ -77,3 +77,32 @@ bun run quality:all
 /release              # 전체 프로세스 실행
 /release --dry-run    # 분할 계획만 출력 (실행 안 함)
 ```
+
+## /goal 통합 (2026-05+, v2.0 dogfood Adopt P0 #6)
+
+verifiable end-state 가 명확한 release 후처리 (예: release-gate 30 체크 통과) 는 Claude Code `/goal` 명령으로 자율 반복 가능:
+
+```
+/goal release-gate 30 체크 모두 PASS (bun run release:gate 통과)
+```
+
+Haiku 평가기가 매 turn 의 `release-gate.ts` 출력을 평가 → 위반 발견 시 Opus 가 fix → 다시 평가 반복. Haiku 평가 비용 ~$0.001/turn 으로 거의 무료.
+
+권고 use case:
+- `bun run release:gate` 가 1-3 위반만 있는 가벼운 상태 (정공법 quick-fix cycle)
+- breaking change 없는 PR 의 final tightening
+
+자세한 차이: `/loop` (시간 driven, 정기 polling) vs `/goal` (binary end-state, condition driven) — canon `agentic-engineering.md` § 2.1 참조.
+
+### 자율 반복 4 도구 조합 (v2.35 P1.4, 2026-05-13)
+
+| 시나리오 | 도구 |
+|---|---|
+| release 직후 인터벌 헬스체크 | `/loop 5m bun run health-check` |
+| release-gate 통과까지 자율 fix | `/goal release-gate 30 체크 모두 PASS` |
+| 매월 1일 정기 release readiness 점검 | `/schedule create monthly-release-audit` |
+| stage 별 release ritual (test → tag → publish → notify) | `/ralph-loop "..." --max-iterations 4` |
+
+canon `agentic-engineering.md` §2.1 의 책임 분리 표 참조.
+
+source: `~/.claude/plans/20260513-evolve-goal-command.md`, `~/.claude/plans/crystalline-sparking-sky.md` (P1.4)

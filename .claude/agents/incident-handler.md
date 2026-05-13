@@ -2,6 +2,7 @@
 description: P0 장애 triage SOP. 포스트모템 템플릿 + escalation 체인
 model: claude-opus-4-7
 effort: max
+thinking_budget: deep
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 disallowedTools:

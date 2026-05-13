@@ -1,11 +1,11 @@
 ---
 title: Opus 4.7 & Effort Policy
-version: 1.0.1
-last_updated: 2026-04-26
-source: [knowledge/canon/opus-4-7-effort-policy.md]
+version: 1.2.0
+last_updated: 2026-05-13
+source: [knowledge/canon/opus-4-7-effort-policy.md, Anthropic effort docs 2026-05 (xhigh sweet spot policy), 2026-05-13 v2.0 dogfood Adopt P0 #7 (max → xhigh recalibration), harness v2.34 P0.3 (thinking_budget 정책 신설 — Adaptive thinking Opus 4.7 4/16 + Extended thinking Sonnet 4.6 2/17)]
 sync_to_siblings: true
 applicability: always
-consumers: [preflight, plan, generate-review]
+consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-api, context-engineering]
 ---
 
 # Opus 4.7 & Effort Policy — 권고
@@ -77,36 +77,160 @@ export CLAUDE_CODE_EFFORT_LEVEL=max
 /effort high    # 기본 reasoning
 ```
 
-## Modfolio Universe Agent 분류 (2026-04-26 기준)
+## Modfolio Universe Agent 분류 (2026-05-13 recalibration)
 
-`max` 카테고리는 **코딩 + 위급/높은-stake 판정** (incident triage 포함). 단순히 "코드를 쓴다"가 기준이 아니라 "오답 비용이 높다"가 기준.
+### v1.1 정책 변경 (Anthropic 공식 권고 흡수)
+
+Anthropic effort docs (2026-05): "Opus 4.7 의 `max` 는 자주 overthinking + 비용 대비 quality 작음. `xhigh` 가 long-horizon coding 의 sweet spot. `max` 는 eval 후 명백히 도움될 때만 상향."
+
+**default = xhigh** (구조화된 코딩 + 리뷰). `max` 는 **명시 정당화** 가능한 영역만:
+- 디자인 의사결정 + 대용량 Figma metadata (1M context 필수)
+- 보안 코드 (오답 비용 = secret leak)
+- P0 장애 triage (오답 비용 = production downtime)
+
+기타 코딩 (component / API endpoint / Drizzle schema / contract / mechanical fix) 은 모두 xhigh — 구조화된 작업이라 max 의 overthinking 위험.
+
+### 표 (2026-05-13 적용 후)
+
+`max` 카테고리: **디자인 1M + 보안 + 장애** 3개만.
 
 | # | Agent | 모델 | effort | 근거 |
 |---|-------|------|--------|------|
-| 1 | design-engineer | claude-opus-4-7[1m] | max | 디자인 의사결정 + Figma metadata |
-| 2 | page-builder | claude-opus-4-7[1m] | max | 레이아웃 전체 생성 |
-| 3 | component-builder | claude-opus-4-7 | max | 코딩: UI 컴포넌트 |
-| 4 | api-builder | claude-opus-4-7 | max | 코딩: 엔드포인트 + Zod + JWT |
-| 5 | schema-builder | claude-opus-4-7 | max | 코딩: Drizzle 스키마/마이그레이션 |
-| 6 | contract-builder | claude-opus-4-7 | max | 코딩: contracts breaking 영향 |
-| 7 | quality-fixer | claude-opus-4-7 | max | 코딩: 기계 수정, 정공법 |
-| 8 | security-hardener | claude-opus-4-7 | max | 코딩: OWASP 취약점 |
-| 9 | incident-handler | claude-opus-4-7 | max | P0 장애 triage + 포스트모템 (오답 비용 높음, 코드 수정은 별도 agent) |
-| 10 | code-reviewer | claude-opus-4-7[1m] | xhigh | 리뷰: 대규모 diff 1M 필요 |
-| 11 | design-critic | claude-opus-4-7 | xhigh | 리뷰: Anti-Slop 판정 |
-| 12 | architecture-sentinel | claude-opus-4-7 | xhigh | 리뷰: 불변 원칙 교차확인 |
+| 1 | design-engineer | claude-opus-4-7[1m] | **max** | 디자인 의사결정 + Figma metadata 대용량 |
+| 2 | security-hardener | claude-opus-4-7 | **max** | 보안 코드 (OWASP 취약점 — 오답 비용 = secret leak) |
+| 3 | incident-handler | claude-opus-4-7 | **max** | P0 장애 triage + 포스트모템 |
+| 4 | page-builder | claude-opus-4-7[1m] | xhigh | 레이아웃 (정형) — 2026-05-13 max → xhigh |
+| 5 | component-builder | claude-opus-4-7 | xhigh | UI 컴포넌트 (정형) — 2026-05-13 max → xhigh |
+| 6 | api-builder | claude-opus-4-7 | xhigh | 엔드포인트 + Zod (정형) — 2026-05-13 max → xhigh |
+| 7 | schema-builder | claude-opus-4-7 | xhigh | Drizzle (정형) — 2026-05-13 max → xhigh |
+| 8 | contract-builder | claude-opus-4-7 | xhigh | Zod contracts (정형) — 2026-05-13 max → xhigh |
+| 9 | quality-fixer | claude-opus-4-7 | xhigh | 기계 수정 (정공법, 정형) — 2026-05-13 max → xhigh |
+| 10 | code-reviewer | claude-opus-4-7[1m] | xhigh | 리뷰: 대규모 diff 1M |
+| 11 | design-critic | claude-opus-4-7 | xhigh | 리뷰: Anti-Slop |
+| 12 | architecture-sentinel | claude-opus-4-7 | xhigh | 리뷰: 불변 원칙 |
 | 13 | accessibility-auditor | claude-opus-4-7 | xhigh | 리뷰: WCAG AA |
-| 14 | migrations-auditor | claude-opus-4-7[1m] | xhigh | 리뷰: Drizzle 마이그레이션 롤백 안전성 (Neon/D1 별, 읽기 전용) |
+| 14 | migrations-auditor | claude-opus-4-7[1m] | xhigh | 리뷰: Drizzle 마이그 안전성 |
 | 15 | test-builder | claude-opus-4-7 | high | 테스트 생성 |
 | 16 | visual-qa | claude-opus-4-7 | high | Playwright + axe 5-gate |
 | 17 | ecosystem-auditor | claude-opus-4-7 | high | ecosystem.json 검증 |
-| 18 | perf-profiler | claude-opus-4-7 | high | CF Workers cost/latency 프로파일, N+1 / R2 / D1 비용 (읽기 전용) |
+| 18 | perf-profiler | claude-opus-4-7 | high | CF Workers cost/latency |
 | 19 | knowledge-searcher | claude-haiku-4-5-20251001 | medium | 검색/요약 |
 | 20 | innovation-scout | claude-haiku-4-5-20251001 | medium | context7 조회·비교 |
+| 21 | initializer (2026-05-13 신규) | claude-haiku-4-5-20251001 | medium | 세션 cold-start 3-line summary, read-only (canon long-running-harness.md) |
+| 22 | lead-planner (v2.35 P1.5 신규) | claude-opus-4-7 | xhigh | Multi-Agent Research Tier 1 — orchestration. trusted-input-only (lethal-trifecta 회피) |
+| 23 | evaluator (v2.35 P1.5 신규) | claude-opus-4-7 | xhigh | Multi-Agent Research Tier 3 — 통합 verdict (binary pass/fail + weighted score). file modify 금지 |
+| 24 | process-reward-evaluator (v3.0 P2.2 신규) | claude-opus-4-7 | high | PRM step-wise verifier — Generator step sequence 의 매 step 0-10 score. canon `process-reward-model.md` v1.0+ |
 
-**분포 합계 (20 agent)**: max=9, xhigh=5, high=4, medium=2
+**분포 합계 (24 agent, 2026-05-13 v3.0)**: max=3, xhigh=13, high=5, medium=3
 
-> diagnostic 의 `effort-policy/agent-distribution-drift` 트랙은 위 값을 expected 로 사용. 새 agent 추가 시 이 표 + `scripts/modfolio/diagnostic.ts` 의 `expected` 객체를 함께 갱신해야 drift 알림이 정확하다.
+> diagnostic 의 `effort-policy/agent-distribution-drift` 트랙은 위 값을 expected 로 사용. 새 agent 추가 시 이 표 + `scripts/modfolio/diagnostic.ts` 의 `expected` 객체 (`{ max: 3, xhigh: 13, high: 5, medium: 3 }`) 를 함께 갱신해야 drift 알림이 정확하다.
+>
+> **v3.0 P2.4 의무화**: 23 agent (Haiku 3 제외) frontmatter 의 `thinking_budget` 필드 명시 필수. 자동 갱신: `bun run scripts/modfolio/sync-thinking-budget.ts`. drift 검출: diagnostic.ts `effort-policy/thinking-budget-drift` 트랙 (expected absent=3).
+
+### A/B 검증 정책 (recalibration 결과 모니터링)
+
+각 max → xhigh 전환 후 30일간:
+- turn 수 (동일 task)
+- output token 누적
+- redirect 빈도 (사용자가 "다시 해" 요청)
+- pattern-history 의 quality 위반 빈도
+
+이상 신호 발견 시 해당 agent 만 max 복귀 — agent frontmatter 의 `_effort_change_note:` 주석에 결정 근거 cement.
+
+### `_effort_change_note` 주석 컨벤션
+
+frontmatter 안:
+```yaml
+effort: xhigh   # 2026-05-13 max → xhigh recalibration (Anthropic sweet spot policy, v2.0 dogfood Adopt P0 #7)
+```
+
+또는 별도 필드:
+```yaml
+_effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. Revert if quality regression."
+```
+
+## Thinking Budget 정책 (v1.2, 2026-05-13 신설)
+
+Anthropic 2026 Q2 신기능:
+- **Opus 4.7 Adaptive thinking** (2026-04-16 출시) — 자동 thinking budget 조절, extended thinking 미지원
+- **Sonnet 4.6 Extended thinking** (2026-02-17 출시) — 명시 thinking_budget 지정, visible thinking
+- **Haiku 4.5** — Adaptive thinking 미지원 (필드 무시)
+
+effort 와 **직교 dimension**: effort = 조절 강도 / thinking_budget = reasoning 깊이. 둘 다 명시 가능.
+
+### Thinking budget 4-level 표
+
+| Level | Token budget | 권장 대상 | effort 매핑 |
+|---|---|---|---|
+| **adaptive** (Opus 4.7 only) | 자동 (~8k-32k 범위) | 일반 — 모델이 task 복잡도 판단 | max / xhigh / high |
+| **deep** | 32,768 | 복잡 reasoning (보안 코드, P0 장애 triage, 디자인 의사결정) | max |
+| **standard** | 8,192 | 구조화된 코딩 (component / API / schema / contract / 리뷰) | xhigh (기본) |
+| **light** | 4,096 | 검증 / 테스트 / 단순 리뷰 | high |
+| **minimal** | 2,048 | 검색 / 요약 / 결정적 검증 | medium |
+
+### agent frontmatter (v2.34 옵션 → v3.0 의무화)
+
+v2.34 에서는 **옵션** (미설정 시 effort 기반 inference):
+
+```yaml
+---
+name: design-engineer
+model: claude-opus-4-7[1m]
+effort: max
+thinking_budget: deep      # v2.34 옵션 (max 와 매핑 자동 inference 가능)
+# 또는
+thinking_budget: adaptive  # Opus 4.7 Adaptive 자동 조절
+---
+```
+
+v3.0 부터 **의무** — 모든 agent frontmatter 에 `thinking_budget` 명시. v3.0 마이그레이션 시 자동 일괄 추가 (effort → thinking_budget 매핑 표 기준).
+
+### Sonnet 4.6 Extended thinking
+
+Sonnet 4.6 은 **명시** thinking budget 지정. Anthropic SDK 직접 호출 sibling 의 경우:
+
+```typescript
+const response = await client.messages.create({
+  model: "claude-sonnet-4-6",
+  max_tokens: 4096,
+  thinking: { type: "enabled", budget_tokens: 8192 },  // standard 매핑
+  messages: [...],
+});
+```
+
+Claude Code 내부는 agent frontmatter `thinking_budget` 으로 추상화 — SDK 호출 코드 직접 작성 없음.
+
+### Haiku 4.5 미지원
+
+Haiku 4.5 는 Adaptive / Extended thinking 둘 다 미지원. frontmatter `thinking_budget` 필드는 **무시** (warning 없음). knowledge-searcher / innovation-scout / initializer 3 agent 는 `thinking_budget` 명시 불필요.
+
+### 비용 영향
+
+thinking token 은 **output token 으로 청구**. budget 32,768 = output $25/MTok × 32k ≈ $0.8 per request (Opus 4.7).
+
+- adaptive (자동) — 평균 ~$0.2 per request (보통 task)
+- deep (32k 고정) — $0.8 per request (high-stake task)
+- standard (8k) — $0.2 per request
+- light (4k) — $0.1 per request
+- minimal (2k) — $0.05 per request
+
+권고: **adaptive 가 기본**. deep 은 명시 정당화 가능 영역만 (보안 / 장애 / 디자인 의사결정).
+
+### 측정 — `effort-policy/thinking-budget-drift` 트랙 (diagnostic.ts)
+
+`scripts/modfolio/diagnostic.ts` 의 `effort-policy` 트랙 내부 신설 finding (v2.34):
+
+- 21 agent 의 `thinking_budget` 분포 측정
+- expected (v2.34 baseline): `{ adaptive: 0, deep: 0, standard: 0, light: 0, minimal: 0, absent: 21 }` (모든 agent 미설정 — v2.34 옵션 단계)
+- v3.0 expected (의무화 후): `{ deep: 3, standard: 11, light: 4, minimal: 3, adaptive: 0, absent: 0 }` (effort 분포와 1:1 매핑)
+- drift 감지 시 info finding — `knowledge/canon/opus-4-7-effort-policy.md` v1.2 표 참조 권고
+
+### Anti-patterns
+
+- `effort: xhigh` + `thinking_budget: deep` — overthinking. xhigh = standard (8k) 가 sweet spot
+- `effort: medium` + `thinking_budget: deep` — Haiku 4.5 인데 thinking_budget 명시 = 의미 없음, frontmatter noise
+- adaptive 와 명시 budget 동시 — 충돌. adaptive 선택 시 다른 필드 없음
+- 모든 agent 를 deep 으로 설정 — 비용 폭증, R1 위험
 
 ## Prompt caching 연계 (1M variant + tokenizer 영향)
 

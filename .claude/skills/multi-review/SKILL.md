@@ -75,6 +75,19 @@ user-invocable: true
 ### 종합 판정: ALL PASS / NEEDS FIX
 ```
 
+## Multi-Agent Research 3-tier 통합 (v2.35 P1.5, 2026-05-13)
+
+4-agent (design-critic / accessibility-auditor / architecture-sentinel / security-hardener) 는 **Tier 3 분산 Evaluator**. 다음과 통합:
+
+- **Tier 1** = `lead-planner` agent — task decomposition + Generator delegate
+- **Tier 2** = 도메인 specialist Generator (component-builder / page-builder / api-builder / ...)
+- **Tier 3** = 본 multi-review 4-agent (분산) **또는** `evaluator` agent (통합 verdict)
+
+복잡 변경 (PR 전체) → multi-review 4-agent 분산 → `evaluator` 가 final aggregator. 단일 task → `evaluator` 1회 호출.
+
+상세 패턴: `knowledge/canon/multi-agent-research-pattern.md` v1.0+ §"3-Tier 정의".
+
 ## 관련 canon
 
 - [agentic-engineering.md](../../../knowledge/canon/agentic-engineering.md) — 본 skill 의 메타 frame (Prompt → Generate → **Review** → Feedback → Iterate). §1.4 untrusted code 가정 + §2.3 verification chain.
+- [multi-agent-research-pattern.md](../../../knowledge/canon/multi-agent-research-pattern.md) — Lead Planner → Generator → Evaluator 3-tier (v2.35 P1.5)

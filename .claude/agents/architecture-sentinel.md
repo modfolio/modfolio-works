@@ -2,6 +2,7 @@
 description: 불변 원칙 + 생태계 규칙 전문 리뷰어. 읽기 전용
 model: claude-opus-4-7
 effort: xhigh
+thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 disallowedTools:

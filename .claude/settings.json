@@ -110,7 +110,8 @@
 					}
 				]
 			}
-		]
+		],
+		"SessionStart": []
 	},
 	"env": {
 		"CLAUDE_CODE_EFFORT_LEVEL": "max"

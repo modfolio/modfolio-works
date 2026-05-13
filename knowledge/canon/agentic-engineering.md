@@ -104,6 +104,7 @@ ecosystem 내 untrusted 가정의 실 구현:
 | `stop-pattern-history.ts` | `scripts/hooks/` | 슬롭 패턴 5종 (hallucinated import / cross-language leak / removed safety check 등) |
 | `multi-review` skill (3-4 agent) | `.claude/skills/multi-review/` | 디자인 / 접근성 / 아키텍처 / **보안** (D-1 추가) |
 | `code-reviewer` agent (Opus 4.7 [1m]) | `.claude/agents/` | 대형 diff 의 의미적 검토 |
+| `checkLethalTrifecta` (v2.0 dogfood) | `scripts/modfolio/governance.ts` + `.claude/rules/lethal-trifecta.md` | private data + untrusted input + outward 3 조건 동시 충족 자동 검출 + human-approval 강제 (OWASP Agentic 2026) |
 
 **원칙**: 이 레이어들 중 **하나라도 우회** 하면 untrusted 가정 위반. `--no-verify` / `git commit --amend --no-verify` 등은 정공법 위반 (`.claude/rules/fundamentals-first.md`).
 
@@ -121,13 +122,34 @@ agentic engineering 의 자연스러운 귀결: AI 가 "확인했다" 고 말하
 |---|---|---|
 | `/plan` (Plan mode) | Prompt | 항상 |
 | `/modfolio` | **메타 진단 — 4 단계 전체 자가 점검** (v2.14.0 신설) | rigor (찜찜할 때 막 돌리기) |
-| `/ralph-loop` | Generate + Iterate (반복) | rigor (자율 반복) |
+| `/schedule` (v2.35+ project skill) | Iterate trigger — cron driven | rigor (시간 절대 시점) |
+| `/loop` (v2.35+ project skill) | Iterate trigger — interval / self-pace | rigor (인터벌 또는 모델 자가 결정) |
+| `/goal` (Claude Code v2.1.140+ native) | Generate + Iterate (binary end-state, Haiku evaluator) | rigor (자율 반복, verifiable 종료 조건) |
+| `/ralph-loop` | Generate + Iterate (step driven) | rigor (자율 반복, scripted N stage) |
 | `/multi-review` | Review (다층) | rigor |
 | `/generate-review` | Generate → Review 통합 | hybrid |
 | `/fix` | Review → 수정 | rigor (P0/P1) |
 | `/security-scan` | Review (보안 전담) | rigor |
 | `/feedback-collect` / `/feedback-send` | Feedback | hybrid |
 | `/journal` / `/retro` | Iterate (학습) | hybrid |
+
+#### 4 자율 반복 도구 책임 분리 (v2.35 P1.4, 2026-05-13)
+
+modfolio universe 의 4 자율 반복 trigger 는 **종료 조건의 종류**로 분리:
+
+| Skill | trigger 종류 | 종료 조건 | 평가 cost | 적합 |
+|---|---|---|---|---|
+| `/schedule` | **시간 절대값** (cron) | cron expression 도래 시 자동 trigger | $0 (시스템) | "매월 1일 9시 /harness-evolve" |
+| `/loop` | **인터벌** (5m / 30m / 1h) 또는 self-pace | 외부 stop / max iter | 인터벌 × 호출 비용 | "5분마다 health-check 폴링" |
+| `/goal` | **condition** (binary) | Haiku evaluator 가 true 판정 | ~$0.001/turn | "tests green 까지" |
+| `/ralph-loop` | **step** (명시 N stage) | `<promise>TAG</promise>` 감지 + max iter | $0 (skill scripted) | "5 stage 순차 마이그 cycle" |
+
+조합 가능:
+- `/schedule` + `/ralph-loop` — 매주 자동 reactive cleanup (cron 으로 ralph-loop unattended trigger)
+- `/loop` + `/goal` — 인터벌 폴링 안에서 condition 만족 시 자동 종료
+- `/ralph-loop` + `/goal` — 각 stage 의 종료 조건을 Haiku evaluator 로 평가 (binary)
+
+source: plan `~/.claude/plans/crystalline-sparking-sky.md` P1.4 + skill `/schedule` + `/loop` + canon `long-running-harness.md`.
 
 `/modfolio` 는 다른 skill 의 메타 — 전체 워크플로우 (Prompt → Generate → Review → Feedback → Iterate) 가 ecosystem 의 17 agent + 38 skill + 12 hook + 44 canon 시스템에서 제대로 운영되고 있는지 14 트랙으로 점검. plan mode 안에서 호출 시 Action Preview 가 plan 자동 작성 — 사용자가 ExitPlanMode 만 누르면 1-click 실행.
 

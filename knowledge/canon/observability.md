@@ -1,17 +1,116 @@
 ---
 title: Observability
-version: 1.5.0
-last_updated: 2026-05-06
-source: [.claude/skills/observability/SKILL.md, templates/observability/signoz-llm-dashboard.json, Phase 4.2 Trial P1 #10 OTel GenAI semconv spike (tech-trends-2026-05.md)]
+version: 1.6.0
+last_updated: 2026-05-13
+source: [.claude/skills/observability/SKILL.md, templates/observability/signoz-llm-dashboard.json, Phase 4.2 Trial P1 #10 OTel GenAI semconv spike (tech-trends-2026-05.md), 2026-05-13 v2.0 dogfood Adopt P0 #1-4 (DO/Worker auto-tracing + GenAI agent-spans + Queues metrics + D1 retry/PRAGMA)]
 sync_to_siblings: true
 applicability: per-app-opt-in
-consumers: [observability, deploy]
+consumers: [observability, deploy, claude-api, ai-patterns, health-check]
 ---
 
 # Observability — Canonical Reference
 
 > 앱 코드에 벤더 SDK 금지. wrangler.jsonc + CF Automatic Tracing만 사용. OTLP 표준.
 > LLM 호출을 가진 Worker 는 예외 — `@microlabs/otel-cf-workers` 를 써서 OTel GenAI semconv 로 `gen_ai.*` 를 span 에 붙인다 (아래 §GenAI Semantic Conventions).
+
+## v1.6.0 변경 (2026-05-13) — DO 자동 trace + GenAI agent-spans + Queues metrics + D1 metric
+
+2026-05-13 `/harness-evolve` v2.0 dogfood 의 Adopt P0 #1-4 통합 cement:
+
+### 1. DO/Worker subrequest auto-tracing (2026-05-07+)
+
+Cloudflare 가 binding 호출 (DO `fetch`, service binding, Queue producer) 시 W3C `traceparent` 헤더 자동 전파 + child span 자동 생성. 활성화 조건:
+
+- `wrangler.jsonc.observability.enabled = true`
+- `compatibility_date >= 2026-05-07`
+- traces 가 Cloudflare Trace API 또는 OTLP 로 export
+
+기존 manual `traceparent` 주입 코드 deprecated — 제거 시 단일 통합 trace 트리. 권장 sampling: production 1.0, dev 0.1, prefetch route 0.0.
+
+> **출처**: https://developers.cloudflare.com/changelog/post/2026-05-07-automatic-tracing-across-do-and-worker-subrequests/
+
+### 2. OTel GenAI agent-spans semconv 정식 entity (2026-Q2)
+
+OpenTelemetry GenAI semconv 정식 entity 6개:
+
+| `gen_ai.operation.name` | 의미 | modfolio 매핑 |
+|---|---|---|
+| `agent` | autonomous agent 작업 단위 | Claude Code agent (20개) |
+| `task` | agent 가 실행한 단일 task | Task tool fork |
+| `action` | tool/function call | Edit/Bash/Read/Glob/Grep/WebFetch |
+| `team` | multi-agent collaboration | multi-review (4-agent 병렬) |
+| `artifact` | agent 산출물 | plan/canon/code file |
+| `memory` | persistent memory access | knowledge/journal/canon read |
+
+필수 attribute (per span):
+- `gen_ai.system` (예: "anthropic"), `gen_ai.request.model` (예: "claude-opus-4-7", "claude-opus-4-7[1m]")
+- `gen_ai.agent.name` (예: "code-reviewer", "design-engineer"), `gen_ai.agent.id` (UUID 또는 task ID)
+- `gen_ai.usage.{input_tokens,output_tokens,cache_read_input_tokens,cache_creation_input_tokens}`
+- `gen_ai.response.finish_reasons`
+
+dual-emit 정책: v1.5 의 `ai.*` 와 `gen_ai.*` 병행 유지 — 6주 후 spec stable 시 `ai.*` deprecated.
+
+> **출처**: https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-agent-spans/
+
+### 3. Cloudflare Queues realtime metrics (2026-04-28+)
+
+Queues 의 backlog/throughput 실시간 metrics — dashboard / REST API / JS API 셋 다 노출.
+
+표준 metric 명:
+
+| Metric | 의미 | unit |
+|---|---|---|
+| `queue.backlog.messages` | 미처리 메시지 수 | count |
+| `queue.backlog.age_ms` | oldest 미처리 메시지 나이 | ms |
+| `queue.throughput.consumed_per_s` | 초당 처리 속도 | count/s |
+| `queue.throughput.produced_per_s` | 초당 생성 속도 | count/s |
+| `queue.consumer.lag_ms` | 생성-처리 latency p95 | ms |
+| `queue.dead_letter.count` | DLQ 누적 | count |
+
+권장 alarm:
+- `backlog.age_ms > 60000` for 5min → warning
+- `dead_letter.count > 0` → critical
+- `consumer.lag_ms p95 > 30000` for 10min → warning
+
+modfolio 적용 (active):
+- `athsra-audit-events` (athsra-worker → audit-consumer): backlog > 1000 → warning
+
+```ts
+// Worker JS API (consumer 안에서)
+export default {
+  async queue(batch, env) {
+    const metrics = await env.MY_QUEUE.getMetrics();
+    // metrics.backlog, metrics.throughput, ...
+  }
+};
+```
+
+REST API: `https://api.cloudflare.com/client/v4/accounts/{account_id}/queues/{queue_id}/metrics` (Authorization: Bearer ${CF_API_TOKEN}).
+
+> **출처**: https://developers.cloudflare.com/changelog/post/2026-04-28-improved-queues-metrics/
+
+### 4. D1 read-only retry + PRAGMA optimize (2026-Q2)
+
+- SELECT/WITH 쿼리 transient failure 시 자동 최대 2회 retry. `meta.total_attempts` 로 관측 (client 변경 0).
+- PRAGMA optimize — schema migration finalize step:
+
+```sql
+PRAGMA optimize;
+```
+
+Drizzle migration generator emit 추가 권장 (별도 helper `scripts/migration/finalize.ts`). 매 `bun run db:migrate` 또는 `wrangler d1 migrations apply` 마지막에 호출.
+
+D1 metric 표준명:
+
+| Metric | 의미 | 활용 |
+|---|---|---|
+| `d1.meta.total_attempts` | 쿼리 retry 횟수 | > 1 이면 transient failure 감지 |
+| `d1.meta.duration_ms` | 쿼리 시간 | p95 monitoring |
+| `d1.meta.rows_read` / `rows_written` | I/O 통계 | query plan 검증 |
+
+> **출처**: https://developers.cloudflare.com/d1/platform/release-notes/
+
+---
 
 ## v1.5.0 변경 (2026-05-06) — GenAI semconv dual-emit 명시
 

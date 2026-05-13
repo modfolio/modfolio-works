@@ -1,8 +1,10 @@
 ---
 description: Drizzle ORM 스키마/마이그레이션 생성기. 생태계 prefix + helper 준수
 model: claude-opus-4-7
-effort: max
+effort: xhigh
+thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }
+_effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. Drizzle schema 정형 — overthinking 회피. 마이그 안전성은 migrations-auditor 가 별도 검증. quality regression 시 revert."
 governance: owasp-agentic-2026
 skills:
   - schema

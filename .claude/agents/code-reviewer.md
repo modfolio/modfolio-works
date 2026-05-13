@@ -2,6 +2,7 @@
 description: 생태계 규칙 기반 코드 리뷰. 읽기 전용
 model: claude-opus-4-7[1m]
 effort: xhigh
+thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 disallowedTools:

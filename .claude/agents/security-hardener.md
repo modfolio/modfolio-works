@@ -2,6 +2,7 @@
 description: 보안 취약점 탐지 + 자동 수정. OWASP Web Top 10 + Agentic Top 10 2026 (ASI01-10)
 model: claude-opus-4-7
 effort: max
+thinking_budget: deep
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 skills:

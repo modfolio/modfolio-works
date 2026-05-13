@@ -1,10 +1,10 @@
 ---
 title: Attention Budget — Context as Finite Resource
-version: 1.0.0
-last_updated: 2026-05-06
-source: [Anthropic 2026 Agentic Coding Trends Report (https://resources.anthropic.com/2026-agentic-coding-trends-report), Anthropic Engineering "Effective context engineering for AI agents" (https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents), Claude Cookbook "Context engineering: memory, compaction, and tool clearing" 2026-03-20 (https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools), harness-evolve 첫 dogfood Adopt P0 #4]
+version: 1.2.0
+last_updated: 2026-05-13
+source: [Anthropic 2026 Agentic Coding Trends Report (https://resources.anthropic.com/2026-agentic-coding-trends-report), Anthropic Engineering "Effective context engineering for AI agents" (https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents), Claude Cookbook "Context engineering: memory, compaction, and tool clearing" 2026-03-20 (https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools), harness-evolve 첫 dogfood Adopt P0 #4, 2026-05-13 v2.0 dogfood Trial P1 (Memory tool L3), harness v2.34 P0.2 (context-engineering canon 분리)]
 sync_to_siblings: true
-consumers: [harness-evolve, modfolio, preflight, claude-api, multi-review, plan]
+consumers: [harness-evolve, modfolio, preflight, claude-api, multi-review, generate-review, plan, ralph-loop, context-engineering]
 applicability: always
 ---
 
@@ -17,9 +17,9 @@ applicability: always
 ## 왜 universe 표준인가
 
 modfolio universe 는:
-- **20 agent** (각자 system prompt + tools + skill content read)
-- **42 skill** + **47 canon** + **14 rule** + 누적 **~50+ journal**
-- **multi-agent orchestration** (design-engineer, code-reviewer, page-builder 등이 sub-agent 분기)
+- **23 agent** (각자 system prompt + tools + skill content read) — v2.35 P1.5 lead-planner + evaluator 신설
+- **44 skill** + **49 canon** + **15 rule** + 누적 **~50+ journal**
+- **multi-agent orchestration** (design-engineer, code-reviewer, page-builder, lead-planner 등이 sub-agent 분기)
 
 → context 누적 압력이 매일 증가. 1M context Opus 4.7 도 finite. **attention budget = 모든 agent/skill/canon 설계의 measurable 기준**.
 
@@ -95,11 +95,33 @@ session-internal 메모리 의존 X, 명시적 파일에 cement. modfolio univer
 | `/multi-review` | sub-agent 의 결과 size 자동 검증 (메인 스레드 budget 보호) |
 | `/plan` | plan 파일 작성 시 attention budget 영향 평가 (예: "이 변경이 agent prompt 를 N% 늘림" 명시) |
 
+## L3 — Persistent Memory (Memory tool, 2026-05+ Trial)
+
+L1 (in-context) / L2 (structured external file: journal/canon/plan) / L3 (persistent memory directory) 의 3-tier memory frame 에서 **L3 는 agent 가 자율 read/write 하는 file-based memory directory**. L2 (외부 파일) 와 차이: agent 가 자기 의지로 invocation 간 정보 cement.
+
+### Anthropic memory tool 실증 (2026-05)
+- 100-turn eval 에서 **84% token 감소** ([memory-tool docs](https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool))
+- file-based — model 이 read/write 명령으로 자율 관리
+
+### modfolio universe 적용 (Trial 단계, 2026-05-13 dogfood)
+- 1차 trial: `ralph-loop` skill (multi-iteration) + `generate-review` (review history 누적)
+- memory directory 위치: `.claude/memory/{agent-name}/` (gitignore)
+- size 한계: 10MB per agent (recommended), 50MB hard cap
+- sync 정책: local-only (cross-machine 동기는 R2 또는 git, 별도 plan)
+
+### 측정
+- `scripts/budget/cache-hit-report.ts --memory-tool` 모드 — token saving 추적 (Trial 단계)
+- 목표: saving > 0.5 → Adopt-1-cement. 0.3-0.5 → Trial 유지. < 0.3 → Skip.
+
+### 분류 결정
+- Trial spike 후 cement / skip 결정 — plan: `~/.claude/plans/20260513-evolve-memory-tool-l3.md`
+
 ## 측정 도구 (Phase 2 — 별도 plan)
 
 - `scripts/evolve/diagnose-current.ts` 에 cache_control 적용률 측정 로직 추가 (이미 일부 있음 — 강화 필요)
 - 신규 `scripts/budget/measure-prompts.ts` — 각 agent system prompt token count 측정
 - 신규 `scripts/budget/cache-hit-report.ts` — Anthropic Usage&Cost API 활용 (Trial P1 #3)
+- 신규 `scripts/budget/cache-hit-report.ts --memory-tool` — L3 Trial 측정
 - ecosystem-dashboard 에 weekly budget panel (Trial P1 #3 의 cost panel 과 합성)
 
 ## 다음 분기점
@@ -119,6 +141,8 @@ session-internal 메모리 의존 X, 명시적 파일에 cement. modfolio univer
 
 ## 관련 canon
 
+- `context-engineering.md` — **설계** 차원 (system / tool / examples 설계 패턴). 본 canon = **측정**, context-engineering = **설계** 의 boundary 명시 (2026-05-13 v1.2 cement)
 - `agentic-engineering.md` — 더 넓은 agentic 패턴 (이 canon 은 그 안의 특정 metric 영역)
-- `opus-4-7-effort-policy.md` — effort tier 결정 (max effort 가 budget 영향 큰)
+- `opus-4-7-effort-policy.md` — effort tier 결정 (max effort 가 budget 영향 큰. v1.2 부터 thinking budget 직교 dimension)
+- `prompt-caching.md` / `prompt-caching-strategy.md` — caching 배치 (본 canon 의 §"권장 패턴 3종" 중 Compaction 의 구현 기반)
 - `tech-trends-2026-05.md` — Adopt P0 #4 출처
