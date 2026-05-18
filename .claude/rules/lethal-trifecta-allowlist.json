@@ -1,0 +1,20 @@
+{
+  "$schema": "https://modfolio.io/schemas/lethal-trifecta-allowlist.v1.json",
+  "_comment": "Lethal Trifecta 화이트리스트 — 명시 justification + 분기별 revisit. governance check 가 본 entry 와 매칭되면 finding skip. 신 entry 추가는 PR review 필수.",
+  "entries": [
+    {
+      "file": "scripts/ops/m365-auth-init.ts",
+      "reason": "Microsoft Graph OAuth refresh_token 발급 — 사용자 1회 수동 실행 (cron/autonomous 아님). athsra get(private) + OAuth redirect(untrusted) + token 교환(outward) 형태이나 사용자가 직접 개시하고 결과는 콘솔 출력 only. 자동 트리거 경로 없음 — 사용자 부재 자동 승인 케이스 아님.",
+      "approved_by": "Niky",
+      "approved_at": "2026-05-17",
+      "revisit_after": "2026-11-17"
+    },
+    {
+      "file": "scripts/obs/langfuse-export.ts",
+      "reason": "로컬 observability 아티팩트(memory/*.jsonl, delta-audit snapshot)를 로컬 Langfuse 로 POST. untrusted 축이 자가생성 로컬 파일이라 prompt-injection surface 아님 (false-positive 소지). read-only client, 외부 SDK 없음, 대상 host 로컬 (mod-ai.localhost) — outward 가 self-hosted 관측 백엔드 한정.",
+      "approved_by": "Niky",
+      "approved_at": "2026-05-17",
+      "revisit_after": "2026-11-17"
+    }
+  ]
+}

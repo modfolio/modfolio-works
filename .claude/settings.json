@@ -24,7 +24,8 @@
 			"Bash(git log*)",
 			"Bash(git branch*)",
 			"Bash(git show*)"
-		]
+		],
+		"defaultMode": "bypassPermissions"
 	},
 	"hooks": {
 		"PostToolUse": [
@@ -56,6 +57,10 @@
 					},
 					{
 						"type": "command",
+						"command": "bun run .claude/hooks/pre-push-guard.ts"
+					},
+					{
+						"type": "command",
 						"command": "bun run .claude/hooks/pre-gh-api-guard.ts"
 					}
 				]
@@ -84,13 +89,6 @@
 			{
 				"hooks": [
 					{
-						"type": "agent",
-						"prompt": "End-of-turn quality gate. Detect violations in changed files. Do NOT modify any files.\n\nSTEP 1: Run `git status --porcelain`. If no changed files, respond {\"ok\": true}.\nSTEP 2: Per category, grep changed files for violations:\n  - [Hardcoded color values]: Hardcoded colors (#hex, rgb(), hsl(), oklch() outside var()). Must use CSS custom properties. (files: *.css,*.svelte,*.tsx,*.jsx,*.astro,*.vue) [error]\n  - [TypeScript suppressions]: @ts-ignore, @ts-expect-error, `as any` usage. Must fix root cause. (files: *.ts,*.tsx) [error]\n  - [Biome suppressions]: biome-ignore directives. Must fix the underlying issue. (files: *.ts,*.tsx,*.svelte,*.astro,*.vue) [error]\n  - [Missing accessibility attributes]: Interactive elements (buttons, inputs, links) missing aria-label or accessible text. (files: *.svelte,*.tsx,*.jsx,*.astro,*.vue) [warn]\n  - [Missing reduced-motion]: CSS animations/transitions without prefers-reduced-motion fallback. (files: *.css,*.svelte,*.tsx,*.jsx,*.astro,*.vue) [warn]\n  - [Unnecessary client:* directives]: Unnecessary client:* directives on static components — remove for zero-JS. (files: *.astro) [warn]\nSTEP 3: Overhaul audit — if user requested redesign but only superficial patches detected, report warning.\n\nRESPONSE FORMAT: JSON only.\nIf no violations: {\"ok\": true}\nIf violations found: {\"ok\": false, \"reason\": \"- [severity] file:line — description\"}",
-						"timeout": 45,
-						"model": "haiku",
-						"maxTurns": 3
-					},
-					{
 						"type": "command",
 						"command": "bun run .claude/hooks/stop-pattern-history.ts"
 					},
@@ -111,7 +109,17 @@
 				]
 			}
 		],
-		"SessionStart": []
+		"SessionStart": [
+			{
+				"matcher": ".*",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/session-start-pickup.ts"
+					}
+				]
+			}
+		]
 	},
 	"env": {
 		"CLAUDE_CODE_EFFORT_LEVEL": "max"

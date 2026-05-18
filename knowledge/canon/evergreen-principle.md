@@ -1,8 +1,8 @@
 ---
 title: Evergreen Principle — 권고 + 정보 공유
-version: 2.2.0
-last_updated: 2026-04-22
-source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립]
+version: 2.3.0
+last_updated: 2026-05-18
+source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립, v2.3 drift 재정의 2026-05-18]
 sync_to_siblings: true
 applicability: always
 consumers: [preflight, harness-pull, sso-integrate, ecosystem]
@@ -84,3 +84,38 @@ consumers: [preflight, harness-pull, sso-integrate, ecosystem]
 - ❌ 묵시적 mutation — 사용자 동의 없이 `bun run harness-pull` 이 파일 수정
 
 자세한 교훈 — `knowledge/canon/adoption-debt-patterns.md` 패턴 16.
+
+## v2.3 — drift 재정의: transient-not-canonical (2026-05-18)
+
+사용자 명시 결정 (2026-05-18): v2.6/v2.10 의 "강제 X, pull-based" 는 **그대로 유지**한다. 다만 "버전 drift 가 정상 분산 상태" 라는 *프레이밍* 을 폐기한다.
+
+> "각 sibling을 내가 프로젝트를 개발 시작하기 위해 vs code를 켜면 결국 최신으로 pull 하겠지만, 적어도 그 전까지는 ecosystem이 굳이 강요를 해서는 안되. 다만 그렇다고 해서 sibling이 뒤쳐진 하네스로 작업한다? 그걸 modfolio universe의 특정 값이라고 인식해서는 안되. 모든 프로젝트들은 최신 하네스로 할거니까. 단지 내가 그 프로젝트를 실행 해서 했는지 안했는지의 차이일 뿐이니까."
+
+### 재정의
+
+- **최신 하네스(=`ecosystem.json.harnessLatest`) 가 universe 의 유일 canonical 상태다.**
+- 구버전을 쓰는 sibling 은 **"의도된 per-app pin" 이 아니다**. 그것은 **transient** — "그 프로젝트를 아직 (이번 release 이후) 열지 않았다" 의 일시 상태일 뿐이다.
+- 따라서 harness-pull 보고서/`pull-manifest.json`/feedback 에서 sibling 의 구버전을 "그 앱의 선택값/정상 분산" 으로 **해석·기록하지 않는다**. "미개봉 transient (open 시 self-heal 예정)" 로 분류한다.
+- "각 member 자율" 의 의미 = **언제 여느냐(open timing)의 자율**이지, *구버전에 머무르겠다는 선언*이 아니다. (v2.6 "버전 선택과 도입 시점은 각 member 자율" 문구는 이 의미로 읽는다.)
+
+### 강제는 여전히 X — 메커니즘은 self-heal pull
+
+Hub-not-enforcer 는 **변함없다**. ecosystem 은 push/PR/MUST-upgrade 를 하지 않는다. 대신 drift 가 스스로 사라지는 경로를 보장한다:
+
+- sibling 의 `SessionStart` hook (`session-start-pickup.ts`) 이 **default-ON** (v3.1). 프로젝트를 IDE 로 여는 순간 sibling 이 **스스로** `modfolio-harness-pull --apply` 를 돌려 최신으로 self-heal (working tree clean + lock 미차단 시 자동 commit; dirty 면 advisory).
+- push 하는 주체는 끝까지 **sibling 자신** — ecosystem 이 아니다.
+- opt-out = sibling 의 `.claude/harness-lock.json` (`enableSessionPickup:false` 또는 `autoPull:false`). 자율·Hub-not-enforcer 보존.
+- 큰 breaking change 시 owner 가 명시적으로 1회 cross-repo 전파(`scripts/ops/harness-propagate-all.sh`)하는 것은 예외로 허용 — 단 **루틴 경로 아님**.
+
+### 그래서 바뀌는 것 / 안 바뀌는 것
+
+| | v2.10 (이전) | v2.3 (현행) |
+|---|---|---|
+| 강제/force-push | X | X (동일) |
+| pull-based | O | O (동일) |
+| harness-lock opt-out | O | O (동일) |
+| 구버전 sibling 해석 | "정상 분산/자율 값" | **"transient 미개봉, self-heal 예정"** |
+| SessionStart pickup | opt-in | **default-ON (opt-out)** |
+| 기대 정상상태 | 버전 분산 공존 | **최신 단일 = canonical** |
+
+관련 — `knowledge/canon/solo-main-workflow.md`, `scripts/hooks/session-start-pickup.ts`, `scripts/harness-pull/settings-adapt.ts` `buildSessionStart`, memory `feedback_auto-mode-classifier`.

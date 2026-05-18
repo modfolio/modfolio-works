@@ -23,7 +23,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 | Tag | 의미 | 예시 |
 |---|---|---|
 | `always` | universe 전체 권고. 모든 repo 가 방향성 정합 기대. 적용 시기는 각 repo 자율. | evergreen-principle, anti-slop, design-tokens, drizzle-conventions |
-| `per-app-opt-in` | 해당 스택/기능 사용 시에만 채택. 미사용 repo 는 skip 가능. | secrets-dotenvx (dotenvx 도입 시), d1-read-replicas (D1 사용 시), prompt-caching (Claude SDK 사용 시) |
+| `per-app-opt-in` | 해당 스택/기능 사용 시에만 채택. 미사용 repo 는 skip 가능. | m365-graph-integration (Microsoft Graph 사용 시), d1-read-replicas (D1 사용 시), prompt-caching (Claude SDK 사용 시) |
 | `doc-only` | 참조 material. sync 는 visibility 목적, 적용 의도 없음. | (현재 sync=true 인 canon 중엔 없음, 참고성 canon 은 sync_to_siblings:false 로 유지) |
 
 > 각 canon 파일 frontmatter `applicability:` 로 선언. 이 INDEX 는 요약만 제공 —

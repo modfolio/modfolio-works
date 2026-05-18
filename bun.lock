@@ -6,7 +6,7 @@
       "name": "modfolio-works",
       "devDependencies": {
         "@biomejs/biome": "^2.4.4",
-        "@modfolio/harness": "3.0.0",
+        "@modfolio/harness": "3.1.0",
         "typescript": "^5.9.3",
       },
     },
@@ -234,7 +234,7 @@
 
     "@modfolio/connect-sdk": ["@modfolio/connect-sdk@5.1.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/5.1.0/0e0704cc24366cf11ea5370161431d450f91c782", { "dependencies": { "jose": "^6.2.1" } }, "sha512-xEXGqLq1764C/cHHAmd2wlzVUEaw1e6vjuNt/6dDshnmbKEy6wrJ1L+10iQcIa4n5j9p564VT+NoA7XrRrO2QQ=="],
 
-    "@modfolio/harness": ["@modfolio/harness@3.0.0", "https://npm.pkg.github.com/download/@modfolio/harness/3.0.0/0d06523e3aa5b0c87acf87a56ba44ad0f1d85fed", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.3.6" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-fcLB/ZICZy5nQ/9KHc+8gKopShmr+pMIySR6AfHrIIRcw+QMvE7DnjAUydu7pp5FlzHmDoQ0mdgZvuK+KqcDkg=="],
+    "@modfolio/harness": ["@modfolio/harness@3.1.0", "https://npm.pkg.github.com/download/@modfolio/harness/3.1.0/072f05319eb9a426778532ce72e9f0e8bb7fe3bb", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-FSG1jmyYv0nRK9ItfpgBemygsyQy70cJoUHthPTloEQCrjc6sqHZQi9kDWNfPiLXDC00CcfVRWUXs6iu76bfSQ=="],
 
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
@@ -940,7 +940,7 @@
 
     "youch-core": ["youch-core@0.3.3", "", { "dependencies": { "@poppinss/exception": "^1.2.2", "error-stack-parser-es": "^1.0.5" } }, "sha512-ho7XuGjLaJ2hWHoK8yFnsUGy2Y5uDpqSTq1FkHLK4/oqKtyUU1AFbOOxY4IpC9f0fTLjwYbslUz0Po5BpD1wrA=="],
 
-    "zod": ["zod@4.3.6", "", {}, "sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg=="],
+    "zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
 
     "zod-to-json-schema": ["zod-to-json-schema@3.25.1", "", { "peerDependencies": { "zod": "^3.25 || ^4" } }, "sha512-pM/SU9d3YAggzi6MtR4h7ruuQlqKtad8e9S0fmxcMi+ueAK5Korys/aWcV9LIIHTVbj01NdzxcnXSN+O74ZIVA=="],
 
