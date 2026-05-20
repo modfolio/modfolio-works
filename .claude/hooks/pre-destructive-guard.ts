@@ -58,8 +58,17 @@ for (const { re, why } of CATASTROPHIC) {
 }
 
 // 2. Plain force-push rewrites remote history. Allow --force-with-lease.
-if (/\bgit\s+push\b/i.test(cmd) && /(?:^|\s)(?:--force|-f)\b/.test(cmd)) {
-	if (!/--force-with-lease\b/.test(cmd)) {
+//    Inspect ONLY the arguments of each `git push` invocation (its token
+//    span up to the next shell separator), NOT the whole compound command.
+//    Root cause of prior false-positives: testing `git push` presence and
+//    `-f`/`--force` presence independently across the entire command meant a
+//    benign `git push origin main` next to an unrelated `-f` token elsewhere
+//    (`[ -f "$x" ]`, `grep -f`, `rm -f`, `tar -f`) blocked the safe push.
+for (const invocation of cmd.match(/\bgit\s+push\b[^\n;|&]*/gi) ?? []) {
+	if (
+		/(?:^|\s)(?:--force|-f)\b/.test(invocation) &&
+		!/--force-with-lease\b/.test(invocation)
+	) {
 		console.error(
 			"BLOCKED: git push --force rewrites remote history. Use --force-with-lease if you really must. (pre-destructive-guard)",
 		);
