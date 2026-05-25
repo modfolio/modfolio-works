@@ -41,6 +41,15 @@
 						"command": "bun run .claude/hooks/post-contract-touch.ts"
 					}
 				]
+			},
+			{
+				"matcher": "Bash|Read",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/post-secret-redact.ts"
+					}
+				]
 			}
 		],
 		"PreToolUse": [
@@ -62,6 +71,19 @@
 					{
 						"type": "command",
 						"command": "bun run .claude/hooks/pre-gh-api-guard.ts"
+					},
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/pre-injection-detect.ts"
+					}
+				]
+			},
+			{
+				"matcher": "Read|WebFetch|WebSearch",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/pre-injection-detect.ts"
 					}
 				]
 			},
@@ -105,6 +127,26 @@
 						"type": "agent",
 						"prompt": "Check if architecture/design decisions were made in this turn. If yes, append to memory/decisions-log.md with format:\n\n## [date] [title]\n- 결정: ...\n- 근거: ...\n- 대안: ...\n- 선택 이유: ...\n\nRESPONSE FORMAT: You MUST respond with ONLY a JSON object, no other text.\nIf no decisions were made: {\"ok\": true}\nIf decisions were logged: {\"ok\": true}",
 						"timeout": 15
+					}
+				]
+			}
+		],
+		"SessionEnd": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/stop-session-end.ts"
+					}
+				]
+			}
+		],
+		"SubagentStop": [
+			{
+				"hooks": [
+					{
+						"type": "command",
+						"command": "bun run .claude/hooks/stop-subagent.ts"
 					}
 				]
 			}

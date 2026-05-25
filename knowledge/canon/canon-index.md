@@ -38,7 +38,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 
 ## 개발 환경
 
-- [local-dev-infra.md](local-dev-infra.md) — **mod-ai-toolkit v2** Tier 1 서비스 사용법.
+- [nas-infra.md](nas-infra.md) — **modfolio-infra(NAS)** substrate: 이중 git/레지스트리/CI($0), Restic→R2 3-2-1 백업. ADR-010 면제. `applicability: always`. (local-dev-infra.md superseded → `archive/`)
 - [modern-orchestration-evaluation.md](modern-orchestration-evaluation.md) — Docker/PaaS/mise/Devcontainer 2026-04 평가.
 - [wrangler-standards-2026.md](wrangler-standards-2026.md) — Cloudflare Workers 배포 표준.
 - [operations.md](operations.md) — 계정/운영 전반.
@@ -71,7 +71,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [cf-dynamic-workers-patterns.md](cf-dynamic-workers-patterns.md) — Dynamic Workers + Artifacts.
 - [d1-read-replicas.md](d1-read-replicas.md) — D1 read replicas + Sessions API.
 - [d1-schema-single-source.md](d1-schema-single-source.md) — D1 스키마 단일 소스.
-- [gh-actions-policy.md](gh-actions-policy.md) — GitHub Actions 정책.
+- [gh-actions-policy.md](gh-actions-policy.md) v2.0 — **GitHub Actions 전면 금지**. CI 는 NAS Forgejo Actions($0).
 
 ## 데이터 / DB
 
@@ -153,3 +153,4 @@ CF Workers 비용/지연 분석? → perf-profiler
 - 2026-05-04: v1.3.1. secret-store v1.5 (athsra Phase 1.x.1 — soft-delete + version history. R2 3-tier layout. 5 신규 명령. 운영 무결성 마지막 hole 메움).
 - 2026-05-04: v1.3.2. secret-store v1.6 (athsra Phase 2.1 — npmjs.org publish `@athsra/cli@0.1.0` + `@athsra/crypto@0.1.0` MIT public. 외부 alpha 진입 hurdle 제거).
 - 2026-05-07: v1.4.0. **db-endpoints.md** 신규 — sibling 별 DB endpoint mapping 표 (작명 혼동 방지). modfolio (parent) 의 Neon DB 명이 `press` 로 작명 → repo `modfolio-press` 와 시각 충돌 사용자 보고. canon + ecosystem.json `infrastructure[].db` 객체 schema 동시 cement (P0.0 cycle).
+- 2026-05-22: v1.5.0. **nas-infra.md** 신규(harness 3.4.0) — modfolio-infra NAS substrate 정합: 이중 git/레지스트리/CI($0). local-dev-infra.md(mod-ai-toolkit v2) superseded → `archive/`. **gh-actions-policy.md v2.0** "전면 금지" 로 강화 — `.github/workflows/` 0, CI 컴퓨트 = NAS Forgejo Actions self-hosted runner. ADR-010 신규(self-hosted-infra-substrate, ADR-002 의 의도된 면제).
