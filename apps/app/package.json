@@ -9,7 +9,7 @@
 	},
 	"dependencies": {
 		"@astrojs/cloudflare": "^12.6.0",
-		"@modfolio/connect-sdk": "^5.1.0",
+		"@modfolio/connect-sdk": "^7.0.0",
 		"astro": "^5.17.0"
 	},
 	"devDependencies": {
