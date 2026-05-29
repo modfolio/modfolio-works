@@ -1,18 +1,18 @@
 {
-	"name": "app",
-	"type": "module",
-	"scripts": {
-		"dev": "astro dev --port 4322",
-		"build": "astro build",
-		"preview": "astro preview",
-		"typecheck": "astro check"
-	},
-	"dependencies": {
-		"@astrojs/cloudflare": "^12.6.0",
-		"@modfolio/connect-sdk": "^7.0.0",
-		"astro": "^5.17.0"
-	},
-	"devDependencies": {
-		"@astrojs/check": "^0.9.8"
-	}
+  "name": "app",
+  "type": "module",
+  "scripts": {
+    "dev": "athsra run modfolio-works -- astro dev --port 4322",
+    "build": "athsra run modfolio-works -- astro build",
+    "preview": "athsra run modfolio-works -- astro preview",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "@modfolio/connect-sdk": "^7.0.0",
+    "astro": "^5.17.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.8"
+  }
 }

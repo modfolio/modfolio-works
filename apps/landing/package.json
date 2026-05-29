@@ -1,17 +1,17 @@
 {
-	"name": "landing",
-	"type": "module",
-	"scripts": {
-		"dev": "astro dev",
-		"build": "astro build",
-		"preview": "astro preview",
-		"typecheck": "astro check"
-	},
-	"dependencies": {
-		"astro": "^5.17.0"
-	},
-	"devDependencies": {
-		"@astrojs/check": "^0.9.8",
-		"typescript": "^5.9.3"
-	}
+  "name": "landing",
+  "type": "module",
+  "scripts": {
+    "dev": "athsra run modfolio-works -- astro dev",
+    "build": "athsra run modfolio-works -- astro build",
+    "preview": "athsra run modfolio-works -- astro preview",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "astro": "^5.17.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.8",
+    "typescript": "^5.9.3"
+  }
 }
