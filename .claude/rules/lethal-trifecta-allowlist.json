@@ -1,6 +1,6 @@
 {
 	"$schema": "https://modfolio.io/schemas/lethal-trifecta-allowlist.v1.json",
-	"_comment": "Lethal Trifecta 화이트리스트 — 명시 justification + 분기별 revisit. governance check 가 본 entry 와 매칭되면 finding skip. 신 entry 추가는 PR review 필수.",
+	"_comment": "Lethal Trifecta 화이트리스트 — 명시 justification + 분기별 revisit. governance check 가 본 entry 와 매칭되면 finding skip. 신 entry 추가는 PR review 필수. 이 파일은 harness-synced(SYNCED) — sibling 의 repo-local 추가는 다음 pull 에서 baseline 으로 리셋된다(의도된 동작: trifecta 예외 curation 은 중앙 baseline 단일점, repo 자가-allowlist 로 governance 우회 불가). 예외 필요 sibling 은 본 baseline 에 entry 위임(connect 2026-06-18 finding).",
 	"entries": [
 		{
 			"file": "scripts/ops/m365-auth-init.ts",
@@ -15,6 +15,13 @@
 			"approved_by": "Niky",
 			"approved_at": "2026-05-17",
 			"revisit_after": "2026-11-17"
+		},
+		{
+			"file": "scripts/modfolio/schema-drift.ts",
+			"reason": "CF D1 스키마 drift 진단 — 우리 소유 CF 계정의 D1 query API 로 fetch POST(CLOUDFLARE_API_TOKEN private). 대상이 외부/공격자 통제 아님, 응답(테이블·컬럼명)은 구조 비교에만 쓰고 LLM 처리 없음 → prompt-injection→exfiltration 경로 부재. athsra run 으로 사용자/CI 개시, 자동 트리거 없음 (langfuse-export.ts self-hosted POST 와 동일 부류). connect 2026-06-18 finding.",
+			"approved_by": "Niky",
+			"approved_at": "2026-06-18",
+			"revisit_after": "2026-12-18"
 		}
 	]
 }
