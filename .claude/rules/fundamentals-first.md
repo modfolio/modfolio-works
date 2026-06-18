@@ -47,5 +47,6 @@
 - CLAUDE.md "불변 원칙" 섹션 — 정공법 한 줄 요약
 - `.claude/rules/agent-evidence.md` — 증거 기반 주장 (정공법의 하위 규칙)
 - `.claude/rules/secrets-policy.md` — 시크릿 관련 우회 금지 (정공법 사례)
+- `.claude/rules/agent-auth-flow.md` — 인증을 사용자 터미널로 떠넘기지 않고 에이전트가 직접 시작 (정공법 사례: 마찰 우회 X, 근본 = 브라우저 플로우 사용)
 - `knowledge/canon/evergreen-principle.md` — 생태계 차원의 정공법 (Hub-not-enforcer, pull-based)
 - `knowledge/canon/attention-budget.md` — context 가 finite resource 임을 측정/관리 (정공법 3원칙 "장기 시야" 의 정량 측정 기준)

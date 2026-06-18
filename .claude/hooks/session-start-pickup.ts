@@ -2,24 +2,30 @@
 /**
  * scripts/hooks/session-start-pickup.ts
  *
- * SessionStart hook — "프로젝트 열기 = 최신 하네스".
+ * SessionStart hook — drift 안내 (기본) + opt-in 자동 self-heal.
  *
  * 동작:
  *   1. `@modfolio/harness` devDep 보유 repo 만 작동 (ecosystem self + sibling).
  *   2. `feedback/<repo>/inbox/*.md` 최근 entries 출력.
  *   3. sibling 이 ecosystem.harnessLatest 보다 뒤쳐졌으면:
- *        - working tree clean + lock 미차단 → `modfolio-harness-pull --apply`
- *          자동 실행 + 자동 commit + 1줄 요약 (drift self-heal).
- *        - dirty 또는 `harness-lock.json {autoPull:false}` → advisory only.
+ *        - 기본 = **advisory only** (수동 동기화 명령 1줄 안내). 자동 mutation 없음.
+ *        - `harness-lock.json {autoPull:true}` 로 **명시 opt-in** 한 프로젝트만
+ *          `bun update` + `modfolio-harness-pull --apply` + 자동 commit (self-heal).
+ *          단 working tree clean + origin behind 아님 일 때만.
  *
- * 철학 (v3.1, 2026-05-18):
+ * 철학 (v3.2, 2026-06-18 — 기본 advisory 로 전환):
  *   - 최신 하네스 = universe 의 유일 canonical 상태. 구버전 = "아직 안 연
- *     프로젝트" 의 transient 이지 의도된 per-app pin 아님.
- *   - Hub-not-enforcer 보존: ecosystem 은 push 하지 않는다. sibling 이
- *     자기 session start 에서 스스로 pull 한다. opt-out = harness-lock.json.
- *   - 절대 throw / push / blocking 안 함. 항상 exit 0.
+ *     프로젝트" 의 transient 이지 의도된 per-app pin 아님 (drift 프레이밍 불변).
+ *   - 그러나 "session 열기 = 자동 pull+commit" (구 default-ON) 은 (1) on-demand
+ *     수동 pull 모델과 충돌하고 (2) stale base 위 자동 commit 이 divergent 로컬
+ *     히스토리를 만들며 (3) 구버전 --apply 가 멤버 소유 파일을 덮어쓸 수 있어
+ *     실운영에서 문제를 냈다 (athsra 2026-06-18: ahead1/behind48 → reset, CHANGELOG
+ *     blank). → 기본은 안내만, 자동은 명시 opt-in.
+ *   - Hub-not-enforcer 보존: ecosystem 은 push 하지 않는다. pull/commit 주체는
+ *     끝까지 sibling 자신. opt-in = harness-lock.json {autoPull:true}.
+ *   - 절대 throw / push / blocking 안 함. 항상 exit 0, 실패는 advisory 로 degrade.
  *
- * canon `evergreen-principle.md` §v2.3, `harness-adoption-guide.md` 정합.
+ * canon `evergreen-principle.md` §v2.5, `harness-adoption-guide.md` 정합.
  */
 
 import { execSync, spawnSync } from "node:child_process";
@@ -142,36 +148,97 @@ function isWorkingTreeClean(root: string): boolean {
 }
 
 /**
- * "프로젝트 열기 = 최신" 의 실제 구현. ecosystem 은 아무것도 push 하지 않는다 —
- * sibling 이 자기 session start 에서 스스로 pull 한다 (Hub-not-enforcer 보존).
+ * 로컬이 upstream(origin) 보다 behind 인지 best-effort 로 판정.
  *
- * 안전 규칙 (정공법):
- *   - working tree clean 일 때만 자동 `--apply` + 자동 commit (revert 가능 기록).
- *     dirty 면 WIP 와 엉키지 않게 advisory 만.
- *   - `.claude/harness-lock.json` { autoPull:false } → advisory only (opt-out).
- *   - 절대 throw 안 함 / push 안 함 / blocking 안 함. SessionStart 는 항상 exit 0.
+ * 자동 commit 은 stale base 위에서 일어나면 divergent 히스토리를 만든다
+ * (athsra 2026-06-18: 로컬 ahead1/behind48 → `git reset --hard` 로 수습). 따라서
+ * opt-in 자동 self-heal 경로에서 commit 직전에 behind 면 보류한다.
+ *
+ * - read-only `git fetch` (CLAUDE.md 상 항상 허용) 로 remote 상태 갱신 후 behind count.
+ * - upstream 미설정 / fetch 실패(offline) → false (divergence 위험 없음 또는 판정
+ *   불가). opt-in 경로이므로 진행 허용 — 잔여 위험은 offline+미pull 인 좁은 경우뿐.
  */
-function harnessAutoPull(
+function isBehindUpstream(root: string): boolean {
+	try {
+		// best-effort: remote 갱신 (실패해도 아래 rev-list 는 last-known 기준으로 시도)
+		spawnSync("git", ["fetch", "--quiet"], {
+			cwd: root,
+			timeout: 15_000,
+			stdio: "ignore",
+			shell: process.platform === "win32",
+		});
+		const behind = execSync("git rev-list --count HEAD..@{u}", {
+			cwd: root,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
+		return (Number.parseInt(behind, 10) || 0) > 0;
+	} catch {
+		// @{u} 미설정 (upstream 없음) 또는 git 실패 → divergence 위험 판정 불가, 진행 허용
+		return false;
+	}
+}
+
+/**
+ * SessionStart drift pickup. ecosystem 은 아무것도 push 하지 않는다 — sibling 이
+ * 자기 session start 에서 스스로 본다 (Hub-not-enforcer 보존).
+ *
+ * 기본 = **advisory only** (수동 동기화 명령 안내). 자동 pull+commit 은 명시
+ * opt-in (`harness-lock.json {autoPull:true}`) 한 프로젝트만. 근거 = 파일 상단
+ * 철학 주석 (session-open 자동 mutation 의 3 문제, athsra 2026-06-18).
+ *
+ * opt-in 자동 self-heal 경로 안전 규칙 (정공법):
+ *   - working tree clean 일 때만 `--apply` + commit. dirty → advisory (WIP 보호).
+ *   - origin 보다 behind 면 보류 → advisory (stale-base commit divergence 차단).
+ *   - 절대 throw 안 함 / push 안 함 / blocking 안 함. 모든 실패는 advisory 로 degrade.
+ */
+export function harnessDriftPickup(
 	root: string,
 	installed: string,
 	latest: string,
 ): string[] {
 	const lock = readHarnessLock(root);
+	const manual = `bun update @modfolio/harness @modfolio/contracts && bun run harness-pull -- --apply`;
 	const advisory = [
-		`  📦 harness ${installed} → ${latest} (최신) — drift 는 "아직 안 연 프로젝트" 의 transient 상태`,
-		`     → bun run harness-pull -- --apply (commit 후 실행 권장)`,
+		`  📦 harness ${installed} → ${latest} (최신) — drift 는 "이 release 이후 아직 안 연 프로젝트" 의 transient`,
+		`     수동 동기화 (commit clean 상태에서 권장): ${manual}`,
+		`     자동 동기화를 원하면 .claude/harness-lock.json 에 { "autoPull": true }`,
 	];
-	if (lock.autoPull === false) {
-		return [
-			`  📦 harness ${installed} → ${latest} (최신) — autoPull:false (lock) → 수동`,
-			`     → bun run harness-pull -- --apply`,
-		];
+	// 기본 advisory. 자동 pull+commit 은 명시 opt-in (autoPull:true) 한 프로젝트만.
+	// (구 default-ON auto 는 athsra 2026-06-18 divergence/clobber 로 폐기 — 상단 주석)
+	if (lock.autoPull !== true) {
+		return advisory;
 	}
+	// --- 여기부터 opt-in 자동 self-heal 경로 (autoPull:true) ---
 	if (!isWorkingTreeClean(root)) {
 		return advisory; // dirty: WIP 보호 — 자동 mutation 안 함
 	}
+	if (isBehindUpstream(root)) {
+		// origin 에 미pull 커밋 존재 → 자동 commit 시 divergent. 먼저 사용자 pull 유도.
+		return [
+			`  📦 harness ${installed} → ${latest} — 로컬이 origin 보다 behind. 자동 pull 보류 (divergence 방지)`,
+			`     먼저 git pull 후: ${manual}`,
+		];
+	}
 	try {
 		const env = sanitizedEnv();
+		// 1. npm dep 를 실제로 상향 — caret 만으로는 lockfile 이 구버전에 고착돼 pull 이
+		//    구 binary/assets 로 돌아간다 (Codex 점검: sibling 들이 3.2~3.5 에 멈춰 있음).
+		//    @modfolio/contracts 미보유 sibling 은 no-op (bun update 는 기존 dep 만 갱신).
+		const upd = spawnSync(
+			"bun",
+			["update", "@modfolio/harness", "@modfolio/contracts"],
+			{
+				cwd: root,
+				encoding: "utf-8",
+				timeout: 180_000,
+				shell: process.platform === "win32",
+				env,
+			},
+		);
+		// bun update 실패(보통 GITHUB_TOKEN 부재) → advisory degrade. 구 binary pull 은 무의미.
+		if (upd.status !== 0) return advisory;
+		// 2. 갱신된 binary 로 pull.
 		const pull = spawnSync("bunx", ["modfolio-harness-pull", "--apply"], {
 			cwd: root,
 			encoding: "utf-8",
@@ -180,13 +247,16 @@ function harnessAutoPull(
 			env,
 		});
 		if (pull.status !== 0) return advisory;
-		// tree 가 pull 전 clean 이었으므로 이후 변경은 전부 pull 산출물 → 안전 commit.
+		// tree 가 시작 시 clean 이었으므로 이후 변경(package.json/lockfile + pull 산출물)은
+		// 전부 self-heal 결과 → 안전 commit (revert 가능 기록).
 		if (isWorkingTreeClean(root)) {
-			return [`  📦 harness ${installed} → ${latest}: 변경 없음 (이미 정합)`];
+			return [
+				`  📦 harness ${installed} → ${latest}: dep 갱신·변경 없음 (이미 정합)`,
+			];
 		}
 		execSync("git add -A", { cwd: root, stdio: "ignore" });
 		execSync(
-			`git commit -m "chore(harness): auto-pull ${latest} on session open"`,
+			`git commit -m "chore(harness): bun update + auto-pull ${latest} (autoPull opt-in)"`,
 			{
 				cwd: root,
 				stdio: "ignore",
@@ -198,7 +268,7 @@ function harnessAutoPull(
 			encoding: "utf-8",
 		}).trim();
 		return [
-			`  📦 harness auto-pulled ${installed} → ${latest} (commit ${sha}) — git push 는 사용자 재량`,
+			`  📦 harness auto-pull ${installed} → ${latest} (commit ${sha}, autoPull opt-in) — git push 는 사용자 재량`,
 		];
 	} catch {
 		return advisory; // 어떤 실패도 advisory 로 degrade — 세션은 계속
@@ -264,9 +334,9 @@ async function main(): Promise<void> {
 				const installed = cleanSemver(harnessDep);
 				if (installed && eco.harnessLatest) {
 					if (compareSemver(installed, eco.harnessLatest) < 0) {
-						// "열면 = 최신": sibling 이 스스로 pull (ecosystem push X).
+						// drift 안내 (기본 advisory) — 자동 self-heal 은 autoPull:true opt-in 만.
 						lines.push(
-							...harnessAutoPull(gitRoot(), installed, eco.harnessLatest),
+							...harnessDriftPickup(gitRoot(), installed, eco.harnessLatest),
 						);
 					}
 				}
@@ -294,4 +364,8 @@ async function main(): Promise<void> {
 	process.exit(0);
 }
 
-await main();
+// import.meta.main 가드 — 테스트가 `harnessDriftPickup` 를 import 할 때 main() 의
+// hook 파이프라인이 부작용으로 실행되지 않도록 (repo 컨벤션: harness-pull.ts 등 동일).
+if (import.meta.main) {
+	await main();
+}

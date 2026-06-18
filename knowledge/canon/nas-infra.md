@@ -10,7 +10,7 @@ consumers: [deploy, ops, release, preflight]
 
 # NAS Infra (modfolio-infra) — 자가호스팅 substrate
 
-> **modfolio-infra(NAS, UGREEN DXP6800 Pro) = 생태계의 자가호스팅 인프라 토대. ADR-002(100% Cloudflare Edge Native)의 의도된 예외(ADR-010). Git 이중 호스팅·Forgejo Actions CI($0)·Forgejo npm registry(이중)·Restic 3-2-1 백업을 제공한다.**
+> **modfolio-infra(NAS, UGREEN DXP6800 Pro) = 생태계의 자가호스팅 인프라 토대. ADR-002(100% Cloudflare Edge Native)의 의도된 예외(ADR-010). Git 이중 호스팅·Forgejo Actions CI($0)·Restic 3-2-1 백업을 제공한다.**
 
 이 canon 은 NAS 토폴로지의 source of truth. 운영 절차는 `.claude/skills/ops/SKILL.md`, NAS 자체의 IaC 는 modfolio-infra repo 에 있다. local-dev-infra.md(mod-ai-toolkit v2) 는 superseded — `archive/local-dev-infra.md`.
 
@@ -116,40 +116,22 @@ athsra set modfolio-ecosystem FORGEJO_NPM_TOKEN=fjt_...
 athsra set modfolio-ecosystem ECOSYSTEM_SYNC_TOKEN=ghp_...
 ```
 
-## 이중 레지스트리 — Forgejo npm registry
+## npm registry — GitHub Packages (단일)
 
-`@modfolio/harness` 등 ecosystem 패키지는 두 곳에 publish:
-
-1. **GitHub Packages** (`https://npm.pkg.github.com`) — primary consume 경로, sibling 기본 `.npmrc`
-2. **Forgejo npm registry** (`https://git.modfolio.io/api/packages/modfolio/npm/`) — best-effort redundant copy
-
-### Publish 메커니즘
-
-`scripts/harness-publish.ts` 가 단일 오케스트레이터:
-- `[4/5]` GitHub Packages publish — primary. 실패 시 exit 2.
-- `[5/5]` Forgejo registry publish — best-effort. `FORGEJO_NPM_TOKEN` 없거나 NAS 도달 실패 시 warn 후 exit 0.
-
+`@modfolio/harness` 등 ecosystem 패키지는 **GitHub Packages 단일** 로 publish 한다.
+`scripts/harness-publish.ts` 가 단일 오케스트레이터 — `bun publish` → GitHub Packages, 실패 시 exit 2.
 local track(`bun run publish:harness`)·Forgejo Actions CI track(`.forgejo/workflows/publish-harness.yml`) 둘 다 같은 orchestrator 호출.
 
-### Consume 전략 — sibling `.npmrc`
-
-기본 = GitHub Packages 단일:
+sibling 기본 `.npmrc`:
 ```
 @modfolio:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+always-auth=true
 ```
 
-이유: `bun install` 이 Tailscale 의존 안 함 → 집·사무실·CI 어디서나 동작. Forgejo 는 redundancy / NAS-resident 컨텍스트(modfolio-infra) 용.
+이유: `bun install` 이 Tailscale 의존 안 함 → 집·사무실·CI 어디서나 동작.
 
-NAS-resident sibling(modfolio-infra) 또는 명시적 Forgejo 선호 시 override:
-```
-@modfolio:registry=https://git.modfolio.io/api/packages/modfolio/npm/
-//git.modfolio.io/api/packages/modfolio/npm/:_authToken=${FORGEJO_NPM_TOKEN}
-```
-
-### Forgejo npm registry token 생성
-
-Forgejo UI → org `modfolio` 선택 → **Settings → Packages → Access Tokens** → `package:read` + `package:write` scope → token 발급. athsra 에 보관.
+> **NAS Forgejo npm mirror(이중)는 미구현 — 2026-06-15 정정.** `package.json` 의 `publishConfig.registry` 가 GitHub Packages 를 고정하고 `--registry` 로 override 되지 않는다(`npm publish --dry-run` 실측: default·`--registry=forgejo` 둘 다 `npm.pkg.github.com` 으로 resolve). 즉 `npm publish` 로는 두 번째 registry 에 올릴 수 없다. 과거 `[5/5] Forgejo publish` 단계는 GitHub 으로만 가는 no-op 이라 `harness-publish.ts` 에서 제거(v3.11.3). 진짜 NAS npm mirror 가 필요하면 별도 push 메커니즘(전용 도구/ADR) — npm publish 가 아니다. NAS 의 git 이중호스팅·Forgejo Actions CI·Restic 백업은 그대로 유효.
 
 ## Backup — Restic → R2 3-2-1
 
@@ -183,7 +165,7 @@ ecosystem.json modfolio-infra note 에 "Forgejo 7" — v7 이면 v15 LTS 권고.
 - `git push` (modfolio-infra): 차단 (Forgejo-only). 복구 후 가능.
 - `bun install`: 무영향 (기본 `.npmrc` = GitHub Packages).
 - Forgejo Actions CI: 차단 (runner 부재). 워크플로 들 `workflow_dispatch` 라 사용자 명시 실행만 영향. 대안: local track.
-- 새 harness publish: GitHub Packages 만 성공(primary), Forgejo `[5/5]` SKIP/warn — release 성립.
+- 새 harness publish: 무영향 (GitHub Packages 단일 — NAS 무관).
 - Restic 백업: 일시 중단 — 복구 후 자동 재개.
 
 ### workstation 노드 (계획)

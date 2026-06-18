@@ -1,6 +1,6 @@
 ---
 description: Multi-Agent Research 3-tier 의 Tier 3 — Generator output 의 통합 verdict (binary pass/fail + weighted score). 별도 분산 평가 (multi-review 4-agent) 의 final aggregator 역할. v3.0 P2.2 에서 PRM step-wise 로 확장.
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: xhigh
 thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }

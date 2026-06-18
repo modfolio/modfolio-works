@@ -1,8 +1,8 @@
 ---
 title: Design Tooling
-version: 1.0.0
-last_updated: 2026-03-27
-source: [knowledge/references/design-tooling-harness.md]
+version: 1.1.0
+last_updated: 2026-05-24
+source: [knowledge/references/design-tooling-harness.md, 2026-05-24 staleness audit + Figma MCP 풀 카탈로그 갱신]
 sync_to_siblings: true
 applicability: always
 consumers: [design, design-engineer]
@@ -11,6 +11,19 @@ consumers: [design, design-engineer]
 # Design Tooling — Canonical Reference
 
 > Paper + Figma + Canva 3도구 워크플로우. 각 도구는 역할이 다르다.
+
+## 2026-05 갱신 — Figma MCP 풀 카탈로그
+
+universe 의 Figma 통합은 **MCP server `claude.ai Figma`** 가 standard. 사용 가능한 함수 + skill set:
+
+- `use_figma` — JS execution in Figma file context. **`figma:figma-use` skill (MANDATORY prerequisite)** 호출 필수
+- `get_design_context`, `get_screenshot`, `get_metadata`, `get_variable_defs` — read 도구
+- `generate_diagram` (FigJam) — **`figma:figma-generate-diagram` prerequisite**
+- `create_new_file` — **`figma:figma-create-new-file` prerequisite**
+- Code Connect: `add_code_connect_map`, `get_code_connect_map`, `get_code_connect_suggestions`, `send_code_connect_mappings`
+- skill set: `figma:figma-use`, `figma:figma-generate-design`, `figma:figma-code-connect`, `figma:figma-generate-diagram`, `figma:figma-use-figjam`, `figma:figma-use-slides`, `figma:figma-create-new-file`, `figma:figma-generate-library`
+
+Canva 통합은 `claude.ai Canva` MCP — `authenticate` + design 생성. 양방향 pipeline 은 `.claude/skills/design/SKILL.md` 가 source of truth.
 
 ## 도구 역할 분리
 

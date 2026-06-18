@@ -4,9 +4,12 @@
   "workspaces": {
     "": {
       "name": "modfolio-works",
+      "dependencies": {
+        "@modfolio/contracts": "1.2.0",
+      },
       "devDependencies": {
         "@biomejs/biome": "^2.4.15",
-        "@modfolio/harness": "^3.4.0",
+        "@modfolio/harness": "3.13.2",
         "typescript": "^5.9.3",
       },
     },
@@ -234,7 +237,9 @@
 
     "@modfolio/connect-sdk": ["@modfolio/connect-sdk@7.0.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/7.0.0/fd816a28bec1ac25945d4f12903f15dfb546cb94", { "dependencies": { "jose": "^6.2.2" } }, "sha512-iUNp5rOXoKXyd4jZ0qzbAdZArZdD9Hr/CmriwCHKLVd8/gj4mnsaGbqVO/v7UhZaw9RapChjVmtOU1sAsElDjA=="],
 
-    "@modfolio/harness": ["@modfolio/harness@3.4.0", "https://npm.pkg.github.com/download/@modfolio/harness/3.4.0/b0497ead729ebe6270478871d0ec86ae3a571e6a", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-Ycd4VdxLsAOOiB82kjj4osaOWVVv2cyw812812Dl9qVdr8n4X+G5Kkgy/jisQc/f0NbjCxsipsAkPlIwNo/DOw=="],
+    "@modfolio/contracts": ["@modfolio/contracts@1.2.0", "https://npm.pkg.github.com/download/@modfolio/contracts/1.2.0/ce506706f0051112ad01c3c937ca5d2b1b3b7640", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-llzb5LGgZI2gGF1h3QkHUZMUJiGrZJU11XHwbojKNtcRU9nG14W77QNBffsbuldnVyVOZu92LjJfKxNI0Cb4JQ=="],
+
+    "@modfolio/harness": ["@modfolio/harness@3.13.2", "https://npm.pkg.github.com/download/@modfolio/harness/3.13.2/da2827e445dd5c73e99991621758d5f6d190e61e", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-1zYpBoA84QVdpXaEV46TSCMxid9M2OwceZiZQJByWHdbP/iU656W611cm039PsVWKN3c6eML45kwjMMXc9TfRA=="],
 
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 

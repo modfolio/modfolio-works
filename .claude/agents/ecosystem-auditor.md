@@ -1,6 +1,6 @@
 ---
 description: ecosystem.json vs 실제 상태 검증. 읽기 전용
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: high
 thinking_budget: light
 cache_control: { type: "ephemeral", ttl: "1h" }

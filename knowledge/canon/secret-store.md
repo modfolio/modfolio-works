@@ -1,7 +1,7 @@
 ---
 title: Secret Store — athsra (E2EE on Cloudflare edge)
-version: 1.14.0
-last_updated: 2026-05-09
+version: 1.15.0
+last_updated: 2026-05-26
 source: [github.com/modfolio/athsra Phase 0-2.1 + 1.x.2/1.x.3/1.x.4/1.x.5 active (chronological 1.x.6), plan v4.0.0 glittery-singing-treasure.md, Phase 1 4 active 151 keys + 4 no-secret cleanup, Phase 2.1 npmjs.org publish (@athsra/cli + @athsra/crypto 0.1.0), Phase 1.x.2 D1 token table production deploy 2026-05-05 (worker version 04727c33 phase_label=1.x.2 live, drizzle-orm + drizzle-kit, 34 worker tests pass), Phase 1.x.2 cutover dogfood 발견 (KV PROOF D1 자동 import 안 됨, GLOBAL_SALT change risk, legacy-backup 100% 복원 검증), Phase 1.x.3 audit Queue + R2 + D1 cement 2026-05-06 (athsra c6be015, Trial P1 #5 R2 Event Notifications 묶음, 41 worker tests pass)]
 sync_to_siblings: true
 consumers: [ops, new-app, preflight, secret]
@@ -19,6 +19,8 @@ applicability: always
 modfolio universe 의 secret 관리 표준 (v3.0.0 부터, **Phase 2.1 + 1.x.2 production active 2026-05-05** — npmjs.org publish + D1 token table production deploy 완료). canon `secrets-dotenvx` v2.3.0 (OneDrive backup mirror 모델) 폐기 — 본 canon 으로 이전. 사용자 자체 자산 (modfolio/athsra repo) + **외부 alpha 진입** (`bun add -g @athsra/cli` 가능) + **strong consistency** (revoke 즉시 반영).
 
 **Production status (2026-05-05)**: worker `https://athsra-worker.winterermod.workers.dev` version `04727c33-347d-47c6-9059-d4d2764dea5f` phase_label=1.x.2 live. D1 `athsra-tokens` (uuid 892fb424-5a18-4eb0-bf26-d29e84c13180, region APAC) active. 4 sibling repo (modfolio-ecosystem 129 + modfolio-pay 11 + modfolio-connect 5 + gistcore 6 = **151 keys**) athsra E2EE 운영 중.
+
+**AI-native + 환경 분리 (2026-06-14)**: MCP 4-tier (read/write/**value**/admin) — AI 코딩 에이전트가 채팅에서 in-chat login(`athsra_login_start`) → secret CRUD → 값 조회/주입까지. **value tier (1.2.0)** (`ATHSRA_MCP_READ_VALUES=1`): `athsra_get_secret_value`(기본 마스킹, full 평문은 env opt-in + `confirm=<project>` 이중 게이트) + `athsra_run`(값 미노출 주입 + 출력 scrub). athsra MCP 는 outward 도구 0개 → 단독 lethal-trifecta 미형성 (`.claude/rules/lethal-trifecta.md`). **환경(config) 분리 (1.3.0)**: `secrets/<org>/<project>/<config>/`, config 생략=default, dev/staging/prod 가 CLI·MCP·대시보드 전반 지원 (무중단 fallback). athsra README 의 "Environments (config)" + "MCP server" 섹션이 single source.
 
 ## 검증된 사례 (Phase 1 dogfood 2026-05-03 + Phase 1.x.2 reset 2026-05-05)
 
@@ -144,6 +146,25 @@ athsra run modfolio-ecosystem -- bun run scripts/ops/m365-poc.ts
 athsra doctor
 ```
 
+#### 환경(config) 분리 — dev/staging/prod (1.3.0, 2026-06-14)
+
+하나의 project 안에서 환경별로 분리된 secret 세트. R2 layout `secrets/<org>/<project>/<config>/`,
+config 생략 = `default`. 지정 우선순위: `--config=<env>` > `<project>:<env>` > `.athsra` 의 `config=` 줄 > `default`.
+config 명명은 소문자 `^[a-z][a-z0-9_-]{0,31}$` + 예약어(versions/current/tombstone) 금지.
+
+```bash
+athsra set modfolio-pay:dev TOSS_SECRET_KEY=test_sk_xxx   # dev 환경
+athsra get modfolio-pay:prod                              # prod 는 독립 세트
+athsra run modfolio-pay:prod -- bunx wrangler deploy      # prod secret 주입 실행
+athsra ls modfolio-pay --configs                          # 환경 목록 + active/deleted
+athsra versions modfolio-pay:prod                         # prod 환경 버전 이력
+```
+
+**무중단**: config 생략 시 기존과 100% 동일. config 도입 전 데이터는 worker 3-tier read fallback
+(config → config-less → founding legacy)으로 읽히고 write self-heal 로 정식 경로에 정착. 신규 환경은
+fallback 없이 빈 세트가 정답(첫 set 으로 생성). 모든 secret 명령 + MCP secret 도구(optional `config`) +
+대시보드 환경 드롭다운이 동일 모델. config-별 ACL 은 1차 미구현(project 단위 유지, 확장 슬롯만).
+
 ### 실수 복구 (Phase 1.x.1)
 
 모든 PUT 은 `versions/<id>.json` 에 영구 보존. DELETE 는 default 가 soft (tombstone marker, versions 보존). 영구 삭제는 `purge` 또는 `delete --hard` (double-confirm).
@@ -217,6 +238,8 @@ after (athsra):
 | **1.x.3** | ✅ **종료 (2026-05-06, chronological 1.x.6)** | **audit log Queue + R2 영구 archive + D1 query — dual emit**. wrangler.jsonc r2_buckets +AUDIT_STORE / queues +AUDIT_QUEUE. drizzle/0002_audit_log.sql `auth_audit_log` 테이블 (id PK autoinc / ts / type / actor / action / request_method / request_path / status / meta_json) + 2 인덱스 (`actor_ts_idx`, `action_ts_idx`). lib/audit.ts signature `logAudit(c, entry)` — Hono Context 받아 `c.executionCtx.waitUntil(c.env.AUDIT_QUEUE.send(line))` push. queue/audit-consumer.ts (~85줄): batch → R2 JSONL put + D1 insert + ackAll/retryAll. test/helpers/mock-queue.ts + test/audit-consumer.test.ts 신규 (6 tests). 12 logAudit 호출처 (middleware 6 + routes 6 + auditWrite 1) + auditWrite c 명시. **41 worker tests pass** (35 → 41, biome 0w / tsc 0e). athsra commit `c6be015`. **옵션 D 채택** (R2 Event Notifications + push) — Trial P1 #5 자연 묶음. 옵션 A (cron pull) / B (waitUntil sample) / C (외부 SIEM) rejected (ROADMAP v8 기록). docs/runbooks/audit-r2-export.md 신규 (운영 절차 + SIEM 연동 + Trial P1 #5). info endpoint `phase_label=1.x.6` + `audit_emit: ['workers-logs','queue:audit-r2-d1']` field 추가. **Production deploy 통합** (Phase 1.x.4 + 1.x.5 + 1.x.3 한 묶음 — R2 bucket create + Queue create + Event Notifications binding + D1 0001+0002 apply + worker deploy). |
 | **1.x.4** | ✅ **종료 (2026-05-06)** | **KV `AUTH` binding 제거** — wrangler.jsonc kv_namespaces + Bindings interface AUTH + test mockKV 일괄 정리. Phase 1.x.2 D1 cutover 후 KV 는 dead data. KV namespace 자체 삭제는 사용자 직접 (1회 wrangler 명령). athsra commit `4a87af3`. 35 worker tests pass (변경 0, type 정리만). |
 | **1.x.5** | ✅ **종료 (2026-05-06)** | **GLOBAL_SALT_VERSION change auto re-bootstrap mitigation** — D1 schema +1 column (`global_salt_version`) + register endpoint version 검증 (mismatch 감지 시 PROOF auto invalidate + token 전체 삭제 + bootstrap 모드) + info endpoint `proof_invalidated` field + CLI login/doctor 안내 메시지. athsra commit `bdae968`, 35 worker tests pass. Phase 1.x.2 cutover dogfood 발견의 구조적 구현. |
+| **MCP value tier (1.2.0)** | ✅ **종료 (2026-06-14)** | AI 가 채팅에서 secret 값 조회/주입. 신규 4번째 tier `value` (`ATHSRA_MCP_READ_VALUES=1`): `athsra_get_secret_value`(기본 마스킹 prefix+length+sha256; full 평문 = env opt-in + `confirm=<project>` 이중 게이트) + `athsra_run`(값 미노출 주입 + 출력 scrub). `mask.ts`/`run.ts` 신규. `mcp install --read-values`. outward 0 → 단독 trifecta 미형성. cli 239 pass. |
+| **환경(config) 분리 (1.3.0)** | ✅ **종료 (2026-06-14)** | `secrets/<org>/<project>/<config>/`, config 생략=default. worker: `?config=` 7 routes + `sanitizeConfig` + 3-tier read fallback + write self-heal + `GET /:project/configs`. CLI: `resolveProject().config`(`--config=`/`project:config`/`.athsra`) → 10 secret 명령 전파 + `ls --configs`. MCP: 11 도구 optional `config`. 대시보드: 환경 Select 드롭다운 + listConfigs. 무중단 하위호환. cli 268 / dashboard 6 pass. |
 | 2.2-2.4 | 검토 | RBAC (multi-user, D1 의존), dashboard alpha (SvelteKit + CF Pages), 잔존 15 repo |
 | 3 | 계획 | beta, paid tier (Stripe $10/u/mo), SAML SSO, GitHub Actions / Vercel / Terraform / K8s ESO integrations, HN launch, SOC2 Type I, hardware wallet (Ledger / Trezor) BIP-39 통합 |
 | 4 | 계획 | GA, SOC2 Type II, SCIM, dynamic secrets, multi-cloud DR, mTLS (enterprise) |
@@ -294,6 +317,114 @@ athsra set <sibling-repo> --from-file .env       # bulk
 athsra get <sibling-repo>                        # 검증
 athsra run <sibling-repo> -- bun run dev         # env inject 후 실행
 ```
+
+### CF Worker secrets + Workers Builds 통합 — `athsra adopt` (v0.1.5+, 2026-05-25)
+
+위 3-step 후 sibling 의 envelope 를 **CF Worker secrets + Workers Builds GitHub push-to-deploy 까지 한 줄로** 연결:
+
+```bash
+cd ~/code/<sibling>
+athsra adopt                  # dry-run: --dry-run
+athsra adopt --manual-build   # 1차 build 즉시 검증
+```
+
+자동 추론 (sibling repo 디렉토리 안에서 호출 시):
+
+| 항목 | 추론 source |
+|---|---|
+| `project` | basename(cwd) / `.athsra` / `package.json` (auto-project.ts) |
+| `gh-repo` | `git remote get-url origin` |
+| `cf-worker` | `wrangler.jsonc` 의 `name` (cwd 하위 발견된 첫 worker, 다중이면 `--cf-worker=<name>` 명시) |
+| `root_directory` | `wrangler.jsonc` 위치 (repoRoot 기준 상대 경로) |
+| CF token | env `CLOUDFLARE_API_TOKEN` > envelope key > `--cf-token-project=<x>` 명시 |
+
+흐름 (모든 step 멱등):
+
+1. envelope 확인 (없으면 `athsra set` 안내 + exit)
+2. CF token 확보 (env 우선)
+3. wrangler secrets sync (envelope → worker, 25-chunk bulk auto-split)
+4. Workers Builds setup:
+   - worker_tag GET
+   - repo connection idempotent PUT (org 동일 시 reuse)
+   - latest build_token GET
+   - trigger upsert (root+branch 매칭 시 PATCH, 없으면 POST)
+   - env vars PATCH (`GITHUB_TOKEN` default — `@modfolio/*` private deps 인증, 누락 시 `bun install` 무한 hang)
+5. (`--manual-build`) 1차 build 트리거 (검증)
+
+핵심 옵션:
+- `--cf-worker=<name>` — 다중 wrangler.jsonc 시 명시
+- `--env=KEY1,KEY2` — Workers Builds trigger env vars (default `GITHUB_TOKEN`)
+- `--cf-token-project=<envelope>` — CF token 출처 envelope (default: project 자체)
+- `--skip-sync` / `--skip-builds` / `--dry-run`
+
+캐논 [`cf-workers-builds-api.md`](cf-workers-builds-api.md) 의 API 호출을 athsra CLI 의 lib (`packages/cli/src/lib/{workers-builds,wrangler-sync,adopt-context}.ts`) 로 추출 — 모든 sibling 동일 도구 사용. `scripts/sync-wrangler-secrets.ts` + `scripts/setup-workers-builds.ts` 는 lib 호출 thin wrapper 로 backward-compat.
+
+#### Option γ — default-deny + manifest opt-in (athsra v0.1.6+, Phase 2.6 / 2026-05-26)
+
+이전 `adopt` 와 `sync-wrangler-secrets` 는 envelope 의 **모든 키** 를 worker secrets 로 무차별 sync. 결과적으로 worker 의 권한이 envelope 전체로 확장 — secret leak 시 blast radius 가 envelope 단위로 증폭. **최소 권한 정공법**: sibling worker 가 명시적으로 opt-in 한 키만 sync.
+
+**기본 동작 — default-deny**:
+- manifest 없으면 sync 거부 + onboarding 안내 출력 (exit 2)
+- `--allow-all` flag 로 legacy override (감사 추적: `bypassedManifest=true` 가 결과에 기록)
+- manifest 있으면 envelope ∩ manifest.secrets 만 sync
+
+**Manifest 위치 + schema (v1)**:
+- `<worker.cwd>/.athsra/secrets.json` — `wrangler.jsonc` 와 같은 디렉토리
+- 키 이름만 저장 (값 X, git commit 안전)
+
+```json
+{
+  "$schema": "https://athsra.com/schema/secrets-manifest-v1.json",
+  "version": "1",
+  "secrets": ["DATABASE_URL", "SESSION_SECRET", "..."]
+}
+```
+
+**CLI**:
+```bash
+# 신규 manifest — envelope 전체 캡처 (마이그레이션 빠른 시작)
+athsra manifest init --all
+
+# 명시 키만 (권장, 최소 권한)
+athsra manifest init --keys=DATABASE_URL,SESSION_SECRET
+
+# 또는 파일에서 키 목록 (한 줄 1개, # 주석 허용)
+athsra manifest init --keys-from=docs/secrets-list.txt
+
+# 출력 / 검증
+athsra manifest show
+athsra manifest validate [<project>]   # envelope vs manifest diff
+
+# 수정
+athsra manifest add NEW_KEY
+athsra manifest remove OLD_KEY
+```
+
+**Hub-not-enforcer 정합**:
+- athsra (hub) 는 기본을 default-deny 로 깔 뿐, 모든 sibling 에 manifest 작성을 강제하지 않음
+- 각 sibling owner 가 자율적으로 opt-in. legacy override (`--allow-all`) 도 보존
+- `bypassedManifest=true` 감사 흔적이 남아 보안 review 시 cleanup target 식별 가능
+
+**해결되는 사고 패턴**:
+- 새 worker 가 의도치 않게 envelope 전체 키 권한 획득 → manifest 강제로 차단
+- 키 rename 시 envelope-manifest sync drift → `athsra manifest validate` 가 누락/초과 보고
+- legacy `--allow-all` 사용처 → `bypassedManifest` flag 로 추적
+
+**Sibling onboarding 흐름**:
+```bash
+cd ~/code/<sibling>/apps/<worker-dir>
+# 첫 도입 (envelope 전체 캡처):
+athsra manifest init --all
+git add .athsra/secrets.json
+git commit -m "feat(secrets): add athsra manifest (Phase 2.6 opt-in)"
+# 이후 키 변경 시:
+athsra manifest add NEW_KEY
+athsra manifest validate <project>
+```
+
+코드: `packages/cli/src/lib/{secrets-manifest,wrangler-sync}.ts` + `packages/cli/src/commands/manifest.ts`. 35 tests (manifest 27 + sync 통합 8) pass.
+
+**전제** (1회 사람 작업): Cloudflare GitHub App (`cloudflare-workers-and-pages`) 이 GitHub org 에 설치 + envelope 에 `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` + `GITHUB_TOKEN` 존재. 셋 다 modfolio universe 의 표준 envelope (보통 `modfolio-connect`) 에 보관.
 
 ### 기존 secrets 이관 oneliner (Doppler / dotenvx → athsra)
 

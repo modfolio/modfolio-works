@@ -18,9 +18,22 @@ const start = performance.now();
 const input = await readHookInput();
 const files = editedFiles(input);
 
-if (files.some((f) => f.includes("contracts/"))) {
-	const reminder =
-		"Contract change detected. Run `bun run schema-impact` after completion to check ripple effects.";
+const touchedContract = files.some((f) => f.includes("contracts/"));
+const touchedEcosystem = files.some((f) => f.endsWith("ecosystem.json"));
+
+if (touchedContract || touchedEcosystem) {
+	const lines: string[] = [];
+	if (touchedContract) {
+		lines.push(
+			"Contract change detected. Run `bun run schema-impact` after completion to check ripple effects.",
+		);
+	}
+	if (touchedEcosystem) {
+		lines.push(
+			"ecosystem.json change detected. Run `bun run registry:generate` to refresh the App Registry (URLs/OIDC/CORS/webhook) — release-gate fails on drift.",
+		);
+	}
+	const reminder = lines.join("\n");
 	const augment = process.env.CONTRACT_TOUCH_AUGMENT === "1";
 
 	if (augment) {

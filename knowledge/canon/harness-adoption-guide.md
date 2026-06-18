@@ -1,20 +1,105 @@
 ---
-title: Harness Adoption Guide — v2.33.0 적용 + 자동 픽업 자동화
-version: 1.0.0
-last_updated: 2026-05-13
-source: [v2.33.0 dogfood — /harness-evolve v2.0 + 10 Adopt P0/P1 cement, CHANGELOG.md v2.33.0]
+title: Harness Adoption Guide — 첫 도입(0→adopted) + 자동 픽업 + 항상-최신
+version: 1.4.0
+last_updated: 2026-06-18
+source: [v2.33.0 dogfood, v3.1.0 velocity recovery, v3.4.0 NAS substrate, v3.7.0 App Registry/payment/dreaming + first-contact bootstrap (2026-06-14), v3.9.1 stale-adopter un-stick + harness:report (2026-06-14), v3.12 session-open = 기본 advisory·자동 pull opt-in (2026-06-18), CHANGELOG.md]
 sync_to_siblings: true
 applicability: always
 consumers: [harness-pull, preflight, initializer, modfolio, session-handoff]
 ---
 
-# Harness Adoption Guide — v2.33.0
+# Harness Adoption Guide — 첫 도입 + 항상-최신
 
-ecosystem 이 발행한 신 자산을 **sibling 이 다음 세션 열 때 알아서 픽업하도록** 만드는 표준. sibling 에서 `bunx modfolio-harness-pull --apply` 호출 후 본 canon 의 적용 step 따르면 즉시 최신 방식 개발 가능.
+도입은 2 단계다: **(0) 첫 접촉**(브랜드 뉴 프로젝트가 처음 `@modfolio/harness` 를 당겨오는 1회) → **(1+) 지속 픽업**(이후 매 세션 SessionStart 가 drift 를 **안내**, 사용자가 pull → 최신; `autoPull:true` opt-in repo 는 자동). 아래 §0 이 첫 접촉, 나머지가 지속 운영.
 
-## v2.33.0 변경 요약 (한 줄 1줄)
+## 0 → Adopted — 브랜드 뉴 프로젝트 첫 도입 (first contact)
 
-`/harness-evolve` v2.0 (Phase 2 retrospective + Phase 4 synthesize script + Lethal Trifecta governance) + 10 Adopt P0/P1 cement (OTel GenAI semconv / DO auto-tracing / Queues metrics / D1 PRAGMA / `/goal` command / claude-progress.txt + initializer / xhigh effort recalibration / Lethal Trifecta / OpenInference Claude SDK Trial / Memory tool L3 Trial).
+기존 가이드는 `@modfolio/harness` 가 **이미 설치된** sibling 을 가정했다. 아직 아무것도 없는 프로젝트는 먼저 이 "첫 접촉"을 1회 한다 — 이후는 SessionStart drift 안내(기본) 또는 `autoPull:true` 자동(opt-in)으로 유지.
+
+### 한 줄 (권장)
+
+```bash
+cd ~/code/<your-new-project>
+bash ~/code/modfolio-ecosystem/scripts/ops/adopt-harness.sh           # 미리보기(dry-run)
+bash ~/code/modfolio-ecosystem/scripts/ops/adopt-harness.sh --apply   # 적용까지
+```
+
+스크립트가 멱등으로: `.npmrc` 셋업 → `GITHUB_TOKEN` 확인 → `@modfolio/harness`+`@modfolio/contracts` `@latest` 설치(caret) → `harness-pull` 동기. **로컬 파일만**(commit/push 안 함).
+
+### 수동 (스크립트 없이)
+
+1. `.npmrc` (프로젝트 루트) — `templates/npmrc.example` 복사:
+   ```
+   @modfolio:registry=https://npm.pkg.github.com
+   //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+   ```
+2. 토큰(read:packages) — athsra: `athsra set <repo> GITHUB_TOKEN=ghp_...` 후 `athsra run <repo> -- <cmd>`. ⚠️ 리터럴 금지, `file:`/`link:` 금지(`contracts.md`).
+3. 설치: `bun add -D @modfolio/harness@latest && bun add @modfolio/contracts@latest`
+4. 첫 동기: `bunx modfolio-harness-pull --dry-run` → 검토 → `--apply`
+
+**fully external** (ecosystem clone 없음, gh 인증만):
+```bash
+gh api repos/modfolio/modfolio-ecosystem/contents/scripts/ops/adopt-harness.sh --jq .content | base64 -d | bash
+```
+
+### 그 다음 = drift 안내 (기본) + 사용자 pull
+
+- **caret 범위**(`^<ecosystem.harnessLatest>`, 예 `^3.8.0`) → `bun update` 시 최신 minor/patch.
+- **SessionStart drift 안내** (v3.12, 기본) → `.claude/harness-lock.json` 에 `{ "enableSessionPickup": true }` 후 `--apply` 1회 → 이후 매 세션 진입 시 drift 를 **감지·안내** (수동 동기화 명령 1줄). drift = transient.
+- **자동 self-heal 을 원하면 (opt-in)** → lock 에 `{ "autoPull": true }` 추가 → 세션 진입 시 스스로 `bun update` + `harness-pull --apply` + commit (working tree clean + origin behind 아님 일 때만). 근거·문제이력 = `evergreen-principle.md` §v2.5.
+- **App Registry** → `@modfolio/contracts/registry` import (바로 아래).
+
+## 기존 stale 어댑터 — self-heal 부트스트랩 갭 (1회 un-stick)
+
+> 강제 아님 — 각 repo 자율. ecosystem 은 상태를 정확히 알고 권고만 한다 (Hub-not-enforcer).
+
+자동 self-heal(SessionStart `bun update`)은 **v3.9.0 에서 처음 도입**됐다. 그래서 그보다 낮은 버전(예 3.2~3.5)에 묶인 repo 는 자기를 갱신해 줄 코드를 **아직 갖지 못한다** — 열어도 스스로 최신으로 못 올라온다(chicken-and-egg). caret(`^3.2.0`)이 3.9.0 을 허용해도 `bun.lockb` 가 낮은 버전을 pin 하므로 `bun install` 로는 안 넘어온다.
+
+**해결(1회, 각 repo 자율)**: 해당 repo 에서 `adopt-harness.sh` 재실행 — 멱등이고, `bun add @latest` 가 lockfile pin 을 덮어써 최신으로 un-stick + `@modfolio/contracts` 도입까지 한다. 그 1회 이후부터는 SessionStart 가 매 세션 drift 를 **안내**하고(기본 advisory, v3.12), 안내된 명령을 사용자가 치면 정합 유지 — `autoPull:true` 를 켠 repo 는 그 과정이 자동.
+
+```bash
+cd ~/code/<stuck-repo>
+bash ~/code/modfolio-ecosystem/scripts/ops/adopt-harness.sh           # dry-run 미리보기
+bash ~/code/modfolio-ecosystem/scripts/ops/adopt-harness.sh --apply   # 적용
+```
+
+**전파 상태 가시성(ecosystem 측, read-only)**: 누가 어느 버전에 묶였고 contracts 를 도입했는지 한눈에 —
+
+```bash
+bun run harness:report          # 표: DECLARED / INSTALLED / CONTRACTS / STATE (behind 등)
+bun run harness:report:json     # 머신 소비
+```
+
+ecosystem 은 이 리포트로 **항상 전파 진실을 안다**. 그러나 sibling 을 직접 갱신하지 않는다 — 위 un-stick 은 각 repo 가 자율 실행. registry 소비(`@modfolio/contracts/registry`)도 그 repo 가 원할 때 도입(현재 도입 0 = 정상, 강제 아님).
+
+## App Registry 소비
+
+URL 손코딩(OIDC redirect_uri·CORS·SSO·webhook) 종료. `@modfolio/contracts@^1.1.0` 설치 후:
+
+```ts
+import { oidcRedirectUris, authEndpoints, corsOriginsFor, webhookUrl, getApp } from '@modfolio/contracts/registry';
+const redirects = oidcRedirectUris('naviaca');      // ['https://app.naviaca.com/auth/callback', ...]
+const { issuer, authorize, token, jwks } = authEndpoints() ?? {};   // connect OIDC 엔드포인트
+```
+
+런타임은 패키지의 **정적 import**(Workers-safe). harness-pull 이 `.claude/app-registry.json` fresh 미러도 sync(build-time/tooling 용, 매 pull 갱신). canon `app-registry.md`.
+
+## v3.1+ 정합 (2026-05-24 추가)
+
+- **`permissions.defaultMode = "bypassPermissions"`** — fleet 표준 (canon `permission-mode.md`). zero approve-prompt. 안전망 = 결정적 hook.
+- **SessionStart hook default-ON** (`session-start-pickup.ts`) — IDE 진입 시 sibling 이 drift 를 **감지·안내** (기본 advisory, v3.12). 자동 `--apply`+commit self-heal 은 `harness-lock.json {autoPull:true}` opt-in 만. drift = transient-not-canonical (`evergreen-principle.md` §v2.3/§v2.5).
+- **pre-commit guard quality:all 제거** — 매 커밋 즉시. quality 검증은 `pre-push-guard` 비차단 + `/release` 하드 게이트 시점에만 (canon `solo-main-workflow.md`).
+- **NAS Forgejo Actions = $0 CI** (`nas-infra.md` + `gh-actions-policy.md` v2.0) — GitHub Actions 전면 금지. CI 컴퓨트는 NAS self-hosted runner.
+
+## 동기되는 자산 = 항상 ecosystem.harnessLatest (버전 고정 금지)
+
+harness-pull 이 당기는 집합은 *현재 최신* 이다 — 특정 버전 목록에 고정하지 않는다 (정공법: drift 방지):
+- **canon**: `sync_to_siblings: true` 인 모든 `knowledge/canon/*.md` (목록 = `canon-index.md`)
+- **rule/skill/agent/hook**: `scripts/harness-pull/constants.ts` 의 `UNIVERSAL_RULES` / `SHARED_SKILLS` / `SHARED_AGENTS` / `SHARED_HOOKS`
+- **App Registry 미러**: `.claude/app-registry.json` (모든 universe 앱 URL — 위 §App Registry)
+- **CLAUDE.md ecosystem 섹션** (관련 앱 표)
+
+지금 무엇이 최신인지 = `ecosystem.harnessLatest`; 버전별 상세 = `CHANGELOG.md` (SSoT). 이 가이드는 버전 목록을 나열하지 않는다.
 
 ## 자동 픽업 메커니즘 (3중 자동화)
 
@@ -75,12 +160,7 @@ bunx modfolio-harness-pull --dry-run   # 변경 사항 확인
 bunx modfolio-harness-pull --apply     # 적용
 ```
 
-자동 동기 자산:
-- 6 canon (`sync_to_siblings: true`): observability v1.6, attention-budget v1.1, opus-4-7-effort-policy v1.1, agentic-engineering, long-running-harness, harness-adoption-guide
-- 신 rule: `.claude/rules/lethal-trifecta.md` + `lethal-trifecta-allowlist.json` (skeleton)
-- 신 agent: `.claude/agents/initializer.md`
-- 5 skill SKILL.md 갱신: release, audit, ralph-loop, session-handoff, security-scan, migration
-- 6 agent frontmatter 변경 (sibling 측 동일 agent 있으면): page-builder / component-builder / api-builder / schema-builder / contract-builder / quality-fixer → xhigh
+자동 동기 자산: 위 "동기되는 자산 = 항상 ecosystem.harnessLatest" 참조 — 최신 집합을 통째로 sync (버전 고정 X). `.claude/harness-lock.json` 으로 잠근 path 만 제외.
 
 ### 3. `/initialize` 또는 자동 initializer agent — cold-start 픽업
 
@@ -209,7 +289,7 @@ step: `~/.claude/plans/20260513-evolve-openinference-claude-sdk.md` 의 Stage A-
 
 ## 안전 가드
 
-- SessionStart hook 은 dry-run 만 — 실 변경 X (사용자가 별도 `--apply` 호출)
+- SessionStart hook 기본 = drift 안내만 — 실 변경 X (사용자가 별도 `--apply` 호출). 자동 `--apply`+commit 은 `autoPull:true` opt-in repo 만 (v3.12, `evergreen-principle.md` §v2.5)
 - harness-pull 가 sibling 의 `.claude/harness-lock.json` path 잠금 존중
 - `settings.local.json` 절대 안 건드림
 - `wrangler.jsonc`, `biome.json` 등 sibling identity 파일 read-only

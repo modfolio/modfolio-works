@@ -1,12 +1,14 @@
 ---
 title: Pages → Workers Migration Pattern
-version: 1.0.0
-last_updated: 2026-04-24
-source: [modfolio-ecosystem dashboard migration 2026-04-22~24, knowledge/journal/20260422-dashboard-cf-workers-migration.md]
+version: 1.1.0
+last_updated: 2026-05-24
+source: [modfolio-ecosystem dashboard migration 2026-04-22~24, knowledge/journal/20260422-dashboard-cf-workers-migration.md, 2026-05-24 권한·endpoint 카탈로그 통합]
 sync_to_siblings: true
 applicability: per-app-opt-in
 consumers: [deploy, ops]
 ---
+
+> **권한 필요 (2026-05-24 추가)**: Pages 작업 (project/deployment/domain delete) 은 **Account-level `Cloudflare Pages:Edit`** 별도 필요. "Edit Cloudflare Workers" 단일 템플릿은 이 권한 미포함. 사용자 "All API" 토큰은 보유 — 운영 가능. 새 토큰 발급 시 누락 주의 (`cf-token-permissions.md`). Pages 영역의 endpoint 풀 카탈로그 = `cf-api-mastery.md` § 2.
 
 <!--
 생태계 내 Cloudflare Pages 배포를 Workers 로 이관하는 공통 pattern.

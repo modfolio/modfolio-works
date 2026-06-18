@@ -1,8 +1,8 @@
 ---
 title: Motion Patterns
-version: 1.0.0
-last_updated: 2026-03-27
-source: [.claude/skills/motion-patterns/SKILL.md]
+version: 1.1.0
+last_updated: 2026-05-24
+source: [.claude/skills/motion-patterns/SKILL.md, 2026-05-24 staleness audit — evergreen 인정 + Svelte 5 motion 신 타입 노트]
 sync_to_siblings: true
 applicability: always
 consumers: [motion-patterns, component, design, design-critic]
@@ -11,6 +11,18 @@ consumers: [motion-patterns, component, design, design-critic]
 # Motion Patterns — Canonical Reference
 
 > 물리 기반 모션을 권장하되, 브랜드 성격에 따라 linear, ease-in-out 등 전통적 easing도 유효하다. Brand Passport에 명시된 모션 철학이 우선한다.
+
+## 2026-05 갱신 — Svelte 5 motion 신 타입 (incremental)
+
+`svelte/motion` 에 신 타입 export 추가됨 (Svelte 5.30+): `TweenOptions`, `SpringOptions`. 컴포넌트 시그니처에 타입 명시 가능 — 모션 컨피그를 prop 으로 받는 컴포넌트는 이 타입 활용.
+
+```ts
+import type { SpringOptions, TweenOptions } from 'svelte/motion';
+
+let { springConfig }: { springConfig?: SpringOptions } = $props();
+```
+
+본 canon 의 물리 파라미터 (stiffness / damping / mass) 등 핵심 결정은 그대로 evergreen. 2026-05 staleness audit 결과 = 도메인 변동 없음 인정.
 
 ## 스프링 물리 파라미터
 

@@ -39,7 +39,7 @@ Anthropic Code Execution Tool (2026 GA) — Claude SDK 의 built-in Python inter
 
 ```typescript
 const response = await client.messages.create({
-  model: "claude-opus-4-7",
+  model: "claude-opus-4-8",
   tools: [{ type: "code_execution_20251001", name: "code_execution" }],
   messages: [...],
 });

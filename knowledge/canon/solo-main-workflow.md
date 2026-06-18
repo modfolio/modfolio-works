@@ -1,8 +1,8 @@
 ---
 title: Solo main 워크플로 — 무사용자 pre-production ceremony 폐기
-version: 1.0.0
-last_updated: 2026-05-18
-source: [2026-05-18 속도회복 세션 §C, 사용자 명시 결정]
+version: 1.1.0
+last_updated: 2026-06-18
+source: [2026-05-18 속도회복 세션 §C, 사용자 명시 결정, 2026-06-18 v3.13 velocity hook 프로필]
 sync_to_siblings: true
 applicability: conditional
 consumers: [deploy, ops, release, session-handoff]
@@ -39,6 +39,15 @@ consumers: [deploy, ops, release, session-handoff]
 
 전환은 **앱 단위**다. 무사용자 sibling 들은 계속 solo main. ecosystem 은 강제하지 않고 트리거 도래를 INFO 로 알릴 뿐(Hub-not-enforcer).
 
+## Hook 프로필 (velocity 기본 / strict 재진입) — v3.13
+
+같은 트리거가 **harness hook 프로필**도 결정한다. harness-pull 이 `.claude/settings.json` 에 wiring 하는 hook 은 `.claude/harness-lock.json` 의 `profile` 로 갈린다 (canon `velocity-mode.md`):
+
+- **`velocity`** (기본, 무사용자) — 결정적 안전 가드 2개(`pre-destructive-guard`, `pre-payment-guard`)만 wiring. 편집마다 lint·push마다 quality:all·세션마다 drift 체크 **없음**. solo main 의 속도 철학과 동일선.
+- **`strict`** (opt-in) — 전체 결정적 hook set(품질 notice·biome check·injection/secret 방어·lifecycle telemetry·session-start drift pickup). 위 **전환 트리거가 도래한 앱**이 자기 repo 에 `{"profile":"strict"}` 로 명시.
+
+velocity 도 `/release`(release:gate) 하드 게이트와 `pre-payment`/`pre-destructive` 안전망은 그대로 — 품질·안전은 시점 이동·게이트 보존이지 폐기가 아니다. 강제 없음: 각 앱이 자기 `harness-lock.json` 으로 선택(Hub-not-enforcer).
+
 ## 안전망 (ceremony 폐기해도 유지)
 
 - `pre-destructive-guard`(v3.1): `rm -rf /`·시스템경로·`git push --force`(main)·시크릿파일 삭제만 차단. 정상 작업 마찰 0, 복구 불가 사고만 방어
@@ -57,5 +66,6 @@ consumers: [deploy, ops, release, session-handoff]
 - `knowledge/canon/gh-actions-policy.md` — ceremony 가 태우던 GH Actions 비용 근거
 - `knowledge/canon/cf-deploy.md` — 배포·cron 의 CF 네이티브 경로
 - `knowledge/canon/evergreen-principle.md` — Hub-not-enforcer(앱별 자율 전환)
+- `knowledge/canon/velocity-mode.md` — hook 프로필(velocity/strict) 레퍼런스 + 전파 runbook
 - `.claude/skills/release/` · `.claude/skills/session-handoff/` — branch 생성 단계 제거 대상
 - memory `project_solo-main-workflow`, `feedback_auto-mode-classifier`

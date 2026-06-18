@@ -1,8 +1,8 @@
 ---
 title: Cloudflare 배포 — 정공법 (Workers Builds + 비대화형 wrangler v4)
-version: 1.0.0
-last_updated: 2026-05-18
-source: [2026-05-18 속도회복 세션 §E, developers.cloudflare.com 웹검증]
+version: 1.1.0
+last_updated: 2026-05-24
+source: [2026-05-18 속도회복 세션 §E, 2026-05-24 사용자 토큰 measurement + hallucination 차단 세션, developers.cloudflare.com 웹검증]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops, observability]
@@ -13,6 +13,8 @@ consumers: [deploy, ops, observability]
 > **배포 = CF Workers Builds(GitHub 네이티브, push-to-deploy). GitHub Actions 배포 금지(`gh-actions-policy.md` 정합). AI 비대화형 실행 = athsra 주입 `CLOUDFLARE_API_TOKEN` + wrangler v4.**
 
 이 canon 은 "예전엔 AI 가 CF 를 잘 했는데 지금은 못 한다" 의 근본 원인과 **확실히 동작하는 정확한 커맨드**를 못 박는다. `.claude/skills/deploy/SKILL.md` 는 운영 절차, 이 canon 은 메커니즘·근거·정확 커맨드의 source of truth.
+
+> **AI 가 CF 작업 막혔을 때 → `cf-token-permissions.md` 의 권한 의심 차단 게이트 + `cf-api-mastery.md` 의 영역별 endpoint 카탈로그 + hallucination 카탈로그를 먼저 확인** (v1.1, 2026-05-24 추가). 사용자 "All API" 토큰은 353/366 perm groups 보유한 mega — "권한 부족" 결론은 hallucination 일 확률 96%+.
 
 ## 왜 AI 가 갑자기 CF 를 못 하게 됐나 (근본 원인 3중)
 
@@ -39,8 +41,19 @@ CF Workers Builds 는 **Cloudflare 자체 빌드 인프라**에서 돈다. GitHu
 - `name` 은 `ecosystem.json` 의 `cfProject`/`cfAppProject`/`cfLandingProject` 가 source of truth. 임의 생성 금지(`deploy` skill Step 0).
 - deploy command: `wrangler deploy`(Active 승격) 또는 `wrangler versions upload`(승격 없이 버전만).
 
-### AI 의 역할
-AI 는 Workers Builds **연결 자체(대시보드 OAuth)** 는 못 한다(사람 1회 작업). AI 가 하는 것: `wrangler.jsonc` `name`/`compatibility_date`/bindings 를 ecosystem 정합으로 맞추고, push 하면 CF 가 배포. 연결 여부 점검은 `harness-pull/cf-audit.ts`(INFO) + 아래 경로 2 의 `wrangler deployments list` 로.
+### AI 의 역할 (2026-05-24 정정)
+
+> 이전 버전 (v1.0) 의 "AI 는 Workers Builds 연결 자체는 못 한다" 는 **잘못된 정보**. 실증으로 가능 확인 — `cf-workers-builds-api.md` 참조 (source of truth).
+
+**사람 1회 작업** = Cloudflare GitHub App (`cloudflare-workers-and-pages`) 을 GitHub org/계정에 1회 설치 (`repository_selection: all` 권장). 확인: `gh api /orgs/<org>/installations --jq '.installations[] | select(.app_slug | test("cloudflare"; "i"))'`
+
+**그 이후 AI 가 API 만으로 100% 처리** — repo connection / build trigger / 매뉴얼 빌드 / 환경변수 / 진단 / 신규 sibling onboarding 까지 전부. 별도 사람 액션 0.
+
+핵심 함정 = **build token silent expire** — 매 push 마다 webhook 트리거 정상이지만 build 가 5초 만에 fail (token error). 23일 침묵 후 발견되는 케이스 (gistcore 2026-05-24 실증). **분기 1회 점검 + `PATCH build_token_uuid` 로 60초 복구**.
+
+상세 API endpoints + 진단 시퀀스 + 신규 sibling onboarding 스크립트 → **`cf-workers-builds-api.md` v1.0+ (source of truth)**.
+
+기존 cf-audit (`harness-pull/cf-audit.ts`) 는 INFO 만. 위 canon 의 정기 점검 스크립트를 audit skill 에 통합 권장.
 
 ## 경로 2 — 비대화형 wrangler (AI 실행 가능, fallback·일회성 작업)
 
@@ -99,18 +112,23 @@ curl -s -o /dev/null -w "%{http_code}" https://<worker>.workers.dev/healthz
 
 `wrangler.jsonc` 의 `compatibility_date` 는 앱별 자율이나 universe 권고 기준값을 `ecosystem.json.cfCompatibilityDate` 에 둔다(현 `2026-04-15`). **월 1회 갱신** 권고: 매월 ecosystem 점검 시 전월 15일 기준으로 전진(예: 6월 → `2026-05-15`). 하드코딩 방치 금지 — 갱신 시 CHANGELOG/journal 에 근거 기록. 개별 앱이 신 런타임 기능을 쓰면 그 앱만 더 최신 날짜 사용 가능(자율). breaking runtime 변경은 `compatibility_flags` 로 점진 적용.
 
-## 출처 (웹검증 2026-05-18)
+## 출처 (웹검증 2026-05-18 + 2026-05-24 사용자 토큰 measurement)
 
 - Workers Builds: https://developers.cloudflare.com/workers/ci-cd/builds/
 - wrangler v3→v4 마이그레이션(local 기본 전환, publish/version 제거): https://developers.cloudflare.com/workers/wrangler/migration/update-v3-to-v4/
 - External CI/CD + API 토큰(CLOUDFLARE_API_TOKEN/ACCOUNT_ID, "Edit Cloudflare Workers"): https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/
 - API 토큰 생성: https://developers.cloudflare.com/fundamentals/api/get-started/create-token/
+- 2026-05-24 사용자 "All API" 토큰 measurement (353/366 perms, 14개 영역 read probe): `cf-token-permissions.md` § 측정값
 
 ## 관련
 
 - `.claude/skills/deploy/SKILL.md` — 운영 절차(이 canon 이 메커니즘 source of truth)
+- `knowledge/canon/cf-token-permissions.md` — **토큰 권한 모델 + 사용자 실측값 + "권한 의심 차단 게이트"**. AI 가 CF 작업 hallucinate 차단.
+- `knowledge/canon/cf-api-mastery.md` — **영역별 endpoint 카탈로그 (Workers/Pages/DNS/Domain/Hostname/Zone) + hallucination 카탈로그 + 검증 패턴**.
+- `knowledge/canon/cf-workers-builds-api.md` — Workers Builds API 단일 영역 깊은 진단 (build token expire 등).
 - `knowledge/canon/gh-actions-policy.md` — GH Actions 최소화(왜 Workers Builds 인가)
 - `knowledge/canon/secret-store.md` — athsra v3 토큰 보관/주입
 - `knowledge/canon/pages-to-workers-migration.md` — Pages 정리 맥락
 - `knowledge/canon/solo-main-workflow.md` — main 직접·무사용자 ceremony 폐기
 - memory `feedback_auto-mode-classifier` — classifier 차단 시 Bypass 표준
+- memory `feedback_cf-no-permission-hallucination` — AI 가 "권한 부족" 발화 전 권한 게이트 강제

@@ -1,6 +1,6 @@
 ---
 description: Drizzle 마이그레이션 롤백 안전성 감사. Neon/D1 DB별 검증. 읽기 전용
-model: claude-opus-4-7[1m]
+model: claude-opus-4-8[1m]
 effort: xhigh
 thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }

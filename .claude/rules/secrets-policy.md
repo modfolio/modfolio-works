@@ -50,6 +50,7 @@
 ## 관련 canon / skill
 
 - `knowledge/canon/secret-store.md` (v1.1+) — 시크릿 관리 표준 athsra v3 (universe-wide, applicability: always)
+- `knowledge/canon/agent-auth-ux.md` + `.claude/rules/agent-auth-flow.md` — 에이전트가 직접 시작·브라우저 승인 인증(athsra login 터미널 떠넘기기 금지)
 - `knowledge/canon/archive/secrets-dotenvx.md` — archived 2026-05-03 (Phase 1 완료)
 - `knowledge/canon/observability.md` — 트레이스에 시크릿 포함 금지 (Langfuse redaction)
 - `.claude/skills/secret/SKILL.md` — athsra CLI 운영 가이드 (v3.1+)

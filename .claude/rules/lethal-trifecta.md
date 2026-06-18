@@ -56,7 +56,7 @@ Lead Planner = orchestration role. private data access (modfolio internal canon 
 ```yaml
 ---
 name: lead-planner
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: xhigh
 thinking_budget: standard
 # trifecta 회피 — untrusted input 직접 처리 금지
@@ -154,7 +154,7 @@ human_approval_required: true
 - ❌ guardrail (LLM filter) 만으로 trifecta 차단 — 5% 우회
 - ❌ allowlist 에 justification 없이 entry 추가
 - ❌ 모든 위반에 `human_approval_required` 만 박고 escape — 실제 sandbox 도 검토
-- ❌ trifecta 형성 agent 가 cron / autonomous 모드 — 사용자 부재 시 자동 승인 X
+- ❌ trifecta 형성 agent 가 cron / autonomous 모드 — 사용자 부재 시 자동 승인 X. 특히 **결제/지출**은 `knowledge/canon/payment-safety.md` (자매 정책) 의 `pre-payment-guard` 가 자율 모드에서 하드 차단 — outward 가 "돈 이동"이면 trifecta 충족 여부와 무관하게 무조건 게이트.
 
 ## 출처
 
@@ -165,6 +165,7 @@ human_approval_required: true
 ## 관련
 
 - `.claude/rules/agent-evidence.md` — agent 주장은 증거 기반 (lethal-trifecta 의 자매 룰)
+- `knowledge/canon/payment-safety.md` — 결제/지출 전용 자매 정책 (spend 단독 무조건 게이트). trifecta="secret 유출", payment-safety="돈 이동".
 - `.claude/skills/security-scan/SKILL.md` — OWASP Top 10 통합
-- `scripts/modfolio/governance.ts` — checkLethalTrifecta 구현
+- `scripts/modfolio/governance.ts` — checkLethalTrifecta + checkPaymentSafety 구현
 - `knowledge/canon/agentic-engineering.md` § 1.4 Untrusted code, § 2.3 Hook chain

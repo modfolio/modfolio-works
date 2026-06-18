@@ -1,7 +1,7 @@
 ---
 title: Attention Budget — Context as Finite Resource
-version: 1.2.0
-last_updated: 2026-05-13
+version: 1.3.0
+last_updated: 2026-05-24
 source: [Anthropic 2026 Agentic Coding Trends Report (https://resources.anthropic.com/2026-agentic-coding-trends-report), Anthropic Engineering "Effective context engineering for AI agents" (https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents), Claude Cookbook "Context engineering: memory, compaction, and tool clearing" 2026-03-20 (https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools), harness-evolve 첫 dogfood Adopt P0 #4, 2026-05-13 v2.0 dogfood Trial P1 (Memory tool L3), harness v2.34 P0.2 (context-engineering canon 분리)]
 sync_to_siblings: true
 consumers: [harness-evolve, modfolio, preflight, claude-api, multi-review, generate-review, plan, ralph-loop, context-engineering]
@@ -22,6 +22,20 @@ modfolio universe 는:
 - **multi-agent orchestration** (design-engineer, code-reviewer, page-builder, lead-planner 등이 sub-agent 분기)
 
 → context 누적 압력이 매일 증가. 1M context Opus 4.7 도 finite. **attention budget = 모든 agent/skill/canon 설계의 measurable 기준**.
+
+## Context Engineering 5 criteria (2026-05-24 추가, Anthropic + 사이드 plan a645d7f4ee5b1b395)
+
+attention budget 운영의 5 가지 평가 축. agent / skill / canon 추가 시 다음 5 criteria 로 점검:
+
+| Criterion | 정의 | 측정 / 점검 |
+|-----------|------|------------|
+| **Relevance** | 현재 task 에 직접 기여하는 token 비율 | "이 canon 의 80% 가 현 task 와 무관" 이면 분할 또는 prefix-cached non-essential |
+| **Sufficiency** | task 완료에 필요한 context 가 전부 들어왔는지 | 부족 시 multi-turn 또는 추가 search — context 부족이 hallucination 의 1순위 원인 |
+| **Isolation** | 다른 task 의 context 가 누설되지 않는지 | subagent / worktree 분리 + system prompt 의 scope 명시 |
+| **Economy** | 동일 효과를 최소 token 으로 | cache_control 적극 활용, 중복 information 제거, 짧은 reference 우선 |
+| **Provenance** | 각 context piece 의 출처 + 신뢰도 추적 | source 명시 (canon link, raw HTTP response, web URL) + agent-evidence.md 정합 |
+
+이 5 축은 attention budget 의 **정공법 운영 원칙**. 단순 token 절감이 아니라 highest-signal token 만 선별의 framework.
 
 ## 측정 메트릭 (modfolio universe 도입)
 

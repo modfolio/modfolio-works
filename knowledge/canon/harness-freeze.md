@@ -1,19 +1,26 @@
 ---
-title: Harness Freeze — 3.4.0 baseline (2026-05-22)
-version: 1.2.0
-last_updated: 2026-05-22
-source: [2026-05-20 사용자 피로 피드백 + 완성도 패스 결과, 2026-05-21 사용자 요청 3.3.0 버그픽스 release, 2026-05-22 사용자 요청 NAS·GHA·이중 레지스트리 3.4.0 release]
+title: Harness Freeze — 해제됨 (2026-06-09, 3.5.0) / 3.2.0~3.4.0 baseline 이력
+version: 1.3.0
+last_updated: 2026-06-09
+source: [2026-05-20 사용자 피로 피드백 + 완성도 패스 결과, 2026-05-21 사용자 요청 3.3.0 버그픽스 release, 2026-05-22 사용자 요청 NAS·GHA·이중 레지스트리 3.4.0 release, 2026-06-09 사용자 명시 freeze 해제 + opus-4-8 baseline 3.5.0 release]
 sync_to_siblings: true
 applicability: always
 consumers: [harness-pull, harness-publish, ops, all-app-sessions]
 ---
 
-# Harness Freeze — 3.4.0 baseline
+# Harness Freeze — 3.2.0~3.4.0 baseline (해제됨 2026-06-09)
 
-> **2026-05-20 사용자 결정**: 한 세션에 22 repo × 평균 4 commit = 90+ harness
-> 커밋이 흐르고 앱 코드 라인은 0 — "이건 정상 평형 아님". harness 를 **`3.2.0`
-> 에서 명시적 freeze** 하고 당분간 앱 개발에 집중. 이 canon 이 그 결정과
-> 운영 규칙의 source of truth.
+> **🔓 2026-06-09 — FREEZE 해제됨**: 사용자 명시 승인("freeze 해제 + release",
+> AskUserQuestion)으로 opus-4-7 → **opus-4-8** 모델 baseline bump =
+> `@modfolio/harness@3.5.0` release. 2026-05-20 ~ 2026-06-09 (~3주) fatigue-freeze
+> 종료 → `evergreen-principle.md`(latest=canonical) **정상 복귀**. **현행 baseline
+> = 3.5.0**. 아래 freeze 운영 규칙은 **이력**이며, 차기 freeze 필요 시 재적용할
+> template 로 보존(같은 절차: 사용자 명시 freeze 선언 → backlog 누적 → 명시 해제).
+
+> **2026-05-20 사용자 결정 (이력)**: 한 세션에 22 repo × 평균 4 commit = 90+
+> harness 커밋이 흐르고 앱 코드 라인은 0 — "이건 정상 평형 아님". harness 를
+> **`3.2.0` 에서 명시적 freeze** 하고 당분간 앱 개발에 집중. 이 canon 이 그
+> 결정과 운영 규칙의 source of truth였다.
 
 ## 결정
 

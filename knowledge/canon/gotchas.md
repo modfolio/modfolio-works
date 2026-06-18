@@ -187,5 +187,5 @@ consumers: [preflight]
 - **D1 Global Read Replicas 자동 GA**: write 직후 read는 Sessions API bookmark 전달 필수 (`canon/d1-read-replicas.md`). default 라우팅은 fastest replica (stale 허용)
 - **Browser Run** (Browser Rendering 리브랜드): 동시 세션 30→120개. Live View 공유 시 PII 노출 주의
 - **Workflows V2 limits**: 50K concurrent, 2M queued, 300/sec creation. 기존 Queue 패턴과 중복 투자 주의 — 앱별 ADR
-- **`[1m]` context variant**: Claude Opus 4.7/4.6 모두 1M 지원 (`/model claude-opus-4-7[1m]`). 새 토크나이저가 최대 +35% 토큰 소비 가능 — 실효 비용 관찰 필요
+- **`[1m]` context variant**: Claude Opus 4.8/4.7/4.6 모두 1M 지원 (`/model claude-opus-4-8[1m]`). 새 토크나이저가 최대 +35% 토큰 소비 가능 — 실효 비용 관찰 필요
 - **`CLAUDE_CODE_EFFORT_LEVEL max` 다운그레이드 버그** (Issue #30726, #40093): agent frontmatter `effort` + env 이중 설정으로 완화. `/effort` slash 런타임 재확인 가능. Claude Code v2.1.111+ 확인 필수

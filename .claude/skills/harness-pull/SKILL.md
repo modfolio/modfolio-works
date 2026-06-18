@@ -54,9 +54,8 @@ Dev Container rebuild 시엔 [setup 4/6] 이 `.npmrc` 자동 ensure, [setup 5/6]
 
 이 phase 는 스크립트가 **이미 실행되고 있다는 전제** (즉 `@modfolio/harness` 는 node_modules 에 있음). 완전 zero 상태가 아닌 "부분 도입" 을 복구한다:
 
-- `.npmrc` 에 `@modfolio:registry` 없으면 patch 된 패키지 안의 `templates/.devcontainer/.npmrc.template` 에서 copy/append
+- `.npmrc` 에 `@modfolio:registry` 없으면 patch 된 패키지 안의 `templates/npmrc.example` 에서 copy/append
 - `package.json` 에 `@modfolio/harness` devDep 없으면 (글로벌 설치만 된 경우 등) `bun add -D @modfolio/harness@<ecosystem.harnessLatest>` 자동 실행
-- `.harness-autopull` marker 없으면 guidance 출력 (opt-in 유지) — `--auto-marker` 로 자동 생성 가능
 - 이미 다 있으면 조용히 skip (idempotent)
 
 **완전 zero 상태** (npm 모듈 자체가 없음) 은 위 "첫 도입 repo — 두 단계" 섹션 수동 절차 필요.
@@ -84,7 +83,6 @@ Dev Container rebuild 시엔 [setup 4/6] 이 `.npmrc` 자동 ensure, [setup 5/6]
 | `--dry-run` | 미리보기 (파일 변경 없음) |
 | `--force` | 동일 내용이어도 덮어쓰기 |
 | `--no-bootstrap` | Phase 0.5 skip (CI / 외부에서 이미 wire up 한 경우) |
-| `--auto-marker` | `.harness-autopull` marker 자동 생성 |
 | `--prune-deprecated` | universe 가 폐기한 파일 삭제 |
 | `--init-lock` | `.claude/harness-lock.json` 초안 생성 후 종료 |
 | `--cleanup` | adoption-blocking debt 자동 수정 후 종료 |

@@ -22,7 +22,7 @@ consumers: [deploy, ops, release]
 |---|---|---|
 | **GitHub Actions 컴퓨트** | (사용 안 함) | ❌ 금지 |
 | Git 호스팅 | GitHub.com (24 repo) + NAS Forgejo pull-mirror | 무료 |
-| npm 레지스트리 | GitHub Packages + Forgejo npm registry(이중) | 무료 (Actions 분 무관 — local/runner publish) |
+| npm 레지스트리 | GitHub Packages (publishConfig 고정 단일) | 무료 (Actions 분 무관 — local/runner publish) |
 | CI 컴퓨트 | NAS Forgejo Actions self-hosted runner | $0 (전기료만) |
 | 배포 | CF Workers Builds (push-to-deploy) | 무료 (CF 자체 build infra — GH Actions 무관, `cf-deploy.md`) |
 | cron | CF Cron Triggers + Forgejo Actions schedule | 무료 |

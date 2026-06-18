@@ -43,7 +43,7 @@ OpenTelemetry GenAI semconv 정식 entity 6개:
 | `memory` | persistent memory access | knowledge/journal/canon read |
 
 필수 attribute (per span):
-- `gen_ai.system` (예: "anthropic"), `gen_ai.request.model` (예: "claude-opus-4-7", "claude-opus-4-7[1m]")
+- `gen_ai.system` (예: "anthropic"), `gen_ai.request.model` (예: "claude-opus-4-8", "claude-opus-4-8[1m]")
 - `gen_ai.agent.name` (예: "code-reviewer", "design-engineer"), `gen_ai.agent.id` (UUID 또는 task ID)
 - `gen_ai.usage.{input_tokens,output_tokens,cache_read_input_tokens,cache_creation_input_tokens}`
 - `gen_ai.response.finish_reasons`
@@ -132,8 +132,8 @@ OpenTelemetry GenAI Semantic Conventions 가 experimental 상태이지만 Datado
 | 속성 | 예시 | 비고 |
 |---|---|---|
 | `gen_ai.system` | `"anthropic"` / `"openai"` / `"vertex_ai"` | provider |
-| `gen_ai.request.model` | `"claude-opus-4-7"` | request model |
-| `gen_ai.response.model` | `"claude-opus-4-7"` | actual responding model (variant 포함) |
+| `gen_ai.request.model` | `"claude-opus-4-8"` | request model |
+| `gen_ai.response.model` | `"claude-opus-4-8"` | actual responding model (variant 포함) |
 | `gen_ai.usage.input_tokens` | `1234` | request tokens |
 | `gen_ai.usage.output_tokens` | `567` | response tokens |
 | `gen_ai.request.temperature` | `0.7` | request param |
@@ -254,14 +254,14 @@ fetch(url, { headers: { 'x-request-id': requestId } });
 | `gen_ai.provider.name` | string | `anthropic`, `openai`, `aws.bedrock`, `gcp.vertex_ai`, `gcp.gemini` | 시스템 flavor discriminator |
 | `error.type` | string | `timeout`, `rate_limit`, `TypeError` | 에러 발생 시 조건부 필수 |
 
-**Span name 규약**: `"{gen_ai.operation.name} {gen_ai.request.model}"` — 예: `chat claude-opus-4-7`. Execute tool 은 `"execute_tool {gen_ai.tool.name}"`.
+**Span name 규약**: `"{gen_ai.operation.name} {gen_ai.request.model}"` — 예: `chat claude-opus-4-8`. Execute tool 은 `"execute_tool {gen_ai.tool.name}"`.
 
 ### 권장 속성 (Recommended)
 
 | 속성 | 타입 | 예시 | 비고 |
 |------|------|------|------|
-| `gen_ai.request.model` | string | `claude-opus-4-7` | 요청 모델 |
-| `gen_ai.response.model` | string | `claude-opus-4-7-20260101` | 실제 응답 모델 (fine-tune / version 붙을 수 있음) |
+| `gen_ai.request.model` | string | `claude-opus-4-8` | 요청 모델 |
+| `gen_ai.response.model` | string | `claude-opus-4-8-20260101` | 실제 응답 모델 (fine-tune / version 붙을 수 있음) |
 | `gen_ai.response.id` | string | `msg_01AbC...` | provider 의 completion id |
 | `gen_ai.response.finish_reasons` | string[] | `["stop"]`, `["length"]`, `["tool_calls"]` | |
 | `gen_ai.usage.input_tokens` | int | `1234` | |

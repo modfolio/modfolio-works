@@ -1,6 +1,6 @@
 ---
 description: Anti-Slop binary FAIL/PASS 판정. negative-space + indistinguishability만 본다. 읽기 전용
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: xhigh
 thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }

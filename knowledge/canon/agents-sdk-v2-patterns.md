@@ -107,7 +107,7 @@ async invokeTool(toolId: string, args: unknown) {
 ```typescript
 // 1. Pre-adoption: tools 배열 전체 inline
 const resp = await client.messages.create({
-  model: 'claude-opus-4-7',
+  model: 'claude-opus-4-8',
   tools: [...allTools],  // N개 tool 정의
   messages: [...],
 });
@@ -116,7 +116,7 @@ console.log('cache_read_input_tokens (before):', resp.usage.cache_read_input_tok
 
 // 2. Post-adoption: Code Mode search() + execute() 2개만
 const resp2 = await client.messages.create({
-  model: 'claude-opus-4-7',
+  model: 'claude-opus-4-8',
   tools: [searchTool, executeTool],  // 2개만
   messages: [...],
 });

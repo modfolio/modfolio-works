@@ -1,6 +1,6 @@
 ---
 description: Zod 이벤트 스키마 계약 생성기. 버전 관리 + union 등록 + 영향 분석
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: xhigh
 thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }

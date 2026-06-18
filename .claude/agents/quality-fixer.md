@@ -1,6 +1,6 @@
 ---
 description: 품질 위반 자동수정기. 리뷰 보고서 기반 P0/P1 기계적 수정. 정공법 원칙
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: xhigh
 thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }

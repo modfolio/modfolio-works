@@ -1,6 +1,6 @@
 ---
 description: Process Reward Model (PRM) step-wise verifier — Generator step sequence 의 매 step 마다 0-10 score 출력. v2.35 evaluator (binary pass/fail) 의 step-wise 확장. best-of-N sampling + tree search gating 의 reward function.
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: high
 thinking_budget: light
 cache_control: { type: "ephemeral", ttl: "1h" }

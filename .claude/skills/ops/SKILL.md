@@ -37,19 +37,21 @@ user-invocable: true
 | 명령 | 용도 |
 |---|---|
 | `athsra login` | 마스터 패스워드 입력 + 머신 등록 (Bearer token 발급) |
-| `athsra set <project> KEY=value` | secret 추가/수정 (다건 가능, `--from-file`/`--stdin` 지원) |
-| `athsra unset <project> KEY [...]` | 특정 key 제거 (envelope 유지) |
-| `athsra get <project> [KEY]` | 값 출력 (single 또는 dump, 마스킹) |
-| `athsra ls [project] [--all]` | project 또는 key 목록 |
-| `athsra run <project> -- <cmd>` | env inject 후 명령 실행 (Doppler-style) |
+| `athsra set <project>[:<env>] KEY=value` | secret 추가/수정 (다건 가능, `--from-file`/`--stdin` 지원) |
+| `athsra unset <project>[:<env>] KEY [...]` | 특정 key 제거 (envelope 유지) |
+| `athsra get <project>[:<env>] [KEY]` | 값 출력 (single 또는 dump, 마스킹) |
+| `athsra ls [project][:<env>] [--all\|--configs]` | project / key 목록, `--configs` = 환경(config) 목록 |
+| `athsra run <project>[:<env>] -- <cmd>` | env inject 후 명령 실행 (Doppler-style) |
 | `athsra doctor` | 환경 검증 (keyring/dbus/worker phase) |
-| `athsra versions <project>` | 모든 version + tombstone 상태 |
-| `athsra rollback <project> <version_id>` | 특정 version 으로 current 복원 |
-| `athsra delete <project> [--hard]` | soft-delete (default) 또는 hard-delete |
-| `athsra restore <project>` | tombstone 제거 + 최신 version 활성화 |
+| `athsra versions <project>[:<env>]` | 모든 version + tombstone 상태 |
+| `athsra rollback <project>[:<env>] <version_id>` | 특정 version 으로 current 복원 |
+| `athsra delete <project>[:<env>] [--hard]` | soft-delete (default) 또는 hard-delete |
+| `athsra restore <project>[:<env>]` | tombstone 제거 + 최신 version 활성화 |
 | `athsra rotate-master` | master pw 변경 (모든 projects re-encrypt) |
 | `athsra handoff [--accept]` | 새 머신 추가 (issue / accept) |
 | `athsra revoke [<atk_*>]` | self 또는 명시 token revoke |
+
+> **환경(config) 분리 (1.3.0)**: `<project>:<env>` / `--config=<env>` / `.athsra` 의 `config=` 줄 로 dev/staging/prod 분리 (생략=default, 무중단). **MCP value tier (1.2.0)**: `athsra mcp install --read-values` 후 AI 가 `athsra_get_secret_value`(마스킹 기본)/`athsra_run`(값 미노출 주입). 상세 canon `secret-store.md`.
 
 ### universe 전용 — harness-pull / release-gate
 

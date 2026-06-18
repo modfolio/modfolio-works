@@ -11,12 +11,13 @@
 - **플랫폼**: 100% Cloudflare Edge Native (Workers + D1 + R2)
 - **런타임**: Bun | **언어**: TypeScript (strict) | **린터**: Biome v2
 
-## 3대 불변 원칙
+## 핵심 불변 원칙
 
 1. **House of Brands** — 앱 간 UI 라이브러리 공유 금지. 각 앱은 독립 디자인 시스템 + 독립 기술 스택. 각 앱은 Brand Passport (`docs/brand-passport.md`)에 디자인 결정의 근거를 기록.
 2. **Zero Physical Sharing** — 코드 공유는 SSO 토큰 / 데이터 스키마(`@modfolio/contracts`) / Webhook API로만.
 3. **100% Cloudflare Edge Native** — Vercel, AWS, GCP 배제. CF Workers만.
 4. **디자인 다양성** — 구조(토큰 명명, cascade layer, 접근성)만 공유한다. 색상값, 그림자, 모션, 타이포그래피, 레이아웃의 실제 값은 각 앱이 Brand Passport에 따라 자유롭게 결정한다.
+5. **Hub-not-enforcer (강제 0, 절대 불변)** — modfolio-ecosystem 은 가이드/관제탑이지 강제자가 아니다. **사용자 건별 허가 전까지 다른 repo 를 직접 수정·commit·push 하지 않는다.** sibling 에 의견(피드백)은 주되 채택·실행 판단은 그 repo 자율. 어떤 환경·머신·도구에서든 불변. (`evergreen-principle.md`)
 
 ## 도메인 아키텍처 (2-프로젝트 모델)
 
@@ -24,7 +25,8 @@
 - `domain.com` = 앱 (SvelteKit / SolidStart 등)
 - `www.domain.com` = 랜딩 (Astro)
 
-**entryMode**: `app-first` (앱 홈 직접) 또는 `landing-first` (302 redirect).
+**entryMode**: `app-first` (앱 홈 직접) 또는 `landing-first` (302 redirect). **현 default = `landing-first`** (ADR-011, 2026-05-24 — 비즈니스 규모 대응).
+**app subdomain (`app.<domain>`)**: 사용 허용 (sibling 자율 시점, ADR-011 §D2).
 **인프라 앱**: 서브도메인 모델 (`*.modfolio.io`).
 
 ## 기술 스택 요약

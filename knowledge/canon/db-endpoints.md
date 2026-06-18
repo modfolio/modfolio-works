@@ -37,12 +37,24 @@ consumers: [secret, ops, modfolio, preflight]
 | modfolio-on | Neon Postgres + Upstash Redis | (사용자 확인 필요 — ecosystem.json infrastructure[Modfolio On].db 갱신 권고) | — | (등록 시점 알림) | — | — |
 | modfolio-admin | D1 (Cloudflare) | (CF binding TOKENS_DB-style) | (D1 uuid 기반) | modfolio-admin | (wrangler secret) | D1 — Neon 아님 |
 | modfolio-dev | D1 (Cloudflare) | — | — | modfolio-dev | — | D1 |
-| modfolio-pay | D1 + Stripe + Toss | — | — | modfolio-pay | (다수) | D1 |
-| modfolio-connect | D1 (Cloudflare) | — | — | modfolio-connect | (다수) | D1 |
+| modfolio-pay | **Neon Postgres** (`mp_*`) | (athsra `DATABASE_URL`) | — | modfolio-pay | DATABASE_URL | ⚠️ **Neon, NOT D1** (drizzle `dialect:postgresql`; 2026-06-14 정정) |
+| modfolio-connect | D1 (Cloudflare) — identity | — | — | modfolio-connect | (다수) | D1 (account/login 공유, Neon 아님) |
 | 기타 D1 sibling | D1 (Cloudflare) | — | — | (sibling 별) | — | D1 |
 | athsra | D1 (`athsra-tokens`) + R2 (`athsra-secret-store`, `athsra-audit`) | (CF binding) | athsra-tokens | (self-hosted) | (CF wrangler secret) | self-hosted |
 
 (Neon endpoint 는 host name 만. Connection string 의 password 는 athsra envelope / wrangler secret 보관 — 본 canon 에 명시 X.)
+
+## DB 경계 원칙 (bounded context — 공용 DB 금지)
+
+2026-06-14 결정 (Codex 점검 정합). **공유는 DB 가 아니라 SSO token · event/webhook · contracts/registry 로만** (Zero Physical Sharing). DB 는 bounded context 별로 **분리**:
+
+- **modfolio (parent)** — Data Hub 전용 Neon. 자기 컨텍스트만.
+- **modfolio-pay** — 결제/정산/원장 전용 Neon (`mp_*`). parent Neon 과 **공유 금지** (금융 경계).
+- **modfolio-connect / account / login** — Connect 내부 **identity D1** 공유 (3-worker 가 같은 D1). **Neon 아님**, parent Neon 으로 **합치지 말 것** (인증 경계 흐려짐).
+- **modfolio-press** — 별도 Neon. parent 의 DB 명이 우연히 `press` 라 혼동 주의 (문서·registry 에서 계속 강하게 구분).
+- **자회사 앱** — 앱별 별도 Neon project 권장. 비용 예외 필요 시 **같은 Neon organization 안에서만** 묶고 project/DB 는 분리 (cross-tenant 격리 유지).
+
+근거: 인증·결제·허브 데이터 경계가 흐려지면 blast radius·마이그레이션 커플링·권한 사고가 커진다. "공용 DB" 의 편의 < 경계 분리의 안전.
 
 ## 신규 sibling 도입 시 절차
 
