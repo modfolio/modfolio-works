@@ -1,6 +1,6 @@
 ---
 title: Canon INDEX
-version: 1.6.4
+version: 1.6.5
 last_updated: 2026-06-18
 sync_to_siblings: true
 applicability: always
@@ -36,6 +36,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [anti-slop.md](anti-slop.md) — "패턴 매칭 최적화"의 슬롭 패턴 + negative space 디자인 원칙.
 - [payment-safety.md](payment-safety.md) v1.0 (신설 2026-06-14) — 자율 agent 무단 지출 차단. `pre-payment-guard` 결정적 hook (tiered 다중승인) + 자율 하드차단 + audit. `applicability: always`.
 - [velocity-mode.md](velocity-mode.md) v1.0 (신설 2026-06-18) — fast-MVP hook 프로필. `velocity`(가드 2개, 기본)/`strict`(전체, opt-in). 훅=0토큰·실비용=지연. `harness-lock.json profile`. solo-main-workflow 자매. `applicability: conditional`.
+- [fleet-harness-propagation.md](fleet-harness-propagation.md) v1.0 (신설 2026-06-18) — harness release 의 fleet 전파 runbook. pull-first·dirty-stash·active reset-to-origin·opt-out skip·역흡수. `harness-propagate-all.sh`. `applicability: conditional`.
 - [secrets-policy.md](../../.claude/rules/secrets-policy.md) (rule) — 하드코딩 금지, 로테이션 주기.
 - [lethal-trifecta.md](../../.claude/rules/lethal-trifecta.md) (rule) — private+untrusted+outward 동시 차단. payment-safety 의 자매 룰.
 

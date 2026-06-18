@@ -47,6 +47,7 @@ gh api repos/modfolio/modfolio-ecosystem/contents/scripts/ops/adopt-harness.sh -
 - **caret 범위**(`^<ecosystem.harnessLatest>`, 예 `^3.8.0`) → `bun update` 시 최신 minor/patch.
 - **SessionStart drift 안내** (v3.12, 기본) → `.claude/harness-lock.json` 에 `{ "enableSessionPickup": true }` 후 `--apply` 1회 → 이후 매 세션 진입 시 drift 를 **감지·안내** (수동 동기화 명령 1줄). drift = transient.
 - **자동 self-heal 을 원하면 (opt-in)** → lock 에 `{ "autoPull": true }` 추가 → 세션 진입 시 스스로 `bun update` + `harness-pull --apply` + commit (working tree clean + origin behind 아님 일 때만). 근거·문제이력 = `evergreen-principle.md` §v2.5.
+- **hook 프로필 (v3.13+)** → `.claude/harness-lock.json` 의 `{ "profile": "velocity" | "strict" }` 가 어떤 hook set 을 wiring 할지 결정. **기본 `velocity`** = 결정적 안전 가드 2개(`pre-destructive`·`pre-payment`)만 wiring, per-turn 토큰·지연 0(fast-MVP). `strict` = 전체 hook(실사용자 앱 — `solo-main-workflow.md` 전환 트리거). 전체 = `velocity-mode.md`.
 - **App Registry** → `@modfolio/contracts/registry` import (바로 아래).
 
 ## 기존 stale 어댑터 — self-heal 부트스트랩 갭 (1회 un-stick)

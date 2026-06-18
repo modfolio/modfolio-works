@@ -66,8 +66,11 @@ const SAFE_ALLOW: RegExp[] = [
 // Segments whose LEADING command cannot move money — skipped so a quoted/echoed
 // pattern (`echo 'terraform apply'`, `grep 'stripe charges create'`) is not a
 // false positive (and so a decoy `echo --dry-run` segment can't whitelist).
+// `git` is inert (commit/push/clone move no money; a `git commit -m '<spend text>'`
+// message is DATA — paired with quote-aware segments() so the message stays one git
+// segment). Note `gh` is NOT inert (gh codespace create / billing bill money).
 const INERT_LEAD =
-	/^\s*(echo|printf|cat|grep|rg|ls|head|tail|less|more|true|sed|awk|test|\[|:)\b/i;
+	/^\s*(echo|printf|cat|grep|rg|ls|head|tail|less|more|true|sed|awk|test|git|\[|:)\b/i;
 
 const CRITICAL: Rule[] = [
 	{
@@ -241,18 +244,45 @@ function loadProjectAllow(root: string): RegExp[] {
 	}
 }
 
-// Strip shell comments so a decoy in a `# ...` comment can't whitelist a spend.
-function stripComments(s: string): string {
-	return s.replace(/#.*$/gm, "");
-}
-
-// Split a compound command into shell segments — a decoy allow-token in one
-// segment then cannot rescue a spend in another (the SAFE_ALLOW-decoy bypass).
+// Split a compound command into shell segments — a decoy allow-token in one segment
+// cannot rescue a spend in another. QUOTE-AWARE: a separator / newline / `#` INSIDE
+// '...' or "..." is DATA (e.g. a commit-message body), not a command boundary — so
+// `git commit -m 'stripe charges create'` stays ONE git segment (inert), not a spend.
+// (bash/sh -c '<spend>' still blocks: its leading isn't inert and the spend text is
+// matched in the whole segment.) Comments outside quotes are stripped inline (a decoy
+// `# stripe charges create` can't whitelist). Unbalanced quotes fall back to one
+// trailing segment — leading still classified. Shell escapes/`$()` are not modeled;
+// on that ambiguity the guard inspects rather than skips (safe direction).
 function segments(cmd: string): string[] {
-	return stripComments(cmd)
-		.split(/\n|;|&&|\|\||\||&/)
-		.map((s) => s.trim())
-		.filter(Boolean);
+	const out: string[] = [];
+	let buf = "";
+	let quote: '"' | "'" | null = null;
+	for (let i = 0; i < cmd.length; i++) {
+		const c = cmd[i];
+		if (quote) {
+			buf += c;
+			if (c === quote) quote = null;
+			continue;
+		}
+		if (c === '"' || c === "'") {
+			quote = c;
+			buf += c;
+			continue;
+		}
+		if (c === "#") {
+			// comment outside quotes — skip to end of line (the `\n` itself splits below).
+			while (i + 1 < cmd.length && cmd[i + 1] !== "\n") i++;
+			continue;
+		}
+		if (c === ";" || c === "&" || c === "|" || c === "\n") {
+			out.push(buf.trim());
+			buf = "";
+			continue;
+		}
+		buf += c;
+	}
+	out.push(buf.trim());
+	return out.filter(Boolean);
 }
 
 function classifySegment(seg: string, projectAllow: RegExp[]): Hit | null {
@@ -271,23 +301,50 @@ function classifySegment(seg: string, projectAllow: RegExp[]): Hit | null {
 	return null;
 }
 
+// athsra is the universe-wide secret store (every repo uses `athsra run` / its MCP
+// tools), not a payment surface — its read/write tools cannot move money. `athsra_run`
+// is the one exception: it injects secrets then runs an arbitrary command, so the money
+// signal is that command (+args), NOT the project name. We reassemble "command arg…" and
+// classify it with the Bash rules — fixing the `\bpay\b` false-positive on a project
+// named e.g. "modfolio-pay" AND closing the gap where bashCommand() saw only `command`
+// and missed args like `wrangler r2 bucket create`. project/config/cwd are ignored.
+function athsraRunCmdline(
+	toolInput: Record<string, unknown> | undefined,
+): string {
+	const ti = toolInput ?? {};
+	const command = typeof ti.command === "string" ? ti.command : "";
+	const args = Array.isArray(ti.args)
+		? ti.args.filter((a): a is string => typeof a === "string")
+		: [];
+	return [command, ...args].join(" ").trim();
+}
+
 function classify(
 	haystack: string,
 	toolName: string,
 	projectAllow: RegExp[],
 ): Hit | null {
-	// MCP: name-based on the whole payload (not shell-segmentable).
-	if (
-		toolName.startsWith("mcp__") &&
-		(MCP_PAYMENT.test(toolName) || MCP_PAYMENT.test(haystack))
-	) {
-		return {
-			tier: "high",
-			vector: "mcp-payment",
-			why: "payment-capable MCP tool",
-		};
+	if (toolName.startsWith("mcp__")) {
+		if (toolName.startsWith("mcp__athsra__")) {
+			// athsra secret-store tool — not a payment surface. Skip the MCP_PAYMENT name/arg
+			// match that false-positived on a project named "modfolio-pay" (read-only key
+			// listing). EXCEPTION: athsra_run's haystack is the injected command+args (built in
+			// main via athsraRunCmdline) → it falls through to the Bash rules below, where a real
+			// spend (stripe / wrangler … create) is still caught.
+			if (toolName !== "mcp__athsra__athsra_run") return null;
+		} else if (MCP_PAYMENT.test(toolName) || MCP_PAYMENT.test(haystack)) {
+			// Other MCP: name-based on the whole payload (not shell-segmentable).
+			return {
+				tier: "high",
+				vector: "mcp-payment",
+				why: "payment-capable MCP tool",
+			};
+		}
+		// Other MCP, non-payment name: fall through to best-effort Bash-segment classification
+		// (catches a spend in a single-string arg; JSON of multi-args is unreliable — that gap
+		// is closed for athsra_run via athsraRunCmdline, the universe's command-injecting tool).
 	}
-	// Bash: classify each shell segment independently (decoy-resistant).
+	// Bash (and athsra_run's command+args): classify each shell segment independently.
 	for (const seg of segments(haystack)) {
 		const hit = classifySegment(seg, projectAllow);
 		if (hit) return hit;
@@ -392,7 +449,13 @@ if (mode === "off") process.exit(0);
 const input = await readHookInput();
 const toolName = input.tool_name ?? "";
 const bash = bashCommand(input);
-const haystack = bash || JSON.stringify(input.tool_input ?? {});
+// haystack = what we classify. For athsra_run the money signal is the injected
+// command+args (not the project name) — see athsraRunCmdline. Bash: the command
+// string. Other MCP: serialized tool_input.
+const haystack =
+	toolName === "mcp__athsra__athsra_run"
+		? athsraRunCmdline(input.tool_input)
+		: bash || JSON.stringify(input.tool_input ?? {});
 const isMcp = toolName.startsWith("mcp__");
 // Nothing to inspect — but for MCP the tool NAME alone is a signal, so don't
 // early-exit on empty args when it's an mcp__* tool.

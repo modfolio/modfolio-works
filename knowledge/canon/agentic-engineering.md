@@ -1,7 +1,7 @@
 ---
 title: Agentic Engineering — methodology canon
-version: 1.0.0
-last_updated: 2026-04-26
+version: 1.1.0
+last_updated: 2026-06-18
 source:
   [
     Karpathy 2026-02 vibe-coding 종언 선언,
@@ -84,7 +84,7 @@ agentic engineering 의 5-단계 표준 워크플로우. modfolio 의 이미 운
 |---|---|---|
 | **Prompt** (Human) | task 정의 + atomic 분해 | `/plan` slash command, `.claude/plans/*.md` 작성 |
 | **Generate** (AI) | 코드/문서 생성 | `ralph-loop` skill, `page-builder` / `contract-builder` / `schema-builder` agent |
-| **Review** (Human + AI) | 다층 검증 | `multi-review` (3-4 agent 병렬) + Stop hook (haiku quality gate) + 인간 코드 리뷰 |
+| **Review** (Human + AI) | 다층 검증 | `multi-review` (3-4 agent 병렬) + `/release` 하드 게이트(release:gate) + 인간 코드 리뷰 |
 | **Feedback** (Human) | 결과 평가 + 다음 prompt 정제 | `stop-feedback-log` hook, `feedback-collect` skill |
 | **Iterate** | 다음 cycle 준비 | `journal` skill, `retro` skill, `pattern-digest` |
 
@@ -98,12 +98,12 @@ ecosystem 내 untrusted 가정의 실 구현:
 
 | 검증 레이어 | 위치 | 무엇을 막는가 |
 |---|---|---|
-| `pre-commit-guard.ts` | `scripts/hooks/` | `@ts-ignore`, `as any`, `biome-ignore` 우회 패턴 |
-| `pre-destructive-guard.ts` | `scripts/hooks/` | `rm -rf`, `git reset --hard`, `--force` 등 비가역 명령 |
-| Stop hook (haiku agent) | `.claude/settings.json` | 하드코딩 색상/시크릿/`@ts-ignore` + animation w/o `prefers-reduced-motion` |
-| `stop-pattern-history.ts` | `scripts/hooks/` | 슬롭 패턴 5종 (hallucinated import / cross-language leak / removed safety check 등) |
+| `pre-destructive-guard.ts` | `scripts/hooks/` | `rm -rf /`·force-push 등 비가역 명령 (**velocity+strict 공통 baseline**) |
+| `pre-payment-guard.ts` | `scripts/hooks/` | 무단 money-spend (다중 human approval) (**velocity+strict 공통 baseline**) |
+| `pre-commit-guard.ts` | `scripts/hooks/` | `@ts-ignore`·`as any`·`biome-ignore` 우회 패턴 notice (**strict 전용** — velocity 미wiring) |
+| `stop-pattern-history.ts` | `scripts/hooks/` | 슬롭 패턴 결정적 스캔 (**strict 전용**; v3.1 에 Stop **haiku agent 폐기**→결정적 대체, v3.13 velocity 기본 off) |
 | `multi-review` skill (3-4 agent) | `.claude/skills/multi-review/` | 디자인 / 접근성 / 아키텍처 / **보안** (D-1 추가) |
-| `code-reviewer` agent (Opus 4.7 [1m]) | `.claude/agents/` | 대형 diff 의 의미적 검토 |
+| `code-reviewer` agent (Opus 4.8 [1m]) | `.claude/agents/` | 대형 diff 의 의미적 검토 |
 | `checkLethalTrifecta` (v2.0 dogfood) | `scripts/modfolio/governance.ts` + `.claude/rules/lethal-trifecta.md` | private data + untrusted input + outward 3 조건 동시 충족 자동 검출 + human-approval 강제 (OWASP Agentic 2026) |
 
 **원칙**: 이 레이어들 중 **하나라도 우회** 하면 untrusted 가정 위반. `--no-verify` / `git commit --amend --no-verify` 등은 정공법 위반 (`.claude/rules/fundamentals-first.md`).
@@ -161,9 +161,11 @@ source: plan `~/.claude/plans/crystalline-sparking-sky.md` P1.4 + skill `/schedu
 - **xhigh** (5 agent): rigor 검토 — code-reviewer / design-critic / architecture-sentinel / accessibility-auditor / security-hardener
 - **high** (4 agent): hybrid — test-builder / visual-qa / ecosystem-auditor / migrations-auditor
 - **medium** (2 agent): vibe — knowledge-searcher / innovation-scout (탐색)
-- **Stop hook (haiku)**: 매 turn 종료 시 빠른 sweep
+- **Stop hooks**: v3.13 velocity 기본 미wiring(strict 전용 — 결정적 `stop-pattern-history`). per-turn haiku agent 는 v3.1 폐기.
 
 ### 2.3 Hook 의 untrusted 검증 chain
+
+> **v3.13 velocity 갱신**: 아래 chain 은 **strict 프로필**(전체 hook) 기준이다. **기본값 velocity** 는 `pre-destructive-guard`+`pre-payment-guard` 2개만 wiring하고 PostToolUse/Stop/SessionStart 등은 미wiring(per-turn 토큰·지연 0). Stop "haiku agent" 는 v3.1 폐기(결정적 대체). 전체 = `velocity-mode.md`.
 
 ```
 Prompt

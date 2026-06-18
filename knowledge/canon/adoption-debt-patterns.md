@@ -1,7 +1,7 @@
 ---
 title: Adoption Debt Patterns
-version: 1.5.0
-last_updated: 2026-04-22
+version: 1.6.0
+last_updated: 2026-06-18
 source:
   [
     v2.3.2 canary 확산,
@@ -19,6 +19,8 @@ consumers: [harness-pull, preflight, ops]
 # Adoption Debt Patterns — 하네스 도입을 막는 흔한 잔재
 
 > v2.3.2 하네스를 22개 member에 확산하는 동안 실측으로 발견된 **공통 adoption-blocking debt**를 기록. 새 adoption 시 먼저 점검하면 `pre-commit-guard`가 막는 상황을 사전 방지할 수 있다.
+
+> **⏳ Historical 주의 (2026-06-18)**: 이 문서의 **Dev Container 관련 debt**(bind-mount·`git safe.directory`·biome musl glibc false-positive 등)는 **2026-04-23 WSL native 전환으로 전면 해소**됐다 — 현행 아키텍처(독립 WSL native, harness 3.14+)엔 Dev Container 자체가 없다. 해당 섹션은 v2.x epoch 의 **이력 기록**으로만 읽을 것(삭제 대신 보존). 현행 도입 = `harness-adoption-guide.md` + velocity 프로필(`velocity-mode.md`).
 
 ## 왜 이 문서가 있는가
 
