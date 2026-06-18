@@ -9,7 +9,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^2.4.15",
-        "@modfolio/harness": "^3.13.3",
+        "@modfolio/harness": "^3.13.4",
         "typescript": "^5.9.3",
       },
     },
@@ -239,7 +239,7 @@
 
     "@modfolio/contracts": ["@modfolio/contracts@1.2.0", "https://npm.pkg.github.com/download/@modfolio/contracts/1.2.0/ce506706f0051112ad01c3c937ca5d2b1b3b7640", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-llzb5LGgZI2gGF1h3QkHUZMUJiGrZJU11XHwbojKNtcRU9nG14W77QNBffsbuldnVyVOZu92LjJfKxNI0Cb4JQ=="],
 
-    "@modfolio/harness": ["@modfolio/harness@3.13.3", "https://npm.pkg.github.com/download/@modfolio/harness/3.13.3/0a4c4ba4e2d8cb30b83b87be88e90f794864ed79", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-SgZLNXolL8bGlML8OwYOXrvitYO18DYoHshNhtX+YalDf7aqqFlEPDnnaOJzeJTNhp0rfRe43B80xYz78lh7ZQ=="],
+    "@modfolio/harness": ["@modfolio/harness@3.13.4", "https://npm.pkg.github.com/download/@modfolio/harness/3.13.4/40cefdcfc9c8974ebfb2c0b18833e52ebc5b3a68", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-JfWcI0xhR/SHnH3/bJ8uhd8IW7OTGKkJnCHwca09dLMmOIdCQTw3JX5lYaLtS0IYx+CMuWjYEuPlrjr0vUCfeA=="],
 
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
