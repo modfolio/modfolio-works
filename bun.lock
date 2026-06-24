@@ -17,7 +17,7 @@
       "name": "app",
       "dependencies": {
         "@astrojs/cloudflare": "^12.6.0",
-        "@modfolio/connect-sdk": "^7.0.0",
+        "@modfolio/connect-sdk": "^8.1.0",
         "astro": "^5.17.0",
       },
       "devDependencies": {
@@ -235,7 +235,7 @@
 
     "@microsoft/microsoft-graph-types": ["@microsoft/microsoft-graph-types@2.43.1", "", {}, "sha512-7r3FiJYW2qTWnl+Li8GV5MzJqPiJp27hvY98kH5V/ZMzGuIOkcJqOfIpusoIQrskLDfYk5kFT8AjpeW713qcIg=="],
 
-    "@modfolio/connect-sdk": ["@modfolio/connect-sdk@7.0.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/7.0.0/fd816a28bec1ac25945d4f12903f15dfb546cb94", { "dependencies": { "jose": "^6.2.2" } }, "sha512-iUNp5rOXoKXyd4jZ0qzbAdZArZdD9Hr/CmriwCHKLVd8/gj4mnsaGbqVO/v7UhZaw9RapChjVmtOU1sAsElDjA=="],
+    "@modfolio/connect-sdk": ["@modfolio/connect-sdk@8.1.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/8.1.0/66281f14ed98561ba2bce55b79f51a6dcc418da7", { "dependencies": { "jose": "^6.2.3" } }, "sha512-5doxhYHlasM2CiQUo5kJ520fKhmGf4nEJSBV4dEP1rUNVRY6wpS/Ff+9apnCeo327fnxEWqxU2t7gfrHItCrqw=="],
 
     "@modfolio/contracts": ["@modfolio/contracts@1.2.0", "https://npm.pkg.github.com/download/@modfolio/contracts/1.2.0/ce506706f0051112ad01c3c937ca5d2b1b3b7640", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-llzb5LGgZI2gGF1h3QkHUZMUJiGrZJU11XHwbojKNtcRU9nG14W77QNBffsbuldnVyVOZu92LjJfKxNI0Cb4JQ=="],
 
@@ -563,7 +563,7 @@
 
     "is-wsl": ["is-wsl@3.1.1", "", { "dependencies": { "is-inside-container": "^1.0.0" } }, "sha512-e6rvdUCiQCAuumZslxRJWR/Doq4VpPR82kqclvcS0efgt430SlGIk05vdCN58+VrzgtIcfNODjozVielycD4Sw=="],
 
-    "jose": ["jose@6.2.2", "", {}, "sha512-d7kPDd34KO/YnzaDOlikGpOurfF0ByC2sEV4cANCtdqLlTfBlw2p14O/5d/zv40gJPbIQxfES3nSx1/oYNyuZQ=="],
+    "jose": ["jose@6.2.3", "", {}, "sha512-YYVDInQKFJfR/xa3ojUTl8c2KoTwiL1R5Wg9YCydwH0x0B9grbzlg5HC7mMjCtUJjbQ/YnGEZIhI5tCgfTb4Hw=="],
 
     "js-yaml": ["js-yaml@4.1.1", "", { "dependencies": { "argparse": "^2.0.1" }, "bin": { "js-yaml": "bin/js-yaml.js" } }, "sha512-qQKT4zQxXl8lLwBtHMWwaTcGfFOZviOJet3Oy/xmGk2gZH677CJM9EvtfdSkgWcATZhj/55JZ0rmy3myCT5lsA=="],
 
