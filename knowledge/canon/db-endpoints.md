@@ -1,8 +1,8 @@
 ---
 title: DB Endpoint Mapping — modfolio universe (혼동 방지 lookup)
-version: 1.0.0
-last_updated: 2026-05-07
-source: [P0.0 DB endpoint 혼동 정리 cycle (2026-05-07), modfolio (parent app) athsra DATABASE_URL 실측, modfolio-press athsra 신규 등록 (DATABASE_URL = ep-fancy-shadow / neondb)]
+version: 1.1.0
+last_updated: 2026-06-26
+source: [P0.0 DB endpoint 혼동 정리 cycle (2026-05-07), 2026-06-26 Neon API 전수 인벤토리(23 projects, org-lucky-rain-45176041) + DB-per-service 완주(little-unit 통합잔재 제거 · opic-mode deprecated · 19 active app 전용 DB 검증) — 전체 per-app 4축 표는 project-infrastructure-registry.md]
 sync_to_siblings: true
 applicability: always
 consumers: [secret, ops, modfolio, preflight]
@@ -30,19 +30,11 @@ consumers: [secret, ops, modfolio, preflight]
 
 ## 전 sibling DB 매핑
 
-| sibling repo | DB type | endpoint hostname | database name | athsra project | athsra key | 작명 주의 |
-|---|---|---|---|---|---|---|
-| **modfolio (parent)** | Neon Postgres + pgvector | ep-dawn-poetry-a1lxsb75-pooler.ap-southeast-1.aws.neon.tech | **press** | modfolio | DATABASE_URL | ⚠️ DB name 'press' — repo 'modfolio-press' 와 별개 |
-| **modfolio-press** | Neon Postgres | ep-fancy-shadow-a1jjkxil-pooler.ap-southeast-1.aws.neon.tech | neondb | modfolio-press | DATABASE_URL | — |
-| modfolio-on | Neon Postgres + Upstash Redis | (사용자 확인 필요 — ecosystem.json infrastructure[Modfolio On].db 갱신 권고) | — | (등록 시점 알림) | — | — |
-| modfolio-admin | D1 (Cloudflare) | (CF binding TOKENS_DB-style) | (D1 uuid 기반) | modfolio-admin | (wrangler secret) | D1 — Neon 아님 |
-| modfolio-dev | D1 (Cloudflare) | — | — | modfolio-dev | — | D1 |
-| modfolio-pay | **Neon Postgres** (`mp_*`) | (athsra `DATABASE_URL`) | — | modfolio-pay | DATABASE_URL | ⚠️ **Neon, NOT D1** (drizzle `dialect:postgresql`; 2026-06-14 정정) |
-| modfolio-connect | D1 (Cloudflare) — identity | — | — | modfolio-connect | (다수) | D1 (account/login 공유, Neon 아님) |
-| 기타 D1 sibling | D1 (Cloudflare) | — | — | (sibling 별) | — | D1 |
-| athsra | D1 (`athsra-tokens`) + R2 (`athsra-secret-store`, `athsra-audit`) | (CF binding) | athsra-tokens | (self-hosted) | (CF wrangler secret) | self-hosted |
+> **전체 per-app 표(domain·email·Neon project/endpoint·athsra·cf·status 4축)는 [`project-infrastructure-registry.md`] 가 단일 SoT** (2026-06-26 Neon API 전수 검증). 본 문서는 **DB 경계 원칙 + 작명주의 + 변경기록**에 집중 — 중복 표를 유지하지 않는다(drift 방지).
 
-(Neon endpoint 는 host name 만. Connection string 의 password 는 athsra envelope / wrangler secret 보관 — 본 canon 에 명시 X.)
+**요약 (2026-06-26 실측)**: Neon project **23개**(org `modfolio`/`org-lucky-rain-45176041`, region ap-southeast-1, plan=free; modfolio-on 신설 포함). **19 active app 전부 자기 전용 Neon project 매핑 검증** (athsra `DATABASE_URL` host = 전용 project endpoint), **교차배선/충돌 0건**. 통합 DB 안티패턴(little-unit 1 project 에 press/modeng/y2a/neondb 4 DB) **제거 완료** → `press`(부모앱) 만 잔존. D1 사용처(connect 의 identity 공유 D1, athsra 의 `athsra-tokens`)는 Neon 과 **병존**(인증/토큰 경계). pay 는 prod/staging 2-branch.
+
+(Neon endpoint 는 pooled host name 만. password 는 athsra `DATABASE_URL` / wrangler secret 보관 — 본 canon 에 명시 X.)
 
 ## DB 경계 원칙 (bounded context — 공용 DB 금지)
 
@@ -106,6 +98,7 @@ grep -B2 'endpoint.*ep-fancy-shadow' ecosystem.json
 
 ## 관련
 
+- **canon `project-infrastructure-registry.md` — 전 프로젝트 4축(athsra·email·domain·Neon) 마스터 SoT (이 표의 권위 상위 문서)**
 - canon `secret-store.md` v1.13+ (athsra v3 표준)
 - canon `secrets-policy.md` (rotation 권고)
 - skill `.claude/skills/preflight/SKILL.md` (DB connection 검증)
@@ -119,3 +112,9 @@ grep -B2 'endpoint.*ep-fancy-shadow' ecosystem.json
 - 근본 원인: modfolio (parent) 의 DB 명이 `press` 로 작명 (우연) → repo `modfolio-press` 와 시각 충돌
 - mitigation: 본 canon 신규 + ecosystem.json `db` 객체 schema 확장 (P0.0.2) + projects md 명시 (P0.0.3) + modfolio-press athsra 등록 (P0.0.1)
 - password rotate 권고 (transcript 노출 — 사용자 시점 진행)
+
+**2026-06-26 — DB-per-service 완주 + 통합 DB 제거**:
+- Neon API 전수 인벤토리(22→23 projects, modfolio-on 신설) + athsra host-mapping 검증: **19 active app 전부 자기 전용 Neon project, 교차배선 0**.
+- **little-unit (modfolio) 통합 잔재 제거**: `modeng`(579행 옛 영어수업)·`neondb`(57행 레거시 멀티앱)·`y2a`(빈) drop, `press`(부모앱)만 유지. 백업 = 브랜치 `backup-pre-cleanup-2026-06-26`(br-wild-king, storage-only $0, 전 DB 보존) + JSON 덤프 선행.
+- **opic-mode (silent-snow) deprecated**: 868행 content seed만(user 0), gistcore(sparkling-frost)가 동일 820 questions+10배로 이미 흡수 → archive 유지, 신규 개발 금지.
+- 발견: ecosystem.json 의 일부 `db` 힌트(admin/dev/connect/keepnbuild/amberstella/munseo/umbracast 의 "D1"/"Turso")가 stale — 06-25 DB-per-service provisioning 후 Neon 으로 전환·병존. **project-infrastructure-registry.md 가 검증된 권위**.

@@ -21,7 +21,7 @@ maxTurns: 10
 ## FAIL 조건 (binary)
 
 1. **하드코딩 색상/간격** — `oklch()`, `#hex`, `rgb()`, `rgba()`, `hsl()`을 `var()` 밖에서 사용
-2. **WCAG AA 미달** — 텍스트 4.5:1 / 대형 텍스트 3:1 / UI 3:1 미만
+2. **WCAG AA 미달** — 텍스트 4.5:1 / 대형 텍스트 3:1 / UI 3:1 미만 (상세 baseline = `canon/ui-enterprise-baseline.md` Part 2; 상태 표면·심화 a11y 는 `accessibility-auditor`/`ui-quality-gate` 담당 — critic 범위 밖)
 3. **인접 앱과 시각적 indistinguishable** — 같은 생태계의 다른 앱 토큰 팔레트와 비교했을 때 시각적으로 구분 불가
 
 위 3개가 모두 0건이면 PASS. 그 외 디자인 선택(중앙 정렬 히어로, 보라-파랑, 라운드+shadow,

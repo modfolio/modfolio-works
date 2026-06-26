@@ -12,6 +12,8 @@ consumers: [ops, deploy, release, preflight]
 
 > **자율 agent 는 사람의 반복(다중) 승인 없이 돈을 쓰거나 유료 서비스를 개시하지 못한다. 결정적 hook 으로 txn 전에 차단한다 (LLM 필터 아님 — 5% 우회). 자율/무인 모드는 승인 경로 자체가 없다 (하드 차단).**
 
+> **범위 구분**: 이 문서 = **agent 무단 지출 가드**(개발/운영 안전). 사용자 결제 수취·서비스 제공의 **제품 결제 아키텍처**(pay 중앙 SoT·통합 크레딧·구독·entitlement·런타임 결제)는 `billing-architecture.md` 가 SoT — 둘은 직교.
+
 ## 1. 위협 모델 + 정직한 범위 경계
 
 `pre-payment-guard.ts` 는 PreToolUse(Bash + outward MCP) hook 이다.

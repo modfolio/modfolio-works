@@ -13,7 +13,7 @@ user-invocable: true
 
 # Skill: 배포 (CF Workers)
 
-> CF Pages → Workers 마이그레이션 완료. 모든 신규/기존 앱은 CF Workers로 배포.
+> 배포 정공법 SoT = `knowledge/canon/cf-deploy.md` 「확정」 블록. 신규/기존 앱 = CF Workers Builds(GitHub 연동 push-to-deploy). Pages 잔존은 이관 대기(완료 아님).
 
 ## Step 0: CF 프로젝트명 확인 (필수)
 
@@ -174,18 +174,13 @@ Nitro preset: `cloudflare` in `nuxt.config.ts`
 - `assets.run_worker_first: true` — 인증/로깅이 정적 에셋보다 먼저 실행되어야 할 때
 - `.assetsignore` 파일로 업로드 제외 (node_modules, .git 등)
 
-## GitHub Actions 허용 범위
+## GitHub Actions — 전면 금지
 
-**배포 목적 Actions 금지. 다음 용도만 허용:**
-- Biome lint + typecheck (빌드 없는 품질 검사만)
-- `@modfolio/contracts` 패키지 publish (GitHub Packages)
+GitHub Actions 컴퓨트는 deploy/CI/publish **어디에도 쓰지 않는다** (canon `gh-actions-policy.md` v2.0). 배포 = CF Workers Builds, CI = NAS Forgejo Actions/local, `@modfolio/*` publish = local track. 신규 `.github/workflows/*.yml` 생성 금지.
 
-## CF API 정보
+## CF API 정보 (athsra 주입 — secret-store v3)
 
-| 항목 | 조회 방법 |
-|------|-----------|
-| Account ID | `doppler secrets get CF_ACCOUNT_ID --plain` |
-| API Token | `doppler secrets get CF_API_TOKEN --plain` |
+CF 자격증명은 athsra 에 보관하고 비대화형 wrangler 는 `athsra run <repo> -- bunx wrangler ...` 로 주입한다 (값 노출 금지). 등록: `athsra set <repo> CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=...`. doppler/dotenvx 경로는 폐기. 상세 = `cf-deploy.md` 경로 2.
 
 ## 새 앱 배포 체크리스트
 

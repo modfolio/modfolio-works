@@ -69,6 +69,10 @@ ecosystem 은 sibling 을 직접 수정하지 않는다(Hub-not-enforcer). sibli
 - `permissions.deny`(payment-approval 토큰 보호)·`defaultMode: bypassPermissions`·`fallbackModel`.
 - **`/release`(release:gate) 하드 게이트** — 코드품질 정공법은 폐기가 아니라 시점 이동. ship 전 전부 green 필수.
 
+## ecosystem 본체 예외 — Evolution Pulse (SessionStart)
+
+ecosystem(관제탑) 본체엔 sibling 프로필과 **무관한** `session-start-evolve-pulse.ts` SessionStart hook 이 추가돼 있다(ecosystem `.claude/settings.json`, `pkg.name==="@modfolio/harness"` 일 때만 작동 — sibling 은 no-op). 피드백→진화 루프를 cron 이 아니라 **session 시작 단계 트리거**로 깨운다(inbound feedback·진화신호·drift 1회 advisory). velocity 정합: **0-token**(결정적 파일 스캔, heavy 스크립트 재실행 안 함)·**actionable 시만 출력**·exit 0. "새 자동화 기본추가 금지"의 **사용자 명시 요청 예외**(2026-06-22). 자매 = `session-start-pickup.ts`(drift).
+
 ## strict 재진입
 
 `solo-main-workflow.md` 의 전환 트리거(외부 실사용자·결제/PII production 경로·협업자 2인+·사용자 명시 요청)가 도래한 **그 앱만** `{"profile":"strict"}`. 앱 단위 자율.

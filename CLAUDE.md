@@ -45,7 +45,7 @@
 | GistCore | 0.5.0-subscription-design | active |
 | Fortiscribe | 0.2.0-sso | landing |
 | Atelier and Folio | 0.2.0-folio-core | active |
-| PD Guide | 0.1.0 | scaffolded |
+| PD Guide | 0.1.0 | active |
 | DLE Desk | 1.0.0 | active |
 | Muje HWP | 0.1.0 | landing |
 
