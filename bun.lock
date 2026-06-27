@@ -5,6 +5,7 @@
     "": {
       "name": "modfolio-works",
       "dependencies": {
+        "@modfolio/connect-sdk": "^8.2.1",
         "@modfolio/contracts": "^1.5.0",
       },
       "devDependencies": {
@@ -235,7 +236,7 @@
 
     "@microsoft/microsoft-graph-types": ["@microsoft/microsoft-graph-types@2.43.1", "", {}, "sha512-7r3FiJYW2qTWnl+Li8GV5MzJqPiJp27hvY98kH5V/ZMzGuIOkcJqOfIpusoIQrskLDfYk5kFT8AjpeW713qcIg=="],
 
-    "@modfolio/connect-sdk": ["@modfolio/connect-sdk@8.1.0", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/8.1.0/66281f14ed98561ba2bce55b79f51a6dcc418da7", { "dependencies": { "jose": "^6.2.3" } }, "sha512-5doxhYHlasM2CiQUo5kJ520fKhmGf4nEJSBV4dEP1rUNVRY6wpS/Ff+9apnCeo327fnxEWqxU2t7gfrHItCrqw=="],
+    "@modfolio/connect-sdk": ["@modfolio/connect-sdk@8.2.1", "https://npm.pkg.github.com/download/@modfolio/connect-sdk/8.2.1/cc78cd07e78f353e09d5545f3c5845ff020d6aae", { "dependencies": { "jose": "^6.2.3" } }, "sha512-wASYgCsVljiPQtzlSNHr1J+dbAyW95Kbb7g+X2dao+8IVZ8NGavEsLwtYNRswFojldIDew9kUlOe+d6SAMf+6g=="],
 
     "@modfolio/contracts": ["@modfolio/contracts@1.5.0", "https://npm.pkg.github.com/download/@modfolio/contracts/1.5.0/f62def5c2ab1e47de141376b9c650a757be73c20", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-EILkdQliOG9qiCFzszAbu9lHiRxW5trIW2mc49DR18SmJlVJ5oNImlL7Wp8RmnJoK31+XQRVqzIYsTPzCNFIkw=="],
 

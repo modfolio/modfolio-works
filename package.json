@@ -25,6 +25,7 @@
 		"@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@^2.4.15"
 	},
 	"dependencies": {
+		"@modfolio/connect-sdk": "^8.2.1",
 		"@modfolio/contracts": "^1.5.0"
 	}
 }
