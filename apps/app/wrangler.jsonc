@@ -3,6 +3,12 @@
 	"name": "modfolio-works-app",
 	"compatibility_date": "2026-03-01",
 	"compatibility_flags": ["nodejs_compat"],
+	// adapter 14 enables Astro sessions via a SESSION KV binding. Pin the namespace id
+	// explicitly — wrangler automatic provisioning is create-only (not idempotent) and
+	// fails on redeploy once the namespace exists (API code 10014).
+	"kv_namespaces": [
+		{ "binding": "SESSION", "id": "371512e24c874c72b1c089678d89d720" }
+	],
 	"observability": {
 		"traces": {
 			"enabled": true,
