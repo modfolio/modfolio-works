@@ -14,6 +14,7 @@ user-invocable: true
 접근성·시맨틱 기초와 구조적 감지 신호는 canon에서 관리:
 
 - [canon/layout-patterns.md](../../knowledge/canon/layout-patterns.md) — 구조 원칙
+- [canon/ui-enterprise-baseline.md](../../knowledge/canon/ui-enterprise-baseline.md) — 상태 표면(loading/empty/error) + WCAG 2.2 AA 완성 floor (구조 원칙의 심화 baseline)
 - [docs/internal/legal-and-brand-info.md](../../docs/internal/legal-and-brand-info.md) — 사업자/SNS 정보 (푸터 참조)
 
 ## 앱 자유 결정 (처방 X)

@@ -53,6 +53,12 @@ consumers: [preflight]
 - `app.d.ts` session type: use `Awaited<ReturnType<typeof import('$lib/server/session').getServerSession>>` to stay in sync with Better Auth types — avoid hardcoding session shape
 - `zod` must be explicit dep in SvelteKit apps too (same as SolidStart SSR bundling issue)
 
+## SvelteKit CSRF — machine-to-machine 엔드포인트 (OIDC token, webhook)
+- 내장 CSRF 보호(`csrf.checkOrigin`)는 cross-origin 의 form content-type POST(`application/x-www-form-urlencoded`·`multipart/form-data`·`text/plain`)를 **기본 차단** → `403 Cross-site POST form submissions are forbidden`
+- OIDC 토큰 엔드포인트(RFC 6749 §4.1.3 = `application/x-www-form-urlencoded` POST 필수)·webhook receiver 등 비브라우저 form-POST 가 전부 막힘 (클라 origin ≠ 서버 origin)
+- 해결: 해당 경로를 CSRF origin 검사에서 면제 — `hooks.server.ts` `handle` 에서 기본 csrf 이전에 처리하거나 OIDC/machine 경로만 origin 검사 자체 구현. client auth(PKCE `code_verifier`/client_secret)·webhook 서명이 form-CSRF 를 이미 대체하므로 안전
+- 출처: modfolio-connect 2026-06-21 근본수정 (commit `452633f`, OIDC `/sso/token` 403 해소). 상세 의견 = `feedback/modfolio-connect/ecosystem-opinion-20260621-sso-token-csrf.md`
+
 ## PortOne (포트원) V2
 - Korean PG aggregator; chosen over Stripe (no US entity) and Toss (expensive)
 - Server: `@portone/server-sdk` — `PortOneClient({ secret })` factory (NOT constructor)
@@ -97,15 +103,10 @@ consumers: [preflight]
 - Qwik SSG results may show "0 pages" when all routes are SSR-only (expected behavior)
 - `using deprecated parameters for the initialization function` warning from Vite 7 + Qwik — informational, does not affect build
 
-## CI/CD
-- Config-driven: `.github/deploy-map.json` (23 deployable apps)
-- `upload-artifact` needs `include-hidden-files: true` for `.svelte-kit/`
-- Deploy: `bunx --bun wrangler` (not wrangler-action, avoids packageManager issues)
-- Concurrency control: prevent simultaneous deploys, cancel-in-progress for PRs
-- Turborepo remote cache: `rharkor/caching-for-turbo` (GitHub Actions cache)
-- Deploy uses `last-deploy-sha` cache to diff against last successful deploy (not just HEAD~1)
-- `workflow_dispatch` trigger allows manual CI re-runs from GitHub Actions UI
-- If E2E fails → deploy skipped → next push picks up missed changes via cached SHA diff
+## CI/CD (배포 = Workers Builds, GHA 금지)
+- 배포 = **CF Workers Builds** (push-to-deploy). SoT = `cf-deploy.md` 「확정」. GitHub Actions 배포/CI **전면 금지** (`gh-actions-policy.md` v2.0) — CI 컴퓨트는 NAS Forgejo Actions/local. (옛 `.github/deploy-map.json`·wrangler-action·workflow_dispatch 기반 GHA 파이프라인은 폐기됨.)
+- 모노레포: Worker 별 **build-watch-paths** 로 바뀐 앱만 rebuild (build-min 절약). `root_directory = apps/<app>` 면 monorepo-root `bun.lock` 캐싱 경고 → symlink 또는 `cd ../..` 패턴.
+- **build token silent expire** = 가장 흔한 무음 배포 실패. 진단/복구 + 분기 점검 = `cf-workers-builds-api.md`.
 
 ## Vitest 4 Migration
 - `vi.fn().mockImplementation(() => ...)` arrow functions can't be used with `new` — use `function` keyword

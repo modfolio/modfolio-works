@@ -1,8 +1,8 @@
 ---
 title: Email Domain Aliases — CF Routing + Google Workspace Send-as
-version: 1.0.0
-last_updated: 2026-04-27
-source: [Option A 결정 2026-04-27 (GW 유지 + M365 비-이메일 자산 활용 + CF Email Routing alias), https://developers.cloudflare.com/email-routing/]
+version: 1.1.0
+last_updated: 2026-06-25
+source: [Option A 결정 2026-04-27 (GW 유지 + M365 비-이메일 자산 활용 + CF Email Routing alias), GW Admin Console 도메인·별칭 실측 2026-06-25, https://developers.cloudflare.com/email-routing/]
 sync_to_siblings: true
 consumers: [ops, new-app]
 applicability: per-app-opt-in
@@ -36,6 +36,34 @@ ecosystem main domain `modfolio.io` 운영 alias. 23 repo 중 다른 도메인 (
 | `legal@modfolio.io` | Incorporation, ToS, privacy notice 수신 | ✅ GW Send-as |
 
 **확장 시**: CF Email Routing 의 alias 개수는 사실상 무제한. 추가 필요 시 `info@`, `billing@`, `dev@`, `partners@` 등 자유롭게.
+
+## 현재 등록 현황 (Google Workspace 실측 — 2026-06-25)
+
+> Admin Console 도메인 관리 + `mod@modfolio.io` 보조 이메일 화면. **실제 운영은 이 canon 본문의 "CF Email Routing alias forwarding" 이 아니라 GW 네이티브 멀티도메인 + 사용자 별칭 도메인(user alias domain)** 으로 돼 있다. 둘 다 무료·유효 — CF Routing 은 GW 밖 도메인이나 alias 별 세분 rule(drop·Resend webhook·다중 destination)이 필요할 때의 대안으로 유지.
+
+### 도메인 인벤토리 (18)
+
+| 도메인 | 유형 | 상태 | Gmail |
+|---|---|---|---|
+| `modfolio.io` | 기본 (primary) | 인증됨 | 미활성 ("활성화하기") |
+| `modfolio.co.kr` | 보조 (secondary) | 인증됨 | ✅ 활성 |
+| `modfolio.co.kr.guest.google` | 게스트 | 인증됨 | — |
+| `modfolio.io.guest.google` | 게스트 | 인증됨 | — |
+| `modfolio.io.test-google-a.com` | 테스트 도메인 별칭 | 활동 안함 | — |
+
+**`modfolio.io` 의 사용자 별칭 도메인 (13 — 전부 인증됨·Gmail 활성)** — 13개가 전부 자회사 앱 1:1 도메인. **2026-06-25 부모 도메인을 `modfolio.co.kr` → `modfolio.io` 로 일괄 이전 완료** (mod 계정 primary 와 정합 — 사용자 직접 GW Admin Console 변경):
+`amberstella.com` · `atelierfolio.com` · `athsra.com` · `dledesk.com` · `fortiscribe.com` · `gistcore.com` · `keepnbuild.com` · `munseo.app` · `naviaca.com` · `pdgd.kr` · `sincheong.app` · `umbracast.com` · `worthee.io`
+
+### `mod@modfolio.io` 슈퍼계정 보조 이메일 — 26/30, 도메인 전부 `@modfolio.io`
+
+기본 로그인 `mod@modfolio.io` (조직단위 Modfolio, 생성 2024-03-27). 보조 이메일(이메일 별칭) 26개, **@뒤 도메인은 전원 `@modfolio.io`** (한도 30):
+
+- **앱 기반 (14)**: `worthee` · `umbracast` · `munseo` · `sincheong` · `naviaca` · `pdgd` · `muje` · `knb`(=keepnbuild) · `fortiscribe` · `dledesk` · `amberstella` · `anf`(=atelier·folio) · `gistcore` · `athsra`
+- **역할·인프라 (12)**: `infra` · `admin` · `dev` · `on` · `studio` · `axiom` · `ls` · `works` · `press` · `pay`(=modfolio-pay) · `connect`(=modfolio-connect) · `info`
+
+### 메커니즘 — 별칭 × 별칭도메인 = 브랜드 주소
+
+보조 이메일은 `<로컬파트>@modfolio.io` 형태이고, 13개 앱 도메인도 이제 **`modfolio.io`(primary)의 사용자 별칭 도메인**(2026-06-25 co.kr→io 이전)이다. **primary 도메인의 별칭 도메인은 모든 사용자에게 자동 미러**되는 GW 확립 동작이라, mod 의 모든 로컬파트가 그 13개 도메인에서도 수신/Send-as 된다 — 즉 로컬파트와 도메인 이름이 일치하는 앱은 `worthee@worthee.io` · `amberstella@amberstella.com` · `athsra@athsra.com` · `pdgd@pdgd.kr` · `naviaca@naviaca.com` 같은 **브랜드 주소가 단일 `mod` inbox 로 자동 귀결**된다. 이전엔 부모가 `modfolio.co.kr`(secondary)라 mod(primary=io)로의 미러 범위가 모호했으나, io(primary) 이전으로 정합이 명확해졌다. 자회사별 GW 계정 추가·결제 없이 **1 슈퍼계정**으로 전 생태계 이메일 운영. (앱이 트랜잭션 메일을 직접 보낼 땐 §표준 alias 의 `noreply@<domain>` + Resend 경로를 별도 사용.)
 
 ## DNS 전제
 

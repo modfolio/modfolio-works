@@ -1,7 +1,7 @@
 ---
 title: Canon INDEX
-version: 1.6.5
-last_updated: 2026-06-18
+version: 1.6.6
+last_updated: 2026-06-24
 sync_to_siblings: true
 applicability: always
 consumers: [preflight]
@@ -35,6 +35,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [agentic-engineering.md](agentic-engineering.md) — Karpathy 2026-02 프레임. atomic task / vibe·rigor 경계 / Prompt→Generate→Review→Feedback→Iterate / untrusted code 가정.
 - [anti-slop.md](anti-slop.md) — "패턴 매칭 최적화"의 슬롭 패턴 + negative space 디자인 원칙.
 - [payment-safety.md](payment-safety.md) v1.0 (신설 2026-06-14) — 자율 agent 무단 지출 차단. `pre-payment-guard` 결정적 hook (tiered 다중승인) + 자율 하드차단 + audit. `applicability: always`.
+- [billing-architecture.md](billing-architecture.md) v1.0 (신설 2026-06-22) — 결제·크레딧·구독·entitlement **SoT**. pay=merchant-of-record(Toss)·통합 크레딧 지갑+구독(사용자당 단일·프로젝트별 rate)·실시간 전달(pay API 권위+웹 live push, SSO claim=coarse only)·atomic debit(idempotent). contracts 1.3.0 events/billing/sso. payment-safety(agent 지출가드)와 직교. `applicability: always`.
 - [velocity-mode.md](velocity-mode.md) v1.0 (신설 2026-06-18) — fast-MVP hook 프로필. `velocity`(가드 2개, 기본)/`strict`(전체, opt-in). 훅=0토큰·실비용=지연. `harness-lock.json profile`. solo-main-workflow 자매. `applicability: conditional`.
 - [fleet-harness-propagation.md](fleet-harness-propagation.md) v1.0 (신설 2026-06-18) — harness release 의 fleet 전파 runbook. pull-first·dirty-stash·active reset-to-origin·opt-out skip·역흡수. `harness-propagate-all.sh`. `applicability: conditional`.
 - [secrets-policy.md](../../.claude/rules/secrets-policy.md) (rule) — 하드코딩 금지, 로테이션 주기.
@@ -88,6 +89,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [cf-deploy.md](cf-deploy.md) v1.1 — 배포 메커니즘 + wrangler v4 정확 커맨드 + 비대화형 실행 표준.
 - [cf-workers-builds-api.md](cf-workers-builds-api.md) v1.0 — Workers Builds API 깊은 진단 (build token silent expire, gh 연결 자동화).
 - [pages-to-workers-migration.md](pages-to-workers-migration.md) v1.1 — Pages → Workers 이관 13단계 + bulk deployment cleanup.
+- [domain-architecture.md](domain-architecture.md) v1.0 — 도메인 주소 + CF Worker 네이밍 표준 **SoT**. 전 Workers(Pages 폐기, NAS=tunnel 예외) · 독립도메인 `app.<domain>`(.app 은 apex=app/www=landing) · 인프라 서브도메인 유지 · `login`/`account` 불변 · `universe.modfolio.io`→ecosystem 301 retire · 현행 도메인 맵.
 - [wrangler-standards-2026.md](wrangler-standards-2026.md) — wrangler.jsonc 템플릿 (프레임워크별 build 블록 + binding).
 - [cf-workflows-v2.md](cf-workflows-v2.md) v1.0 (신설 2026-05-24) — Workflows V2 GA + Dynamic Workflows. per-tenant durable execution. **Trial — POC sibling 1 spike 후 결정**.
 
@@ -110,6 +112,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [design-innovation.md](design-innovation.md) — 혁신 원칙 (negative space).
 - [landing-copywriting.md](landing-copywriting.md) — 랜딩 카피 가이드.
 - [layout-patterns.md](layout-patterns.md) — 레이아웃 구조 원칙.
+- [ui-enterprise-baseline.md](ui-enterprise-baseline.md) v1.0 (신설 2026-06-24) — 상태 표면(loading/empty/error) + WCAG 2.2 AA 완성 floor. 공유 패키지 아닌 **표준 + copy-paste**(ADR-001 정합). fleet 27-repo 감사 도출. `applicability: always`.
 - [motion-patterns.md](motion-patterns.md) v1.1 — 스프링 모션 + 접근성 + Svelte 5 motion 신 타입.
 - [typography.md](typography.md) — 타이포그래피 변수/스케일.
 - [icon-system.md](icon-system.md) v1.0 (신설 2026-05-24) — UnoCSS preset-icons + Iconify 표준 + Lucide/Tabler 셋.
@@ -182,3 +185,4 @@ CF Workers 비용/지연 분석? → perf-profiler
 - 2026-05-24: v1.6.0. **Cloudflare API · 배포 전용 섹션 신설**. 신규 canon 2개 — [cf-token-permissions.md](cf-token-permissions.md) (사용자 "All API" 토큰 353/366 perm groups 실측 + 권한 의심 차단 게이트), [cf-api-mastery.md](cf-api-mastery.md) (영역별 endpoint 카탈로그 + H1~H13 hallucination 카탈로그). cf-deploy v1.1 / pages-to-workers-migration v1.1 정정 — link out. 배경: 사용자 보고 "API mega-token 인데 AI 가 계속 못한다고 hallucinate". 사용자 토큰 직접 measurement 로 권한 fact 박고, endpoint/body 정확성으로 hallucination 차단.
 - 2026-05-24: v1.6.1. **2026-05-24 staleness audit 결과 반영** — stale 5 (전부 2026-03-27) 차등 처리: ai-patterns v1.1 (CF AI Gateway / Opus 4.7 / Managed Agents 옵션), design-tooling v1.1 (Figma MCP 풀 카탈로그 + skill set), memory-architecture v1.1 (App-level + agent-runtime-layers / memory-architecture-eval / Claude Code memory 4 layer 분리), motion-patterns v1.1 (evergreen 인정 + Svelte 5 motion 신 타입), rate-limiting v1.1 (CF Workers Rate Limiting binding GA). minor gap — harness-adoption-guide v1.1 (v3.1+ bypassPermissions + SessionStart default-ON + pre-commit guard 제거 + NAS Forgejo).
 - 2026-05-24: v1.6.2. **2026-04~05 신기술 도입 결과** — Adopt 4 canon 신설: icon-system v1.0 (UnoCSS preset-icons + Iconify), standard-schema v1.0 (Zod 4 + Valibot interop), anthropic-agent-skills-standard v1.0 (agentskills.io 표준 인지), cf-workflows-v2 v1.0 (Trial — POC spike). attention-budget v1.3 (Context Engineering 5 criteria 보강). tech-trends-2026-05 v1.1 (Adopt/Trial/Watch/Skip 표 + Better Auth 1.6 / Forgejo v15 / Astro 6 / Svelte 5 attachments / Zod 4 마이그 등 별도 plan 권고).
+- 2026-06-24: v1.6.6. **ui-enterprise-baseline.md v1.0 신설** (디자인 섹션) — fleet 27-repo 완성도 감사에서 도출한 상태 표면(loading/empty/error) + WCAG 2.2 AA 완성 floor. 핵심: 공유 UI 패키지가 아니라 **표준 + copy-paste**(ADR-001 "공유 라이브러리 엄금"·design-tokens §11 "공용 토큰 소스 금지" 정합). 감사 종합 §6 의 "@modfolio/ui-* 패키지" 제안을 이 canon-기반 표준으로 대체(ADR 충돌 근본 정정).

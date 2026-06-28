@@ -10,7 +10,7 @@ applicability: per-app-opt-in
 
 # Microsoft Graph SDK 통합 — Personal MSA + OAuth refresh token
 
-M365 Family (Personal Microsoft Account, MSA) 의 자산 (OneDrive, Excel, Outlook, Calendar, OneNote) 을 코드로 자동화. CF Worker scheduled job / WSL2 cron / GitHub Actions 어디서든 동일 패턴.
+M365 Family (Personal Microsoft Account, MSA) 의 자산 (OneDrive, Excel, Outlook, Calendar, OneNote) 을 코드로 자동화. CF Worker scheduled job / WSL2 cron / NAS Forgejo Actions 어디서든 동일 패턴 (GitHub Actions 금지 — `gh-actions-policy.md`).
 
 ## Personal MSA vs Enterprise tenant 제약
 

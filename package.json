@@ -18,13 +18,14 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.15",
-		"@modfolio/harness": "^3.14.0",
+		"@modfolio/harness": "^3.15.4",
 		"typescript": "^5.9.3"
 	},
 	"overrides": {
 		"@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@^2.4.15"
 	},
 	"dependencies": {
-		"@modfolio/contracts": "^1.2.0"
+		"@modfolio/connect-sdk": "^8.2.1",
+		"@modfolio/contracts": "^1.5.0"
 	}
 }

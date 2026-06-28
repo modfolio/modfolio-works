@@ -1,9 +1,9 @@
 ---
 title: Cloudflare Workers Builds — API 완전 자동화 + 진단 (build token silent expire + private/local dep 실패 포함)
-version: 1.1.0
-last_updated: 2026-06-08
+version: 1.3.0
+last_updated: 2026-06-24
 source: [2026-05-24 gistcore 진단 세션, 2026-05-31 modfolio-pay 3일 outage(file: dep) 회고, developers.cloudflare.com/workers/ci-cd/builds/api-reference, 실증 curl 시퀀스]
-changelog: ["1.1.0 (2026-06-08): source 필드로 CI 판별 불가 정정(build history 사용) + private/local dep 설치 실패를 TL;DR·함정표에 추가(modfolio-pay 피드백)"]
+changelog: ["1.3.0 (2026-06-24): 빌드 OOM(build container 힙 초과) 세 번째 실패 시나리오 추가 — vite build 큰 SvelteKit/SSR 번들이 ~2GB 기본 힙 OOM(rendering chunks), fix=NODE_OPTIONS max-old-space 6144 를 build script 에 내장(bun run 래퍼 = CF·WSL·Win 공통). pdgd 2026-06-24 실증, 큰 번들 fleet 공통 위험.", "1.2.1 (2026-06-22): stale-local-clone 진단 함정 추가 + athsra-in-CI fix 메커니즘 명확화 (trigger build_command = 일반 bun run build → repo package.json build 실행이라 fix = repo 한 줄, CF-side 아님). gistcore·docs·admin·modfolio 4 repo 1줄 제거 → 5 worker build success + live 200 실증.", "1.2.0 (2026-06-21): athsra-in-CI build script anti-pattern 함정 추가 (fleet-wide 진단 — apps/landing build 의 `athsra run` 이 CF runner 에서 command-not-found). build-token 만료 fleet 복구 + docs GITHUB_TOKEN 주입 실증.", "1.1.0 (2026-06-08): source 필드로 CI 판별 불가 정정(build history 사용) + private/local dep 설치 실패를 TL;DR·함정표에 추가(modfolio-pay 피드백)"]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops]
@@ -24,8 +24,9 @@ supersedes: [cf-deploy.md 의 "AI 는 연결 자체 못 한다" 주장(line 42-4
 
 1. **build token silent expire/roll** — build trigger 가 쓰던 build token 이 조용히 만료/롤. 매 push 마다 webhook 정상 트리거되고 build 가 큐에 들어가지만 토큰 검증 단계에서 5초 만에 fail.
 2. **private/local 의존성 설치 실패** (2026-05-31 modfolio-pay 3일 outage) — `@modfolio/*` 를 `file:../` 로컬 경로로 의존하면 CI clone 에는 그 경로가 없어 `bun install` 이 실패. 또는 published `@modfolio/*` 인데 `GITHUB_TOKEN` (is_secret) 미주입이면 GitHub Packages 인증 실패. **local 빌드는 통과**해서 "정상"처럼 보이고 prod 는 옛 커밋에 멈춰 있다.
+3. **빌드 OOM (build container 힙 초과, 2026-06-24 pdgd 실증)** — `vite build`(SvelteKit/SSR 큰 번들 — 예: Mingcute 등 대형 아이콘셋 전체 번들)가 CF 빌드 컨테이너 기본 힙(~2GB)에서 `rendering chunks` 중 OOM → build_outcome=fail. **local 빌드는 머신 힙이 커서 통과**해 "정상"처럼 보인다. fix = build script 에 힙 상한 **내장**: `NODE_OPTIONS=--max-old-space-size=6144 vite build` (또는 `bun run build` 래퍼 — bun shell 이라 CF·WSL·Windows 공통, cross-env 불요). **큰 번들 @modfolio 앱(SvelteKit 등) fleet 공통 위험** → 같은 패턴 권고.
 
-둘 다 CF Dashboard "Builds" 탭 / API build 로그(6단계)를 열기 전엔 안 보인다. **항상 로그부터 확인** — "토큰이겠지" 하고 7단계 PATCH 부터 돌리면 의존성 실패를 놓친다.
+세 경우 모두 CF Dashboard "Builds" 탭 / API build 로그(6단계)를 열기 전엔 안 보인다. **항상 로그부터 확인** — "토큰이겠지" 하고 7단계 PATCH 부터 돌리면 의존성 실패를 놓친다.
 
 복구 (60초):
 ```bash
@@ -247,6 +248,8 @@ done
 | monorepo bun.lock 캐싱 안 됨 | "No package-lock.json, ... bun.lock! Build caching not supported" | root_directory 가 `apps/<app>` 라 monorepo root 의 `bun.lock` 못 찾음. symlink (`apps/<app>/bun.lock → ../../bun.lock`) 또는 build_command 앞에 `cd ../.. &&` 패턴. 작동에는 문제 없으나 build 시간 증가 |
 | build_command_failed: null | build 가 시작 전 fail 이라 build command 실행도 안 함 | initializing 단계 fail. logs 확인하면 사유 명확 |
 | private/local dep 설치 실패 | install 단계에서 fail/hang. **local 빌드는 통과**. 로그에 `ENOENT ... @modfolio/contracts` (file: 경로) 또는 GitHub Packages 401/403 (토큰 미주입) | (a) `file:../`·`link:../` 로컬 경로 의존 제거 → published `@modfolio/<pkg>@^x` 로 교체 (CI clone 엔 sibling 경로 없음). (b) published `@modfolio/*` 면 trigger 환경변수에 `GITHUB_TOKEN` 을 `is_secret:true` 로 설정 (PATCH endpoint) + repo 루트 `.npmrc`. **`@modfolio/*` 에 `file:`/`link:` 절대 금지** |
+| **build script 가 CI 에서 `athsra run` 호출** (2026-06-21 fleet-wide 발견) | build 단계 `athsra: command not found` (exit 127). **local 빌드는 통과**(athsra 설치됨)라 안 보임. `apps/landing/package.json` 의 `"build": "athsra run <repo> -- astro build"` 가 전형. 영향: gistcore·modfolio(-app)·docs·admin(landing)·atelier-and-folio 등 → **build-token 복구해도 이 단계에서 재실패** | build/deploy 에서 **`athsra run` 제거** (CF runner 엔 athsra 없음). build 는 plain `astro build`/`bun run build`, **build-time secret 은 Builds trigger env**(`PATCH .../environment_variables`, `is_secret:true`)로 주입. athsra = **dev/CLI·로컬 deploy 전용 — CI 빌드 스크립트엔 금지** |
+| **build script fix 를 stale local clone 으로 진단** (2026-06-22 fleet 복구 실증) | local `~/code/<repo>` HEAD 가 origin 보다 수주 뒤처졌는데 `git status` 는 "0 behind"(origin/main 추적 ref 자체가 stale — fetch 안 함) → local `package.json` build 가 이미 clean 처럼 보여 "고칠 것 없음" 오판. 실제 CF 가 빌드하는 건 **GitHub HEAD** | 진단·수정은 **GitHub `main` HEAD(contents API) + build 로그**가 ground truth — local clone·local `origin/main` 믿지 말 것. trigger `build_command` 는 보통 일반 `bun run build`(root `apps/<app>`)라 repo `package.json` 의 build 를 실행 → **fix = repo `package.json` 한 줄**(CF-side PATCH 아님, sibling 코드 edit). 실증: gistcore·docs·admin·modfolio 4개 한 줄 제거 → 5 worker 전부 build success + live 200 |
 
 ## ecosystem 차원의 정기 점검 (분기 1회 권장)
 

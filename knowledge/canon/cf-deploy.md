@@ -1,8 +1,8 @@
 ---
 title: Cloudflare 배포 — 정공법 (Workers Builds + 비대화형 wrangler v4)
-version: 1.1.0
-last_updated: 2026-05-24
-source: [2026-05-18 속도회복 세션 §E, 2026-05-24 사용자 토큰 measurement + hallucination 차단 세션, developers.cloudflare.com 웹검증]
+version: 1.2.0
+last_updated: 2026-06-21
+source: [2026-05-18 속도회복 세션 §E, 2026-05-24 사용자 토큰 measurement + hallucination 차단 세션, 2026-06-21 배포 정공법 cement(문서 분산·모순 제거) + Workers Builds 비용 웹검증, developers.cloudflare.com]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops, observability]
@@ -11,6 +11,29 @@ consumers: [deploy, ops, observability]
 # Cloudflare 배포 — 정공법
 
 > **배포 = CF Workers Builds(GitHub 네이티브, push-to-deploy). GitHub Actions 배포 금지(`gh-actions-policy.md` 정합). AI 비대화형 실행 = athsra 주입 `CLOUDFLARE_API_TOKEN` + wrangler v4.**
+
+## 확정 — 배포 정공법 (single source of truth · anti-drift)
+
+> **이 canon 이 universe 배포의 유일한 source of truth.** `.claude/skills/deploy/SKILL.md` · `knowledge/global.md` · `docs/` · sibling repo 의 어떤 배포 문서도 여기로 defer 한다. 배포가 "그때그때 바뀌는" 느낌의 근본 원인은 **문서 분산 + 모순**(폐기된 Pages-first/“GHA 허용” 가이드 잔존)이었다 — 그 표면을 제거하고 여기에 못 박는다(2026-06-21 cement). 표준 자체는 안 바뀌었다.
+
+**결정 (확정 — 재논의 대상 아님)**:
+
+1. **상시 배포 = CF Workers Builds** (GitHub 연동 push-to-deploy). push = release.
+2. **GitHub Actions 배포 금지** (`gh-actions-policy.md` 전면 금지 정합). GHA 는 deploy 에 쓰지 않는다.
+3. **wrangler 직접 배포 = fallback·일회성만** (긴급 hotfix / secret 주입 / KV·R2·D1 조작). 상시화 금지.
+4. **Pages → Workers** (Workers Static Assets). 신규는 무조건 Workers. Pages 잔존은 **이관 대기**(≠ 완료).
+5. **build script CI-safe**: build/deploy 스크립트에 **`athsra run` 금지** (CF Builds runner 엔 athsra 없음 → `command not found` 로 build fail). build 는 plain `astro build`/`bun run build`, **build-time secret 은 Builds trigger 환경변수(`is_secret`)로 주입**. athsra = dev/CLI·로컬 deploy 전용. (2026-06-21 fleet-wide 진단 — 다수 repo 의 `apps/landing` build 가 athsra-in-CI 라 자동배포 정지. 상세·복구 = `cf-workers-builds-api.md` 함정/§정기점검)
+
+**비용 = 사실상 $0** (웹검증 2026-06-21, [Workers Builds limits & pricing](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/)):
+
+- repo 연결 + push 자동배포 **자체는 과금 항목이 아님**. 유일한 미터링 = **build minutes**.
+- Free **3,000분/월**(동시 빌드 1, timeout 20분) · Workers Paid($5/mo) **6,000분/월** + 초과 **$0.005/분**.
+- 모노레포는 **build-watch-paths**(바뀐 앱만 rebuild)로 분 최소화 → ~27개 small Worker 규모로 무료 한도 초과 도달 불가 = **추가 비용 0**.
+- 실패는 GitHub commit **check runs** + **PR 코멘트** + CF 대시보드 로그로 표면화, CF 쪽 재시도 가능.
+
+**변경 프로토콜 (drift 방지)**: 이 표준을 바꾸려면 **이 블록만** 갱신하고 `version` 을 올린다. 다른 문서·skill·sibling 에 독립적 배포 주장(특히 “GHA 허용” / “Pages-first” / “마이그레이션 완료”)을 새로 쓰지 않는다 — 전부 이 블록을 인용한다. (`sync_to_siblings: true` 이므로 harness-pull 로 sibling 에 자동 전파.)
+
+---
 
 이 canon 은 "예전엔 AI 가 CF 를 잘 했는데 지금은 못 한다" 의 근본 원인과 **확실히 동작하는 정확한 커맨드**를 못 박는다. `.claude/skills/deploy/SKILL.md` 는 운영 절차, 이 canon 은 메커니즘·근거·정확 커맨드의 source of truth.
 
@@ -99,6 +122,7 @@ athsra run <repo> -- bunx wrangler deployments list
 - **AI 비대화형 일회성**(secret 주입·KV seed·Pages 삭제·긴급 hotfix deploy) = 경로 2.
 - 두 경로 동시 상시화 금지 — 이중 deploy race(`gh-actions-policy.md` 배경). 경로 1 이 상시, 경로 2 는 명시 일회성.
 - cron = CF Cron Trigger(`wrangler.jsonc` `triggers.crons` + `scheduled()` 핸들러). GH Actions schedule 금지.
+  - ⚠ **wrangler v4 silent trigger-skip**: 비대화형(CI/Workers Builds/headless)의 `wrangler deploy` 는 코드만 올리고 `schedules` PUT 을 **silent skip**(출력 banner + exit 0, 실제 triggers `[]` 유지). `CI=1`·`wrangler telemetry disable` 로도 우회 안 됨. → 배포 후 **트리거 등록을 반드시 검증**(아래 「검증 — cron」), 누락 시 CF API 로 직접 PUT. 정공법 후속 = wrangler 버전 bump 추적.
 
 ## 검증
 
@@ -106,6 +130,19 @@ athsra run <repo> -- bunx wrangler deployments list
 athsra run <repo> -- bunx wrangler whoami            # 토큰 유효 + account 일치
 athsra run <repo> -- bunx wrangler deployments list  # 최근 배포 = Workers Builds commit
 curl -s -o /dev/null -w "%{http_code}" https://<worker>.workers.dev/healthz
+```
+
+**검증 — cron** (위 silent-skip 함정 — 비대화형 deploy 후 필수. 엔드포인트 웹검증 2026-06-23):
+
+```bash
+# 1) 등록된 schedules 조회 — 빈 배열이면 deploy 가 trigger 를 skip 한 것
+athsra run <repo> -- bash -c 'curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/<worker>/schedules" | jq .result'
+# 2) 누락 시 직접 PUT — body 는 bare 배열 [{"cron":"…"}] (wrangler.jsonc triggers.crons 와 일치)
+athsra run <repo> -- bash -c 'curl -s -X PUT -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/<worker>/schedules" \
+  -d "[{\"cron\":\"0 3 * * *\"}]"'
 ```
 
 ## compatibility_date 정책 (F, 2026-05-18 명문화)
@@ -119,6 +156,7 @@ curl -s -o /dev/null -w "%{http_code}" https://<worker>.workers.dev/healthz
 - External CI/CD + API 토큰(CLOUDFLARE_API_TOKEN/ACCOUNT_ID, "Edit Cloudflare Workers"): https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/
 - API 토큰 생성: https://developers.cloudflare.com/fundamentals/api/get-started/create-token/
 - 2026-05-24 사용자 "All API" 토큰 measurement (353/366 perms, 14개 영역 read probe): `cf-token-permissions.md` § 측정값
+- Workers Cron schedules API (GET/PUT `/accounts/{account_id}/workers/scripts/{script_name}/schedules`, PUT body = bare 배열 `[{"cron":"…"}]`, 웹검증 2026-06-23): https://developers.cloudflare.com/api/resources/workers/subresources/scripts/subresources/schedules/methods/update/
 
 ## 관련
 
@@ -126,7 +164,7 @@ curl -s -o /dev/null -w "%{http_code}" https://<worker>.workers.dev/healthz
 - `knowledge/canon/cf-token-permissions.md` — **토큰 권한 모델 + 사용자 실측값 + "권한 의심 차단 게이트"**. AI 가 CF 작업 hallucinate 차단.
 - `knowledge/canon/cf-api-mastery.md` — **영역별 endpoint 카탈로그 (Workers/Pages/DNS/Domain/Hostname/Zone) + hallucination 카탈로그 + 검증 패턴**.
 - `knowledge/canon/cf-workers-builds-api.md` — Workers Builds API 단일 영역 깊은 진단 (build token expire 등).
-- `knowledge/canon/gh-actions-policy.md` — GH Actions 최소화(왜 Workers Builds 인가)
+- `knowledge/canon/gh-actions-policy.md` — GH Actions 전면 금지(왜 Workers Builds 인가)
 - `knowledge/canon/secret-store.md` — athsra v3 토큰 보관/주입
 - `knowledge/canon/pages-to-workers-migration.md` — Pages 정리 맥락
 - `knowledge/canon/solo-main-workflow.md` — main 직접·무사용자 ceremony 폐기
