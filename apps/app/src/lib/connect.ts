@@ -1,3 +1,3 @@
 import { createAstroAuth } from "@modfolio/connect-sdk/astro";
 
-export const auth = createAstroAuth({ clientId: "modfolio-works" });
+export const auth = createAstroAuth({ clientId: "works" });
