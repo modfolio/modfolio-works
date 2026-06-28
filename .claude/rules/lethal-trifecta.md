@@ -51,7 +51,7 @@ Lead Planner = orchestration role. private data access (modfolio internal canon 
 
 ### 정공법 적용
 
-`.claude/agents/lead-planner.md` (v2.35 P1.5 신설 예정) frontmatter:
+`.claude/agents/lead-planner.md` (v2.35 P1.5+, `SHARED_AGENTS` 로 멤버 동기화) frontmatter:
 
 ```yaml
 ---
@@ -88,7 +88,7 @@ Generator subagent (e.g. `code-reviewer`, `design-engineer`) 은 untrusted input
 
 ## 위반 시 정책
 
-`scripts/modfolio/governance.ts` 의 `checkLethalTrifecta` 가 자동 검출. 위반 발견 시:
+`scripts/modfolio/governance.ts` 의 `checkLethalTrifecta` 가 자동 검출 (멤버 repo 에서는 동기화되는 `pre-injection-detect.ts` 훅 + 설치된 `@modfolio/harness` 패키지가 집행 — governance.ts 자체는 허브/패키지 전용). 위반 발견 시:
 
 ### 옵션 A — 명시 human-approval
 

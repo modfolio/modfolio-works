@@ -1,7 +1,7 @@
 ---
 title: NAS Infra (modfolio-infra) — 자가호스팅 substrate
-version: 1.0.0
-last_updated: 2026-05-22
+version: 1.1.0
+last_updated: 2026-06-28
 source: [2026-05-21 modfolio-infra 등록(0a26e1a), 2026-05-22 harness 3.4.0 NAS 통합 결정]
 sync_to_siblings: true
 applicability: always
@@ -132,6 +132,8 @@ always-auth=true
 이유: `bun install` 이 Tailscale 의존 안 함 → 집·사무실·CI 어디서나 동작.
 
 > **NAS Forgejo npm mirror(이중)는 미구현 — 2026-06-15 정정.** `package.json` 의 `publishConfig.registry` 가 GitHub Packages 를 고정하고 `--registry` 로 override 되지 않는다(`npm publish --dry-run` 실측: default·`--registry=forgejo` 둘 다 `npm.pkg.github.com` 으로 resolve). 즉 `npm publish` 로는 두 번째 registry 에 올릴 수 없다. 과거 `[5/5] Forgejo publish` 단계는 GitHub 으로만 가는 no-op 이라 `harness-publish.ts` 에서 제거(v3.11.3). 진짜 NAS npm mirror 가 필요하면 별도 push 메커니즘(전용 도구/ADR) — npm publish 가 아니다. NAS 의 git 이중호스팅·Forgejo Actions CI·Restic 백업은 그대로 유효.
+>
+> **갱신 2026-06-28 (modfolio-infra 2026-06-27 보고):** 위가 예고한 "별도 push 메커니즘"이 구현됨 — **`pkg.modfolio.io` 전용 Forgejo npm registry (ADR-012, modfolio-infra repo)** Phase 1 라이브(infra 보고: 라우팅 401 실측 = 엔드포인트 가동·인증 요구). 즉 `npm publish` 우회가 아니라 **전용 IaC registry** 로 NAS 미러를 별도 채널로 확보한 것. ecosystem 의 1차 publish 경로는 여전히 **GitHub Packages 단일**(`publishConfig.registry` 고정) — 불변. pkg.modfolio.io 는 infra 자율의 추가 채널이고, harness/contracts 의 sibling consume 경로 정합·이중화 시점은 infra 자율(Hub-not-enforcer). ADR-012 자체는 modfolio-infra repo 소유 — ecosystem 은 토폴로지 mirror 만.
 
 ## Backup — Restic → R2 3-2-1
 
@@ -175,6 +177,7 @@ GPU 데스크탑(64GB RAM + RTX4060). mod-ai-toolkit 의 AI/관찰 스택 흡수
 ## 갱신 이력
 
 - 2026-05-22: v1.0.0 초판. modfolio-infra 등록(2026-05-21 commit `0a26e1a`) + harness 3.4.0 NAS 통합 release. local-dev-infra.md (mod-ai-toolkit v2) 를 supersede 하고 `archive/` 로 이동. GitHub Actions 전면 제거(canon `gh-actions-policy.md` v2.0) + 이중 git/레지스트리/CI 토폴로지 cement.
+- 2026-06-28: v1.1.0. **pkg.modfolio.io 전용 Forgejo npm registry (ADR-012, modfolio-infra) Phase 1 라이브** 반영(modfolio-infra 2026-06-27 보고). 「npm mirror 미구현」 노트를 additive 갱신 — 예고했던 "별도 push 메커니즘"이 전용 IaC registry 로 구현됨. ecosystem 1차 publish 경로(GitHub Packages 단일)는 불변. ADR-012 는 infra repo 소유, ecosystem 은 topology mirror.
 
 ## 관련
 

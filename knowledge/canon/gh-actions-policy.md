@@ -1,7 +1,7 @@
 ---
 title: GitHub Actions — 전면 금지 (CI 는 NAS Forgejo Actions, $0)
-version: 2.0.0
-last_updated: 2026-05-22
+version: 2.1.0
+last_updated: 2026-06-28
 source: [2026-05-22 사용자 결정 — "gh actions 를 안 쓰고 무료로 구축" + modfolio-infra(NAS) substrate 활용]
 sync_to_siblings: true
 applicability: always
@@ -55,6 +55,18 @@ ecosystem 은 강제하지 않음(Hub-not-enforcer). 권고:
 - `templates/github-actions/` 부활 금지.
 - `bun publish` / CF deploy 를 GitHub Actions runner 에서 실행 금지 — local track 또는 Forgejo Actions runner.
 
+### 기존 red CI 차단 — 계정 빌링 장애 모드 (2026-06-27 athsra 관측)
+
+증상: 아직 `.github/workflows/ci.yml` 이 남은 repo 에서 job 이 **시작조차 못 하고** red — annotation `"The job was not started because recent account payments have failed or your spending limit needs to be increased"`. 즉 **코드 버그가 아니라 org/계정 레벨 GHA 빌링**. 같은 org 의 모든 sibling 이 동일하게 silent 실패 → red 를 코드 실패로 오인하거나 CI 가 검증 안 하는 걸 모르고 머지할 위험.
+
+대응(이관 완료 전 interim mute — 새 워크플로 생성 아님, 기존 것의 트리거 변경):
+
+- 남은 `ci.yml` 의 `on:` 을 `workflow_dispatch` 로 바꿔 **자동 red 노이즈 차단**(push/PR 트리거 제거). 빌링 복구 시 트리거 복원 또는 `이관 체크리스트` 로 `.forgejo/` 이전 후 삭제.
+- 실 검증은 그 사이 **`pre-push-guard` local 게이트**(`bun run quality:all`)가 담당 — push 시점 비차단 PASS/FAIL. GHA red 와 무관하게 품질은 보장.
+- NAS Forgejo CI(`.forgejo/workflows/ci.yml`) 로 옮긴 경우, install 단계가 `@modfolio/*`(GitHub Packages)를 당기므로 runner secret **`GH_PACKAGES_TOKEN` = github.com PAT(scope: `read:packages`)** 필요(= publish 용 `write:packages` 와 구분 — `nas-infra.md` 의 `FORGEJO_NPM_TOKEN`/publish 토큰과 별개).
+
+> 근본 해소는 owner 의 GitHub Billing & plans 확인. 복구 안 할 거면 위 mute + no-GHA 패턴 영구화.
+
 ## GitHub-native 무료 기능 (Actions 무관 — 허용)
 
 | 기능 | 비용 | 비고 |
@@ -100,6 +112,7 @@ ecosystem 은 강제하지 않음(Hub-not-enforcer). 권고:
 
 - 2026-04-17: v1.0.0 초판. "최소화" 정책 — deploy/cron 금지, CI 품질 게이트/외부 패키지 게시만 허용.
 - 2026-05-22: v2.0.0. **전면 금지로 강화**. 사용자 결정("gh actions 안 쓰고 무료로 구축") + modfolio-infra NAS substrate 활용. ecosystem `.github/workflows/` 5개·`templates/github-actions/` 2개 전부 삭제, `.forgejo/workflows/` 로 이전. CI 컴퓨트 = NAS Forgejo Actions self-hosted runner = $0. canon 제목 "최소화 정책" → "전면 금지".
+- 2026-06-28: v2.1.0. **기존 red CI 차단 (계정 빌링 장애 모드) 런북 추가** — athsra 2026-06-27 관측(org-wide GHA 빌링 실패로 `ci.yml` job 미시작 red, fleet silent 실패 위험). 미이관 repo 의 `ci.yml` `on:`→`workflow_dispatch` interim mute + `pre-push-guard` local 게이트 보강 + NAS Forgejo CI install 용 `GH_PACKAGES_TOKEN`(read:packages, publish용 write:packages 와 구분) 명시.
 
 ## 관련
 

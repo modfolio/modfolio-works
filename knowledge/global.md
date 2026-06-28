@@ -41,7 +41,7 @@
 | 서비스 | 역할 | 프레임워크 |
 |--------|------|-----------|
 | modfolio-connect | SSO/OIDC (login.modfolio.io) | SvelteKit 5 + Better Auth |
-| modfolio-pay | 결제 게이트웨이 | SvelteKit 5 |
+| modfolio-pay | 자체 결제·선불 크레딧 (자사 앱 공용, 제3자 PG 아님) | SvelteKit 5 |
 
 SSO 연동 상세: `/sso-integrate` skill 참조.
 
