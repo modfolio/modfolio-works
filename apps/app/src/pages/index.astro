@@ -19,6 +19,8 @@ if (!user) {
 	<Header userName={user.name} />
 	<main id="main" class="portal-main">
 		<h1 class="sr-only">Works 포털</h1>
+		<!-- Single DOM-persistent live region: announces aggregate + retry results. -->
+		<div class="sr-only" data-health-live aria-live="polite" aria-atomic="true"></div>
 		<div class="portal-grid">
 			{apps.map((app) => (
 				<AppCard app={app} />
@@ -26,6 +28,11 @@ if (!user) {
 		</div>
 	</main>
 </Base>
+
+<script>
+	import { initHealth } from "../lib/health";
+	initHealth();
+</script>
 
 <style>
 	@layer components {

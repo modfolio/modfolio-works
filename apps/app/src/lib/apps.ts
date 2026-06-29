@@ -9,6 +9,27 @@ export interface WorksApp {
 	accentVar: string;
 }
 
+/**
+ * Live reachability state for a sub-app, resolved by `/api/health`.
+ *
+ * - `up`         — origin answered with a healthy status (2xx/3xx).
+ * - `degraded`   — origin answered, but slowly or with a 5xx/429 (reachable, unhealthy).
+ * - `down`       — origin could not be reached (network error / timeout / 4xx other than 429).
+ * - `coming-soon`— app is not yet launched (`status === "landing"`); never probed.
+ */
+export type HealthState = "up" | "degraded" | "down" | "coming-soon";
+
+/** One entry in the `/api/health` JSON response. */
+export interface HealthResult {
+	/** Matches `WorksApp.id`. */
+	id: string;
+	state: HealthState;
+	/** Observed HTTP status, or `null` when the probe never got a response. */
+	httpStatus: number | null;
+	/** Round-trip latency in milliseconds, or `null` for un-probed (`coming-soon`) apps. */
+	ms: number | null;
+}
+
 export const apps: WorksApp[] = [
 	{
 		id: "naviaca",

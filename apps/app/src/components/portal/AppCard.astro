@@ -1,5 +1,5 @@
 ---
-import type { WorksApp } from "../../lib/apps";
+import type { HealthState, WorksApp } from "../../lib/apps";
 
 interface Props {
 	app: WorksApp;
@@ -8,9 +8,34 @@ interface Props {
 const { app } = Astro.props;
 const isActive = app.status === "active";
 const monogram = app.name.charAt(0);
+
+// Server-rendered baseline state — the no-JS fallback. An `active` app shows its
+// static declared state (`up`); a `landing` app is `coming-soon`. The health
+// island (health.ts) upgrades `active` cards loading→live once JS runs.
+const initialState: HealthState = isActive ? "up" : "coming-soon";
+
+// Korean copy for the SSR baseline. Mirrors STATE_COPY in health.ts; the island
+// overwrites these the moment it resolves, so this is the graceful-degradation text.
+const STATE_LABEL: Record<HealthState, string> = {
+	up: "정상",
+	degraded: "지연",
+	down: "점검 중",
+	"coming-soon": "준비 중",
+};
+const STATE_SR: Record<HealthState, string> = {
+	up: "정상 작동 중",
+	degraded: "응답이 느림",
+	down: "접속할 수 없음",
+	"coming-soon": "출시 예정",
+};
 ---
 
-<article class:list={["app-card", { "app-card--active": isActive }]}>
+<article
+	class:list={["app-card", { "app-card--active": isActive }]}
+	data-health-card
+	data-app-id={app.id}
+	data-health-state={initialState}
+>
 	<div class="app-card__strip" style={`background: ${app.accentVar}`}></div>
 	<div class="app-card__content">
 		<div class="app-card__top">
@@ -25,12 +50,16 @@ const monogram = app.name.charAt(0);
 		<p class="app-card__tagline">{app.tagline}</p>
 		<p class="app-card__desc">{app.description}</p>
 		<div class="app-card__footer">
-			<span class:list={[
-				"app-card__status",
-				isActive ? "app-card__status--active" : "app-card__status--landing"
-			]}>
-				{isActive ? "Active" : "Coming Soon"}
-			</span>
+			<div class="app-card__health">
+				<span class="app-card__dot" data-health-dot role="img" aria-label={STATE_SR[initialState]}></span>
+				<span class="app-card__status" data-health-label>{STATE_LABEL[initialState]}</span>
+				<button type="button" class="app-card__retry" data-health-retry>
+					<svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+						<path d="M10 6a4 4 0 1 1-1.2-2.8M10 2v2H8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+					다시 확인
+				</button>
+			</div>
 			{isActive ? (
 				<a href={app.url} class="app-card__action" target="_blank" rel="noopener">
 					앱 열기
@@ -137,23 +166,99 @@ const monogram = app.name.charAt(0);
 			justify-content: space-between;
 		}
 
+		/* ── Live health indicator (dot + label + retry) ────────────────────────
+		   State is driven by [data-health-state] on the card root. The visible
+		   label text carries the state independently of color (WCAG 1.4.1). */
+		.app-card__health {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			/* Reserve a stable row height so loading→resolved swaps never shift
+			   layout (CLS 0). Sized to the caption line + dot. */
+			min-height: 1.5rem;
+		}
+
+		.app-card__dot {
+			flex-shrink: 0;
+			width: 8px;
+			height: 8px;
+			border-radius: var(--radius-full);
+			/* Neutral default; per-state color set below. */
+			background: var(--color-text-3);
+		}
+
 		.app-card__status {
 			font-size: var(--font-size-caption);
 			font-family: var(--font-ui);
-			text-transform: uppercase;
-			letter-spacing: 0.05em;
-			padding: var(--space-1) var(--space-3);
-			border-radius: var(--radius-full);
+			letter-spacing: 0.02em;
+			color: var(--color-text-2);
 		}
 
-		.app-card__status--active {
-			background: oklch(0.72 0.12 155 / 0.12);
-			color: var(--color-success);
+		/* up → success */
+		[data-health-state="up"] .app-card__dot { background: var(--color-success); }
+		[data-health-state="up"] .app-card__status { color: var(--color-success); }
+
+		/* degraded → warning */
+		[data-health-state="degraded"] .app-card__dot { background: var(--color-warning); }
+		[data-health-state="degraded"] .app-card__status { color: var(--color-warning); }
+
+		/* down → danger */
+		[data-health-state="down"] .app-card__dot { background: var(--color-danger); }
+		[data-health-state="down"] .app-card__status { color: var(--color-danger); }
+
+		/* coming-soon → parchment accent (matches the old landing pill hue) */
+		[data-health-state="coming-soon"] .app-card__dot { background: var(--color-accent-fortiscribe); }
+		[data-health-state="coming-soon"] .app-card__status { color: var(--color-accent-fortiscribe); }
+
+		/* error → muted, with a retry affordance */
+		[data-health-state="error"] .app-card__dot { background: var(--color-text-3); }
+		[data-health-state="error"] .app-card__status { color: var(--color-text-3); }
+
+		/* loading → skeleton dot with a gentle pulse; label dimmed */
+		[data-health-state="loading"] .app-card__dot {
+			background: var(--color-text-3);
+			animation: health-pulse var(--dur-slow) var(--ease-float) infinite;
+		}
+		[data-health-state="loading"] .app-card__status { color: var(--color-text-3); }
+
+		@keyframes health-pulse {
+			0%, 100% { opacity: 0.35; }
+			50% { opacity: 1; }
 		}
 
-		.app-card__status--landing {
-			background: oklch(0.80 0.08 65 / 0.12);
-			color: var(--color-accent-fortiscribe);
+		/* Reduced motion: no pulse — show the dot at a steady, legible opacity. */
+		@media (prefers-reduced-motion: reduce) {
+			[data-health-state="loading"] .app-card__dot {
+				animation: none;
+				opacity: 0.7;
+			}
+		}
+
+		/* Retry button — only revealed in the error state. */
+		.app-card__retry {
+			display: none;
+			align-items: center;
+			gap: var(--space-1);
+			padding: var(--space-1) var(--space-2);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-sm);
+			background: transparent;
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			color: var(--color-text-2);
+			cursor: pointer;
+			transition:
+				border-color var(--dur-fast) var(--ease-out),
+				color var(--dur-fast) var(--ease-out);
+		}
+
+		[data-health-state="error"] .app-card__retry {
+			display: inline-flex;
+		}
+
+		.app-card__retry:hover {
+			border-color: var(--color-border-hover);
+			color: var(--color-text-1);
 		}
 
 		.app-card__action {
