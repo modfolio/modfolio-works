@@ -1,0 +1,16 @@
+{
+	"$schema": "https://pkg.modfolio.io/contracts/platform/project-platform-manifest.schema.json",
+	"repo": "modfolio-works",
+	"consumes": [],
+	"coreServices": {
+		"athsra": {
+			"project": "modfolio-works"
+		},
+		"connect": {
+			"clientId": "modfolio-works",
+			"agent": false
+		}
+	},
+	"ciRunsOn": "none",
+	"registryConsume": ["github-packages"]
+}
