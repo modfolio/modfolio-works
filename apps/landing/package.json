@@ -3,7 +3,7 @@
 	"type": "module",
 	"scripts": {
 		"dev": "athsra run modfolio-works -- astro dev",
-		"build": "athsra run modfolio-works -- astro build",
+		"build": "astro build",
 		"preview": "athsra run modfolio-works -- astro preview",
 		"typecheck": "astro check"
 	},
