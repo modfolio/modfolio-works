@@ -21,6 +21,25 @@ if (!user) {
 		<h1 class="sr-only">Works 포털</h1>
 		<!-- Single DOM-persistent live region: announces aggregate + retry results. -->
 		<div class="sr-only" data-health-live aria-live="polite" aria-atomic="true"></div>
+
+		<!-- Hub-level "System Status" rollup. SSR baseline = `loading`; the health
+		     island (lib/health.ts) reduces the SAME single /api/health pass the cards
+		     fetch into a worst-state-wins verdict + operational count. No-JS: this row
+		     stays in its `loading` copy, matching the cards' graceful degradation. -->
+		<section class="status-bar" data-health-summary data-summary-state="loading" aria-label="시스템 상태 요약">
+			<span class="status-bar__dot" aria-hidden="true"></span>
+			<div class="status-bar__text">
+				<p class="status-bar__headline" data-health-summary-headline>시스템 상태 확인 중</p>
+				<p class="status-bar__count" data-health-summary-count></p>
+			</div>
+			<button type="button" class="status-bar__retry" data-health-summary-retry>
+				<svg width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+					<path d="M10 6a4 4 0 1 1-1.2-2.8M10 2v2H8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+				</svg>
+				다시 확인
+			</button>
+		</section>
+
 		<div class="portal-grid">
 			{apps.map((app) => (
 				<AppCard app={app} />
@@ -46,6 +65,119 @@ if (!user) {
 			display: grid;
 			grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 			gap: var(--space-6);
+		}
+
+		/* ── System Status rollup band ──────────────────────────────────────────
+		   A single hub-level glance above the card grid. State lives on
+		   [data-summary-state] (set by the island); the visible headline carries
+		   the verdict independently of color (WCAG 1.4.1). */
+		.status-bar {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+			margin-bottom: var(--space-8);
+			padding: var(--space-4) var(--space-6);
+			background: var(--color-surface-card);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-lg);
+			/* Stable height so the loading → resolved verdict swap never shifts the
+			   grid below it (CLS 0). Sized to the two text rows. */
+			min-height: 4.25rem;
+		}
+
+		.status-bar__dot {
+			flex-shrink: 0;
+			width: 10px;
+			height: 10px;
+			border-radius: var(--radius-full);
+			background: var(--color-text-3);
+		}
+
+		.status-bar__text {
+			flex: 1;
+			min-width: 0;
+			display: flex;
+			flex-direction: column;
+			gap: var(--space-1);
+		}
+
+		.status-bar__headline {
+			font-family: var(--font-display);
+			font-size: var(--font-size-h3);
+			font-weight: 700;
+			line-height: 1.2;
+			color: var(--color-text-1);
+		}
+
+		.status-bar__count {
+			font-size: var(--font-size-caption);
+			font-family: var(--font-ui);
+			color: var(--color-text-3);
+		}
+
+		.status-bar__count:empty {
+			display: none;
+		}
+
+		/* Per-state color for the dot + headline. Mirrors the card status palette. */
+		[data-summary-state="up"] .status-bar__dot { background: var(--color-success); }
+		[data-summary-state="up"] .status-bar__headline { color: var(--color-success); }
+
+		[data-summary-state="degraded"] .status-bar__dot { background: var(--color-warning); }
+		[data-summary-state="degraded"] .status-bar__headline { color: var(--color-warning); }
+
+		[data-summary-state="down"] .status-bar__dot { background: var(--color-danger); }
+		[data-summary-state="down"] .status-bar__headline { color: var(--color-danger); }
+
+		[data-summary-state="error"] .status-bar__dot { background: var(--color-text-3); }
+		[data-summary-state="error"] .status-bar__headline { color: var(--color-text-2); }
+
+		/* loading → skeleton dot with a gentle pulse; headline dimmed. */
+		[data-summary-state="loading"] .status-bar__dot {
+			background: var(--color-text-3);
+			animation: status-pulse var(--dur-slow) var(--ease-float) infinite;
+		}
+		[data-summary-state="loading"] .status-bar__headline { color: var(--color-text-2); }
+
+		@keyframes status-pulse {
+			0%, 100% { opacity: 0.35; }
+			50% { opacity: 1; }
+		}
+
+		/* Reduced motion: no pulse — steady, legible dot. */
+		@media (prefers-reduced-motion: reduce) {
+			[data-summary-state="loading"] .status-bar__dot {
+				animation: none;
+				opacity: 0.7;
+			}
+		}
+
+		/* Retry — revealed only when the rollup itself failed to resolve. */
+		.status-bar__retry {
+			display: none;
+			align-items: center;
+			gap: var(--space-1);
+			flex-shrink: 0;
+			padding: var(--space-1) var(--space-3);
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-sm);
+			background: transparent;
+			font-family: var(--font-ui);
+			font-size: var(--font-size-caption);
+			color: var(--color-text-2);
+			cursor: pointer;
+			transition:
+				border-color var(--dur-fast) var(--ease-out),
+				color var(--dur-fast) var(--ease-out);
+		}
+
+		[data-summary-state="error"] .status-bar__retry {
+			display: inline-flex;
+		}
+
+		.status-bar__retry:hover {
+			border-color: var(--color-border-hover);
+			color: var(--color-text-1);
 		}
 	}
 </style>
