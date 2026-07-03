@@ -1,7 +1,7 @@
 ---
 title: Claude Code 2026 H1 Features — 권고 (Adopt/Trial/Watch)
-version: 1.1.0
-last_updated: 2026-06-14
+version: 1.2.0
+last_updated: 2026-07-02
 source: [Anthropic Claude Fable 5 announcement 2026-06-09, code.claude.com/docs/en/changelog, code.claude.com/docs/en/workflows, code.claude.com/docs/en/memory, code.claude.com/docs/en/model-config (fallback-model-chains, 2026-06-14 검증), claude-api skill (model ground truth)]
 sync_to_siblings: true
 applicability: always
@@ -16,8 +16,8 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 
 | 기능 | 분류 | 한 줄 | 영향 범위 |
 |------|------|-------|-----------|
-| **Fable 5** (`claude-fable-5`) | Watch / available | Opus 상위 티어 모델, 6/22까지 무료. agent 기본 아님 — opt-in `/model fable`. | 모델 레지스트리 (`ecosystem.json`) |
-| **Dynamic Workflows** (`Workflow` tool) | Trial | 대규모 fan-out (100+ 파일 마이그레이션·전수 감사). 토큰 폭증 주의. | 사용자 명시 호출 시 |
+| **Fable 5** (`claude-fable-5`) | **Adopt / opt-in** (2026-07-02 재평가 완료) | Mythos-class(Opus 상위)·$10/$50. 무료창 6/22 종료. baseline=Opus 유지, **오너 세션 opt-in** `/model fable` 로 심층작업. | 모델 레지스트리 (`ecosystem.json`) |
+| **Dynamic Workflows** (`Workflow` tool) | **Trial (2026-07-02 G15 실사용)** | 대규모 fan-out (100+ 파일 마이그레이션·전수 감사). 토큰 폭증 주의. per-agent `model`/`effort` 로 비용 조정. | 사용자 명시 호출 시 |
 | **`/goal`** | Trial | 완료조건 기반 자율 반복. long-running 작업. | 세션 운영 |
 | **Fallback models** | **Adopt** (ecosystem 적용 v3.7.0) | 과부하(429/529) 시 최대 3 모델 자동 폴백. 가용성·복원력↑. | `.claude/settings.json.fallbackModel` |
 | **Subagent memory** (`memory:` frontmatter) | Watch | agent별 격리 메모리. 24 agent 영향 → 신중. | agent frontmatter |
@@ -25,15 +25,15 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 
 > baseline 무변: 모델 = `claude-opus-4-8`(+`[1m]`)/`claude-haiku-4-5-*`, effort = max3/xhigh13/high5/medium3 (`opus-4-7-effort-policy.md`). 이 canon 은 그 위에 **추가 가능성**을 기록할 뿐 기존 calibration 을 바꾸지 않는다.
 
-## 모델 — Fable 5 (Watch / available, opt-in)
+## 모델 — Fable 5 (Adopt / opt-in, 오너 승인 사용 — 2026-07-02 재평가 완료)
 
-- **ID** `claude-fable-5` — 1M context, 128K max output. Opus **상위** 티어 ("most powerful, tier above Opus", claude-api skill ground truth).
-- **가격** $10 / $50 per MTok (input/output) = Opus 4.8($5/$25)의 **2배**.
-- **무료창** Pro/Max/Team/Enterprise 구독에서 **2026-06-22까지 무료** 사용 (이후 크레딧 필요, 용량 여유 시 재포함 검토). 출처: Anthropic 발표 2026-06-09 + 다중 보도.
-- **Claude Code 사용** `/model fable` (또는 `claude-fable-5`) 로 세션 선택. agent frontmatter `model: claude-fable-5` 도 유효 (Claude Code v2.1.170+).
+- **ID** `claude-fable-5` — GA **2026-06-09**. 1M context 기본, **128K max output**, reasoning 지원, text/image/file 입력. **Mythos-class** 티어(Opus 상위) — "가장 강력한 generally-available 모델", SWE·지식업무·비전·과학연구 거의 전 벤치 SOTA. (Mythos 5 = 동일 underlying 모델, 세이프가드 해제판, Project Glasswing 한정. Fable 5 = 세이프가드 분류기 포함 — 일부 주제 쿼리는 보수적으로 **Opus 4.8 로 라우팅**, 평균 세션의 <5% 발동.)
+- **가격** $10 / $50 per MTok (input/output) = Opus 4.8($5/$25)의 **2배**. Fable=Mythos 동일가.
+- **무료창 종료** 2026-06-22 (Pro/Max 무료 사용 창 종료 — 이제 유료). 출처: Anthropic 발표 2026-06-09.
+- **Claude Code 사용** `/model fable` (또는 `claude-fable-5`) 로 세션 선택. agent frontmatter `model: claude-fable-5` 도 유효.
 - **API surface** Opus 4.7/4.8 과 동일 (adaptive thinking only, `budget_tokens`/`temperature`/`top_p`/`top_k` 제거 = 400). **단 하나 차이**: explicit `thinking: {type: "disabled"}` 가 400 → `thinking` 파라미터를 **생략**해야 함.
-- **universe 정책** baseline 은 **Opus 4.8 유지**. Fable 5 는 **available, opt-in** 으로만 등록 (`ecosystem.json.harnessFableVersion` + `harnessFableStatus: "available-optin"`). agent 기본 모델로 승격하지 않음.
-- **재평가 trigger** **2026-06-22** (무료창 종료). 그 시점에 (a) 특정 deep-reasoning agent(design-engineer·security-hardener·incident-handler)에 Fable Trial 가치 vs $10/$50 비용, (b) 기본 유지 여부 재판단. cost-attribution.md 정합.
+- **universe 정책 (2026-07-02 재평가 확정)**: baseline agent 기본 모델은 여전히 **Opus 4.8**(비용 효율·대량 fan-out 용). **Fable 5 = 오너 세션 opt-in**(`/model fable`) — 오너가 세션별로 명시 선택 시 그 세션의 심층 작업(설계·보안·auth-critical·복잡 리팩)에 사용. 2026-07-02 G15 세션이 첫 대규모 Fable 실사용(오너 "fable로 작업해줘 다 허락"). `ecosystem.json.harnessFableStatus: "available-optin"` 유지.
+- **선택 기준(재평가 결론)**: Fable 값어치가 비용(2×)을 정당화하는 곳 = (a) auth/payment/secret 등 **틀리면 비싼** 코드의 설계·구현(connect eject·athsra E2EE·pay idempotency), (b) 다차원 트레이드오프 판단(아키텍처·마이그 경로). **기계적 fan-out**(TS6 전파·dep bump·포맷)은 Opus/Sonnet 로 내려 비용 절감 — Workflow 스테이지에서 `model`/`effort` per-agent 조정. cost-attribution.md 정합.
 
 ## Dynamic Workflows (Trial)
 
@@ -90,8 +90,8 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 
 ## 재평가 trigger
 
-- **2026-06-22** — Fable 5 무료창 종료. 비용 vs 가치 재판단 (위 모델 섹션).
-- Dynamic Workflows / `/goal` Trial 결과 측정 후 분류 갱신.
+- ✅ **2026-06-22 Fable 무료창 종료 → 2026-07-02 재평가 완료**: Fable 5 = Adopt/opt-in(오너 세션 선택), baseline Opus 유지, 심층작업만 Fable·기계작업 Opus/Sonnet. (위 모델 섹션.)
+- **Dynamic Workflows Trial 진행 중** (2026-07-02 G15 첫 실사용 — fleet TS6 전파·evergreen 배치·platform-adapter 스윕에 적용). 결과·비용을 이 canon 에 기록 후 Trial→Adopt 재분류 판단.
 - Claude Code changelog 신 릴리스 시 이 표 갱신 (harness-evolve `/evolve` 경로).
 
 ## 관련

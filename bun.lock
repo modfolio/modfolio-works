@@ -10,7 +10,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^2.5.2",
-        "@modfolio/harness": "^3.16.4",
+        "@modfolio/harness": "3.16.6",
         "typescript": "^6.0.3",
       },
     },
@@ -294,7 +294,7 @@
 
     "@modfolio/contracts": ["@modfolio/contracts@1.7.0", "https://npm.pkg.github.com/download/@modfolio/contracts/1.7.0/1df4fe9beb95ea2002a059a71f16019c6dae2747", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-5Vug4OFy1IOVm3gmtsfpTEyML5+lVUrLDlz42xacotN0BWZR4n+RcJUyeBQXhDfOcS1gBZdMdhqW4xA2LaBzHg=="],
 
-    "@modfolio/harness": ["@modfolio/harness@3.16.4", "https://npm.pkg.github.com/download/@modfolio/harness/3.16.4/4ce092d4de9bd98d27e198f9422dad14f26ee8ce", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-kf9wMFt9fmFvpEmP0wo7PAXdbeqOcgL02jJ6ClGyLvrhu1nldmPqGJcGre28O6ZVopl3o5By9acY9jmL6z4xuQ=="],
+    "@modfolio/harness": ["@modfolio/harness@3.16.6", "https://npm.pkg.github.com/download/@modfolio/harness/3.16.6/cc6f7957346100c7447a3c7daf700311bc5a417a", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-zUuW7C712CZtIhe9YGFzkjHnAbJjz2QgYnP1Cg5WMGCLhg8bSH5SQCYV6Q5KCpQOPNgTwlunwIuMKwCVt7VTpg=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.6", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg=="],
 

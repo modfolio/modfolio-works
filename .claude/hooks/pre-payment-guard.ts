@@ -209,6 +209,52 @@ function curlSpend(seg: string): Hit | null {
 const MCP_PAYMENT =
 	/payment|charge|stripe|toss|payout|invoice|checkout|billing|subscription|\bpay\b|transfer|refund|wallet|fund|square|paddle|paypal|adyen|razorpay|mollie/i;
 
+// Claude Code ENVIRONMENT MCP tools — session management / UI / visualization. They move no
+// money; their ARGS are user content (a chapter title, a spawned-task PROMPT, widget code) that
+// legitimately mentions "payment"/"billing" OR even describes a spend command — pure TEXT, not
+// an executed spend. BOTH the MCP_PAYMENT arg-word match AND the Bash-segment fallthrough would
+// false-positive on that text (observed 2026-06-29: mcp__ccd_session__mark_chapter / __spawn_task
+// blocked while the session worked ON payment topics → orphaned, hung tasks). Skipped wholesale
+// (like athsra) — local-only namespaces, zero external money capability. NOT including
+// Claude_Preview / computer-use / Claude_in_Chrome (those can drive a browser/external payment
+// surface — the guard stays on them).
+const SESSION_SAFE_MCP =
+	/^mcp__(ccd_session|ccd_session_mgmt|ccd_directory|visualize)__/;
+
+// Claude Code remote/scheduling tools — schedule messages / triggers / sessions; move NO money.
+// Their args (a reminder message, a trigger prompt) routinely mention "payment"/"billing" as pure
+// TEXT (e.g. a status heartbeat "payment 크레딧=쿼터"), which the MCP_PAYMENT haystack match
+// false-positives on → in AUTONOMOUS mode that HARD-BLOCKS the loop's OWN scheduler, killing the
+// unattended/overnight run (observed 2026-07-01: send_later blocked on a heartbeat that described
+// the payment policy). Matched by tool-name SUFFIX — the remote server UUID varies per connection;
+// the tool names are stable. These spawn Claude work (quota, not money — payment-safety.md "credits
+// ≠ $"); a real spend in a SPAWNED session is still guarded there by this same hook.
+const SCHEDULER_SAFE_MCP =
+	/__(send_later|create_trigger|update_trigger|delete_trigger|list_triggers|fire_trigger|list_environments|list_repos|add_repo|register_repo_root|create_scheduled_task|list_scheduled_tasks|update_scheduled_task)$/;
+
+// GitHub MCP server — repo/PR/issue metadata + content tools; NO payment surface (no sponsors/
+// marketplace/billing tools in this server). Its args are repo CONTENT: a PR body, issue comment,
+// commit message, or pushed file that legitimately *describes* payment topics — this universe has a
+// payments repo, so PR/issue narratives routinely say pay/billing/결제 — or even quotes a spend
+// command as text GitHub never executes. Observed 2026-07-02: create_pull_request HARD-BLOCKED in a
+// remote session because the PR body summarized billing-feedback synthesis (MCP_PAYMENT haystack
+// match). Skipped wholesale (same reasoning as SESSION_SAFE/SCHEDULER_SAFE: args = TEXT, not an
+// executed spend). Pushing code that CI later runs is not a new laundering path — plain Bash
+// `git push` is already inert-lead; execution-time spends are guarded where they execute.
+const GITHUB_SAFE_MCP = /^mcp__github__/;
+
+// Cloudflare MCP server — READ-ONLY introspection tools (get/list/query resource metadata,
+// docs search). They move NO money: they inspect existing Workers/D1/KV/R2/Hyperdrive, they do
+// not provision. Their serialized args are resource IDENTIFIERS that routinely contain a repo/
+// worker name like "modfolio-pay-app" → the MCP_PAYMENT haystack's `\bpay\b` matched the hyphen-
+// bounded "pay" and HARD-BLOCKED a read-only `workers_get_worker({scriptName:"modfolio-pay-app"})`
+// (observed 2026-07-02, pay round). Allowlisted by tool-name SUFFIX — the CF MCP server UUID varies
+// per connection; the tool names are stable. Matched EXACTLY (read verbs only) so the billable
+// WRITE tools (`*_create` / `*_delete` / `*_edit` / `*_update` — which provision paid CF resources,
+// same class as the `wrangler … create` HIGH rule) are NOT allowlisted and stay guarded.
+const CF_READONLY_MCP =
+	/__(workers_get_worker|workers_get_worker_code|workers_list|d1_databases_list|d1_database_get|d1_database_query|kv_namespaces_list|kv_namespace_get|r2_buckets_list|r2_bucket_get|hyperdrive_configs_list|hyperdrive_config_get|search_cloudflare_documentation|migrate_pages_to_workers_guide)$/;
+
 function resolveMode(): Mode {
 	const raw = (process.env.PAYMENT_GUARD_MODE ?? "block").toLowerCase();
 	return raw === "off" || raw === "warn" || raw === "block" ? raw : "block";
@@ -285,6 +331,51 @@ function segments(cmd: string): string[] {
 	return out.filter(Boolean);
 }
 
+// Unwrap a shell-wrapper invocation — `bash -lc "…"`, `sh -c '…'`, `zsh -c "…"`, or the
+// universe's ubiquitous `wsl.exe -d ubuntu bash -lc "…"` — to the INNER command it runs, so the
+// guard classifies WHAT ACTUALLY EXECUTES (the inner pipeline, split per-segment) instead of the
+// whole quoted inner collapsing into ONE non-inert `bash`/`wsl.exe`-led blob. That collapse
+// false-positived a READ-ONLY `git show X | grep -iE 'tosspayments…|/v1/billing…'` (RED-FLAG
+// money-path scan) as a live `toss-live` charge: the inner `|` sat inside the wrapper's quotes so
+// segments() never split it, and the grep-PATTERN literals matched the payment rules (observed
+// 2026-07-02, pay round). Unwrapping only EXPOSES the inner — a REAL wrapped spend
+// (`bash -lc "curl -X POST api.tosspayments.com/v1/payments …"` or `bash -lc "stripe charges
+// create"`) unwraps to that exact command and is still classified/blocked, MORE precisely. On any
+// parse ambiguity (unbalanced/absent trailing quote) the regex simply does not match → the raw
+// command is classified (conservative — still inspected). Bounded recursion for nested wrappers.
+const SHELL_WRAP =
+	/\b(?:ba|z|da)?sh(?:\.exe)?\s+-[A-Za-z]*c[A-Za-z]*\s+(["'])([\s\S]*)\1/;
+
+// Classify a command by shell segment, unwrapping any `bash -c "…"` wrapper so the INNER pipeline
+// is what gets classified. For a wrapping segment we check BOTH: (a) the inner recursively (a real
+// wrapped spend like `bash -lc "stripe charges create"` still blocks), and (b) the OUTER segment
+// with the wrapped inner stripped (so an outer spend around the wrapper — `curl … api.stripe.com
+// -d x $(bash -c "…")` — still blocks) — while the inner's grep/echo PATTERN literals are no longer
+// misread as a live spend. Bounded recursion for nested wrappers; on the depth cap or a
+// non-wrapping segment it classifies the segment as-is (conservative).
+function classifyShell(
+	cmd: string,
+	projectAllow: RegExp[],
+	depth = 0,
+): Hit | null {
+	for (const seg of segments(cmd)) {
+		const m = depth < 4 ? seg.match(SHELL_WRAP) : null;
+		if (m?.[2]?.trim()) {
+			const innerHit = classifyShell(m[2].trim(), projectAllow, depth + 1);
+			if (innerHit) return innerHit;
+			const outerHit = classifySegment(
+				seg.replace(SHELL_WRAP, " "),
+				projectAllow,
+			);
+			if (outerHit) return outerHit;
+			continue;
+		}
+		const hit = classifySegment(seg, projectAllow);
+		if (hit) return hit;
+	}
+	return null;
+}
+
 function classifySegment(seg: string, projectAllow: RegExp[]): Hit | null {
 	if (INERT_LEAD.test(seg)) return null;
 	for (const re of SAFE_ALLOW) if (re.test(seg)) return null;
@@ -332,6 +423,16 @@ function classify(
 			// main via athsraRunCmdline) → it falls through to the Bash rules below, where a real
 			// spend (stripe / wrangler … create) is still caught.
 			if (toolName !== "mcp__athsra__athsra_run") return null;
+		} else if (
+			SESSION_SAFE_MCP.test(toolName) ||
+			SCHEDULER_SAFE_MCP.test(toolName) ||
+			GITHUB_SAFE_MCP.test(toolName) ||
+			CF_READONLY_MCP.test(toolName)
+		) {
+			// Claude Code environment / remote-scheduling / GitHub content tool — not a payment
+			// surface. Its payment-mentioning or command-describing args are TEXT, not an executed
+			// spend. Skip BOTH the MCP_PAYMENT match and the Bash-segment fallthrough (same as athsra).
+			return null;
 		} else if (MCP_PAYMENT.test(toolName) || MCP_PAYMENT.test(haystack)) {
 			// Other MCP: name-based on the whole payload (not shell-segmentable).
 			return {
@@ -344,12 +445,10 @@ function classify(
 		// (catches a spend in a single-string arg; JSON of multi-args is unreliable — that gap
 		// is closed for athsra_run via athsraRunCmdline, the universe's command-injecting tool).
 	}
-	// Bash (and athsra_run's command+args): classify each shell segment independently.
-	for (const seg of segments(haystack)) {
-		const hit = classifySegment(seg, projectAllow);
-		if (hit) return hit;
-	}
-	return null;
+	// Bash (and athsra_run's command+args): classify each shell segment independently, unwrapping
+	// any `bash -c "…"` / `wsl.exe … bash -lc "…"` wrapper so the INNER pipeline is classified (a
+	// read-only `git show | grep 'tosspayments…'` is inert; a wrapped real spend still blocks).
+	return classifyShell(haystack, projectAllow);
 }
 
 // Audit destination — overridable (PAYMENT_AUDIT_PATH) so tests never pollute

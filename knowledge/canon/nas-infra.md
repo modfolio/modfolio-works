@@ -54,27 +54,42 @@ tailscale status                                # mesh 확인
 
 ## Git 호스팅 이중화 (GitHub + NAS Forgejo)
 
-24 개 repo 토폴로지 (canon `evergreen-principle.md` 정합):
+> **⚠ 2026-07-01 실측 정정 (doc-reality drift 발견 + 방향 전환 착수)**: 이 섹션이 과거 기술한 "GitHub→NAS **pull-mirror** 라이브(23 repo)"는 **현실과 불일치**였다. 2026-07-01 실측(`docker --context nas-ts exec forgejo` + Forgejo API): 26 repo **전부 `mirror: false`**(`original_url: ""`, `push_mirrors: []`) — pull-mirror 도 push-mirror 도 **설정돼 있지 않았다**. Forgejo 의 repo 들은 ~2026-06-27 의 **1회성 스냅샷**(예: keepnbuild Forgejo `e76a7e49` @06-27 vs GitHub `6725aff6` @06-29 = **2일 stale**)이었다. 즉 어느 방향으로도 살아있는 미러가 아니었다. → 오너 비전(**NAS-primary**: dev→Forgejo→push-mirror→GitHub→CF Builds)에 맞춰 **push-mirror 방향**을 새로 구축 착수. 파일럿(keepnbuild) **end-to-end 검증 완료** (journal `20260701-nas-primary-chain.md`).
 
-| 카테고리 | GitHub | NAS Forgejo |
-|---|---|---|
-| 23 repo (modfolio·gistcore·…) | **primary** (push/fetch origin) | **pull-mirror** (Forgejo 가 GitHub 에서 서버측 동기) |
-| modfolio-infra | (미러 없음) | **native** (push/fetch — 토폴로지 민감 사용자 결정) |
+목표 토폴로지 (NAS-primary, canon `evergreen-principle.md` 정합):
 
-### Forgejo pull-mirror 설정 (NAS 측, 각 repo 1회)
+| 카테고리 | dev origin (push) | GitHub | NAS Forgejo |
+|---|---|---|---|
+| 앱 repo (modfolio·gistcore·…) | **NAS Forgejo** (primary) | **push-mirror 수신** (Forgejo 가 sync_on_commit 으로 push) + `github` fallback remote | **primary/upstream** (dev 가 직접 push, push-mirror 원본) |
+| modfolio-infra | NAS Forgejo | (미러 없음 — 토폴로지 민감) | **native** |
 
-Forgejo UI → 새 repo 생성 → "Migrate" → URL = `https://github.com/modfolio/<repo>.git` → "This repository will be a mirror" 체크 → sync 주기(기본 8h, `15m`/`1h` 권고).
+핵심: GitHub→CF Workers Builds 는 **이미 wired**(ledger G7, 47/55) 이고 그대로 둔다. 바뀌는 건 **GitHub 에 commit 이 도착하는 경로** 뿐 — dev 직접 push(과거) → **Forgejo push-mirror 가 대신 push**(현행 전환). CF Builds 입장에선 동일한 GitHub push event.
 
-장점:
-- 재현 가능 — dev 머신 `.git/config` 에 hack 불필요 (이전 dual-push 의 fragility 해소)
-- NAS 다운에도 dev `git push` 무영향 (origin = GitHub)
-- 재clone 에도 살아남음 — `wsl-bootstrap.sh` 가 GitHub origin 만 clone, 미러는 NAS 가 알아서
+### Forgejo push-mirror 설정 (NAS-primary, 각 repo 1회)
 
-미러 repo 의 Forgejo Actions:
-- ✅ `workflow_dispatch`(수동) 동작
-- ✅ `schedule:`(cron) 동작
-- ❌ `push:` — 미러 sync 의 자동 토큰 push 는 workflow trigger 안 됨(Forgejo 무한루프 회피 정책)
-- 우리 ecosystem 5 워크플로 전부 `workflow_dispatch` — 미러 위에서 정상 작동
+> 파일럿 검증된 정확한 레시피 + 전 fleet rollout 절차 = **journal `knowledge/journal/20260701-nas-primary-chain.md`**. 요약:
+
+1. **선행 — Forgejo 를 GitHub 현재 상태로 fast-forward** (Forgejo 가 stale 이므로 필수. 안 하면 첫 mirror sync 가 stale 을 GitHub 에 덮어쓸 위험). 로컬 clone(=GitHub 최신)에서 Forgejo 로 `git push`(non-force FF). ancestry 확인: `gh api repos/modfolio/<repo>/compare/<forgejo_head>...<github_head>` → `status: ahead, behind_by: 0` 이어야 안전.
+2. **push-mirror 생성** (Forgejo API, `sync_on_commit: true`):
+   ```
+   POST /api/v1/repos/modfolio/<repo>/push_mirrors
+   { "remote_address":"https://github.com/modfolio/<repo>.git",
+     "remote_username":"nikyhmod",
+     "remote_password":"<GitHub PAT (repo scope) — athsra modfolio-infra GH_MIRROR_TOKEN>",
+     "interval":"8h0m0s", "sync_on_commit":true }
+   ```
+   `sync_on_commit:true` = Forgejo 로 push 될 때마다 즉시 GitHub 로 전파(파일럿 실측 <5s). `interval` = 주기적 fallback.
+3. **로컬 remote 재구성** (resilience): `origin` → Forgejo SSH(`ssh://git@modfolio-nas.taila0ec92.ts.net:2222/modfolio/<repo>.git`), `github` → GitHub(fallback remote, NAS-down 시 직접 push).
+
+Forgejo push-mirror repo 의 Forgejo Actions:
+- ✅ `workflow_dispatch`(수동) 동작 · ✅ `schedule:`(cron) 동작
+- ⚠ push-mirror 는 **Forgejo→GitHub 방향**이라 Forgejo 자체 push event 는 정상 발생 — 우리 ecosystem 5 워크플로는 전부 `workflow_dispatch` 라 무관.
+
+### 인증 (auth) — 이 세션에서 확보한 경로
+
+- **Forgejo 관리/API**: athsra 에 Forgejo 토큰 **없음**(`modfolio-infra` project 자체가 athsra 에 미등록). 대신 **`docker --context nas-ts exec -u git forgejo forgejo admin user generate-access-token -u nikyhmod --scopes "write:repository,read:user,write:organization" --raw`** 로 admin CLI 직접 발급(에이전트-직접 auth, 토큰 값 미노출). SSH git push 는 키 기반(`winterermod@gmail.com` 키 등록됨, 핸드셰이크 검증).
+- **push-mirror → GitHub auth**: HTTPS + PAT(username=`nikyhmod`, password=PAT). 파일럿은 세션 `$GITHUB_TOKEN`(40-char gho_)으로 검증. **fleet rollout 은 전용 fine-grained PAT(`repo` write) 를 athsra `modfolio-infra` GH_MIRROR_TOKEN 으로 보관** 권장(ephemeral gho_ 는 회전 시 mirror 깨짐).
+- **Forgejo egress**: 컨테이너 → `github.com` HTTPS 200(실측, connect 11ms). push-mirror outbound 가능.
 
 ### modfolio-ecosystem 의 과거 dual-push (deprecated)
 
@@ -161,14 +176,17 @@ NAS = ADR-002 의 의도된 예외. **ADR-010(self-hosted-infra-substrate)** 이
 
 ecosystem.json modfolio-infra note 에 "Forgejo 7" — v7 이면 v15 LTS 권고. v15.0(2026-04) 에서 미러 인증 버그 fix + Actions·npm registry 성숙. `feedback_always_latest` 정합.
 
-### NAS 다운 시 영향
+### NAS 다운 시 영향 (⚠ NAS-primary 전환으로 변경 — resilience tradeoff)
 
-- `git push` (다른 23 repo): 무영향 (origin=GitHub).
-- `git push` (modfolio-infra): 차단 (Forgejo-only). 복구 후 가능.
+> **NAS-primary 의 본질적 tradeoff**: origin=Forgejo(NAS) 로 전환된 repo 는 **NAS 가 push 의 single point of failure** 가 된다(과거 origin=GitHub 일 땐 NAS 다운이 push 에 무영향이었음). 이걸 **`github` fallback remote** 로 완화한다 — NAS 다운 시 `git push github main` 으로 직접 GitHub→CF Builds. 즉 NAS 다운이 개발을 막지 않고, 단지 "평소 경로(Forgejo)"가 "비상 경로(github)"로 바뀔 뿐.
+
+- `git push` (push-mirror 전환된 앱 repo): **origin(Forgejo) 차단** → **fallback: `git push github main`** (직접 GitHub, CF Builds 정상 트리거). NAS 복구 후 Forgejo 가 stale → 복구 시 fast-forward 재동기 1회 필요(또는 push-mirror 가 주기 sync 로 자동 따라잡지 못함 — Forgejo 가 *받는* 쪽이 아니므로. 복구 절차 = journal).
+- `git push` (modfolio-infra): 차단 (Forgejo-only, fallback 없음 — 토폴로지 민감). 복구 후 가능.
 - `bun install`: 무영향 (기본 `.npmrc` = GitHub Packages).
 - Forgejo Actions CI: 차단 (runner 부재). 워크플로 들 `workflow_dispatch` 라 사용자 명시 실행만 영향. 대안: local track.
 - 새 harness publish: 무영향 (GitHub Packages 단일 — NAS 무관).
 - Restic 백업: 일시 중단 — 복구 후 자동 재개.
+- **이미 GitHub 에 도달한 commit 의 배포**: 무영향 (CF Builds = GitHub→CF, NAS 무관).
 
 ### workstation 노드 (계획)
 
@@ -178,6 +196,7 @@ GPU 데스크탑(64GB RAM + RTX4060). mod-ai-toolkit 의 AI/관찰 스택 흡수
 
 - 2026-05-22: v1.0.0 초판. modfolio-infra 등록(2026-05-21 commit `0a26e1a`) + harness 3.4.0 NAS 통합 release. local-dev-infra.md (mod-ai-toolkit v2) 를 supersede 하고 `archive/` 로 이동. GitHub Actions 전면 제거(canon `gh-actions-policy.md` v2.0) + 이중 git/레지스트리/CI 토폴로지 cement.
 - 2026-06-28: v1.1.0. **pkg.modfolio.io 전용 Forgejo npm registry (ADR-012, modfolio-infra) Phase 1 라이브** 반영(modfolio-infra 2026-06-27 보고). 「npm mirror 미구현」 노트를 additive 갱신 — 예고했던 "별도 push 메커니즘"이 전용 IaC registry 로 구현됨. ecosystem 1차 publish 경로(GitHub Packages 단일)는 불변. ADR-012 는 infra repo 소유, ecosystem 은 topology mirror.
+- 2026-07-01: v1.2.0. **NAS-primary 체인 (dev→Forgejo→push-mirror→GitHub→CF Builds) 착수 + doc-reality drift 정정.** 실측 결과 과거 기술한 "GitHub→NAS pull-mirror 라이브"는 거짓(26 repo 전부 `mirror:false`, 1회성 stale 스냅샷)이었음을 발견·정정. 오너 NAS-primary 비전대로 push-mirror 방향(`sync_on_commit:true`) 신규 구축. 파일럿 **keepnbuild end-to-end 검증 완료**(push→Forgejo `49b5d57d`→GitHub <5s→CF Build success→app.keepnbuild.com 200). resilience model = `github` fallback remote. 정확한 per-repo 레시피 + fleet rollout + NAS-down 복구 = **journal `20260701-nas-primary-chain.md`**. ⚠ fleet rollout 은 오너 결정/배치 사안 — ecosystem 은 파일럿+레시피만 cement(Hub-not-enforcer: 타 repo 의 origin 전환은 각 repo 작업).
 
 ## 관련
 

@@ -116,7 +116,7 @@ redirect_uris: [
 ]
 ```
 
-검증: `curl -s https://connect.modfolio.io/.well-known/openid-configuration` 정상 + admin UI / D1 쿼리로 이중 URI 확인.
+검증: `curl -s https://login.modfolio.io/.well-known/openid-configuration` 정상 + admin UI / D1 쿼리로 이중 URI 확인.
 
 ### 5. Dry-run deploy
 

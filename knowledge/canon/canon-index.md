@@ -72,6 +72,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 
 - [observability.md](observability.md) — OTLP/SigNoz/Langfuse 연결.
 - [incident-response.md](incident-response.md) — P0/P1 triage SOP.
+- [cron-safety.md](cron-safety.md) v1.0 (신설 2026-06-30) — **DB-touching cron `<=*/5` 금지** (Neon Free 5분 autosuspend resonance → 24/7 compute → 402). 최소 안전 `*/15`·권장 `*/30`·실시간은 인라인 `ctx.waitUntil()`. pay 402(2026-06-20)+press(2026-06-30) 출처. governance 결정적 검출. `applicability: always`.
 - [rate-limiting.md](rate-limiting.md) — CF + Workers rate limit 패턴.
 - [gotchas.md](gotchas.md) — 반복 트러블슈팅 기록.
 - [cross-worker-do-pattern.md](cross-worker-do-pattern.md) — Durable Object + Facets.
@@ -186,3 +187,4 @@ CF Workers 비용/지연 분석? → perf-profiler
 - 2026-05-24: v1.6.1. **2026-05-24 staleness audit 결과 반영** — stale 5 (전부 2026-03-27) 차등 처리: ai-patterns v1.1 (CF AI Gateway / Opus 4.7 / Managed Agents 옵션), design-tooling v1.1 (Figma MCP 풀 카탈로그 + skill set), memory-architecture v1.1 (App-level + agent-runtime-layers / memory-architecture-eval / Claude Code memory 4 layer 분리), motion-patterns v1.1 (evergreen 인정 + Svelte 5 motion 신 타입), rate-limiting v1.1 (CF Workers Rate Limiting binding GA). minor gap — harness-adoption-guide v1.1 (v3.1+ bypassPermissions + SessionStart default-ON + pre-commit guard 제거 + NAS Forgejo).
 - 2026-05-24: v1.6.2. **2026-04~05 신기술 도입 결과** — Adopt 4 canon 신설: icon-system v1.0 (UnoCSS preset-icons + Iconify), standard-schema v1.0 (Zod 4 + Valibot interop), anthropic-agent-skills-standard v1.0 (agentskills.io 표준 인지), cf-workflows-v2 v1.0 (Trial — POC spike). attention-budget v1.3 (Context Engineering 5 criteria 보강). tech-trends-2026-05 v1.1 (Adopt/Trial/Watch/Skip 표 + Better Auth 1.6 / Forgejo v15 / Astro 6 / Svelte 5 attachments / Zod 4 마이그 등 별도 plan 권고).
 - 2026-06-24: v1.6.6. **ui-enterprise-baseline.md v1.0 신설** (디자인 섹션) — fleet 27-repo 완성도 감사에서 도출한 상태 표면(loading/empty/error) + WCAG 2.2 AA 완성 floor. 핵심: 공유 UI 패키지가 아니라 **표준 + copy-paste**(ADR-001 "공유 라이브러리 엄금"·design-tokens §11 "공용 토큰 소스 금지" 정합). 감사 종합 §6 의 "@modfolio/ui-* 패키지" 제안을 이 canon-기반 표준으로 대체(ADR 충돌 근본 정정).
+- 2026-06-30: v1.6.7. **cron-safety.md v1.0 신설** (운영/신뢰성 섹션) — DB-touching Worker cron 의 `<=*/5` 금지(Neon Free 5분 고정 autosuspend 와 resonance → compute 24/7 → ~180 CU-h >> 100 한도 → HTTP 402). 최소 안전 `*/15`·권장 `*/30`·실시간은 인라인 `ctx.waitUntil()` + cron 안전망. **modfolio-pay 402(2026-06-20 fix) + modfolio-press 사고 직전(2026-06-30 fix)** 출처 — 지식이 wrangler 주석에만 살아 전파 안 되던 것을 canon + `governance.ts checkCronAutosuspendResonance` 결정적 검출(release-gate, HIGH)로 cement. `sync_to_siblings: true`.

@@ -25,7 +25,10 @@
 			"!**/.astro",
 			"!**/.wrangler",
 			"!**/public",
-			"!**/bun.lock"
+			"!**/bun.lock",
+			"!.claude/app-registry.json",
+			"!.claude/payment-approval.json",
+			"!**/migrations"
 		]
 	},
 	"overrides": [

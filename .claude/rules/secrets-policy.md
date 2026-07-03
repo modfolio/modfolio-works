@@ -11,6 +11,17 @@
 5. **dotenvx** (deprecated 2026-05-03 v3 전환): 8 repo migration 완료. 잔존 repo 는 `bun ~/code/athsra/scripts/migrate-package-json.ts` 로 일괄 변환.
 6. **Doppler** (deprecated 2026-04-25): 과거 표준. 새 repo 는 도입 금지.
 
+## athsra runtime-injection — AI 행동 규칙 (2026-06-30, "빈 .env ≠ 시크릿 없음")
+
+athsra 는 **runtime 주입** 모델 — 시크릿은 `athsra run <repo> -- <cmd>` 또는 세션 진입 시 env 로 들어오고 **디스크에 영구 저장되지 않는다**(no-persistence = 보안 gold standard; local-sync·`.env` 캐시는 의도적 폐기). 그래서 `.env` 가 비거나 없는 건 **정상이고 예상된 상태**다.
+
+**AI/agent 필수 행동** (반복 마찰 = "athsra-forgetting" 제거):
+- **빈/부재 `.env` 를 보고 "시크릿 누락 → 사용자에게 인증 요청"으로 절대 결론짓지 않는다.** 가장 흔한 마찰. 시크릿은 athsra 에 있다.
+- 시크릿이 필요하면 순서대로: ① 주입된 **세션 env**(`process.env.<KEY>`)부터 확인 → ② 없으면 `athsra run <repo> -- <cmd>`(주입 후 명령 실행) → ③ 단일 값은 `athsra get <repo> <KEY>`(값은 로그/응답 미노출).
+- "인증/로그인 필요" 결론은 **`athsra doctor` 가 실제로 토큰/세션 부재를 보고할 때만**. 빈 `.env` 는 근거가 아니다.
+
+**구조적 해결 (forgetting 자체 제거)**: 개발 세션을 `athsra run <repo> -- <launcher>` 로 시작 → 시크릿이 세션 env 에 상주 → AI 가 그냥 `process.env` 로 읽음(매번 `athsra run` 기억 불필요, 디스크 0). IDE/툴이 `.env` 파일을 강제하면 영구 캐시 대신 **tmpfs 에 쓰고 종료 시 wipe**. 상세: canon `secret-store.md`.
+
 ## 금지 패턴
 
 - 테스트 코드에 실제 키 하드코딩 — 테스트 키라도 예외 없음

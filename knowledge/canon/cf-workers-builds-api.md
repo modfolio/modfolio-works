@@ -1,9 +1,9 @@
 ---
 title: Cloudflare Workers Builds — API 완전 자동화 + 진단 (build token silent expire + private/local dep 실패 포함)
-version: 1.3.0
-last_updated: 2026-06-24
-source: [2026-05-24 gistcore 진단 세션, 2026-05-31 modfolio-pay 3일 outage(file: dep) 회고, developers.cloudflare.com/workers/ci-cd/builds/api-reference, 실증 curl 시퀀스]
-changelog: ["1.3.0 (2026-06-24): 빌드 OOM(build container 힙 초과) 세 번째 실패 시나리오 추가 — vite build 큰 SvelteKit/SSR 번들이 ~2GB 기본 힙 OOM(rendering chunks), fix=NODE_OPTIONS max-old-space 6144 를 build script 에 내장(bun run 래퍼 = CF·WSL·Win 공통). pdgd 2026-06-24 실증, 큰 번들 fleet 공통 위험.", "1.2.1 (2026-06-22): stale-local-clone 진단 함정 추가 + athsra-in-CI fix 메커니즘 명확화 (trigger build_command = 일반 bun run build → repo package.json build 실행이라 fix = repo 한 줄, CF-side 아님). gistcore·docs·admin·modfolio 4 repo 1줄 제거 → 5 worker build success + live 200 실증.", "1.2.0 (2026-06-21): athsra-in-CI build script anti-pattern 함정 추가 (fleet-wide 진단 — apps/landing build 의 `athsra run` 이 CF runner 에서 command-not-found). build-token 만료 fleet 복구 + docs GITHUB_TOKEN 주입 실증.", "1.1.0 (2026-06-08): source 필드로 CI 판별 불가 정정(build history 사용) + private/local dep 설치 실패를 TL;DR·함정표에 추가(modfolio-pay 피드백)"]
+version: 1.5.0
+last_updated: 2026-07-01
+source: [2026-05-24 gistcore 진단 세션, 2026-05-31 modfolio-pay 3일 outage(file: dep) 회고, 2026-07-01 CF edge completeness round(build-token refresh 자동화), developers.cloudflare.com/workers/ci-cd/builds/api-reference, 실증 curl 시퀀스]
+changelog: ["1.5.0 (2026-07-01): build-token silent-expire 의 '분기별 수동 점검 권장'을 자동화로 대체 — scripts/ops/cf-build-token-refresh.py(canonical 토큰=관측된 success 다수결, NEVER_TOUCH owner-domain skip, report/--apply/--rebuild/--json) + 월 1회 .forgejo/workflows/cf-build-token-refresh.yml(NAS, $0). 실측: yeonsoo 2 trigger 가 rolled 2026-03-27 토큰에 5연속 fail 검출. athsra child-exit 미전파 → CI 는 --json 폴링. (knowledge/journal/20260701-cf-edge-completeness.md)", "1.4.0 (2026-06-28): @astrojs/cloudflare 14 SESSION KV 비멱등 provisioning 함정(#4) 추가 — adapter 13+ 가 세션을 SESSION KV 로 기본 활성화하고 wrangler automatic provisioning 이 create-only 라 재배포 시 code 10014 충돌; fix=KV 사전생성 + wrangler.jsonc id 명시 고정. dev/on + 3 브랜드(amberstella/fortiscribe/keepnbuild) astro 5→7 + adapter 12→14 마이그레이션 실증.", "1.3.0 (2026-06-24): 빌드 OOM(build container 힙 초과) 세 번째 실패 시나리오 추가 — vite build 큰 SvelteKit/SSR 번들이 ~2GB 기본 힙 OOM(rendering chunks), fix=NODE_OPTIONS max-old-space 6144 를 build script 에 내장(bun run 래퍼 = CF·WSL·Win 공통). pdgd 2026-06-24 실증, 큰 번들 fleet 공통 위험.", "1.2.1 (2026-06-22): stale-local-clone 진단 함정 추가 + athsra-in-CI fix 메커니즘 명확화 (trigger build_command = 일반 bun run build → repo package.json build 실행이라 fix = repo 한 줄, CF-side 아님). gistcore·docs·admin·modfolio 4 repo 1줄 제거 → 5 worker build success + live 200 실증.", "1.2.0 (2026-06-21): athsra-in-CI build script anti-pattern 함정 추가 (fleet-wide 진단 — apps/landing build 의 `athsra run` 이 CF runner 에서 command-not-found). build-token 만료 fleet 복구 + docs GITHUB_TOKEN 주입 실증.", "1.1.0 (2026-06-08): source 필드로 CI 판별 불가 정정(build history 사용) + private/local dep 설치 실패를 TL;DR·함정표에 추가(modfolio-pay 피드백)"]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops]
@@ -25,8 +25,9 @@ supersedes: [cf-deploy.md 의 "AI 는 연결 자체 못 한다" 주장(line 42-4
 1. **build token silent expire/roll** — build trigger 가 쓰던 build token 이 조용히 만료/롤. 매 push 마다 webhook 정상 트리거되고 build 가 큐에 들어가지만 토큰 검증 단계에서 5초 만에 fail.
 2. **private/local 의존성 설치 실패** (2026-05-31 modfolio-pay 3일 outage) — `@modfolio/*` 를 `file:../` 로컬 경로로 의존하면 CI clone 에는 그 경로가 없어 `bun install` 이 실패. 또는 published `@modfolio/*` 인데 `GITHUB_TOKEN` (is_secret) 미주입이면 GitHub Packages 인증 실패. **local 빌드는 통과**해서 "정상"처럼 보이고 prod 는 옛 커밋에 멈춰 있다.
 3. **빌드 OOM (build container 힙 초과, 2026-06-24 pdgd 실증)** — `vite build`(SvelteKit/SSR 큰 번들 — 예: Mingcute 등 대형 아이콘셋 전체 번들)가 CF 빌드 컨테이너 기본 힙(~2GB)에서 `rendering chunks` 중 OOM → build_outcome=fail. **local 빌드는 머신 힙이 커서 통과**해 "정상"처럼 보인다. fix = build script 에 힙 상한 **내장**: `NODE_OPTIONS=--max-old-space-size=6144 vite build` (또는 `bun run build` 래퍼 — bun shell 이라 CF·WSL·Windows 공통, cross-env 불요). **큰 번들 @modfolio 앱(SvelteKit 등) fleet 공통 위험** → 같은 패턴 권고.
+4. **@astrojs/cloudflare 14 SESSION KV 비멱등 provisioning** (2026-06-28 modfolio-dev 실증) — adapter 13+ 는 Astro 세션을 SESSION KV 로 **기본 활성화**하고, wrangler **automatic provisioning 은 create-only(비멱등)**. 첫 deploy 는 `<worker>-session` KV 를 생성하지만, **재배포는 같은 이름 재생성을 시도해 충돌** → `a namespace with this account ID and title already exists [code 10014]` → deploy 단계 fail (build 는 통과해 로그 봐야 보임). 특히 deploy→revert→재deploy 처럼 링크가 끊긴 흐름에서 확정 재현. **fix = KV 사전 생성 후 wrangler.jsonc 에 id 명시 고정**: `"kv_namespaces":[{"binding":"SESSION","id":"<id>"}]` (수동 바인딩이 provisioning 우선 — adapter 문서). 세션 미사용이어도 바인딩은 deploy 에 필요(끄는 adapter 옵션 없음, `sessionKVBindingName` rename 만). astro adapter-14 마이그레이션 시 **반드시 사전 고정** — fleet 공통.
 
-세 경우 모두 CF Dashboard "Builds" 탭 / API build 로그(6단계)를 열기 전엔 안 보인다. **항상 로그부터 확인** — "토큰이겠지" 하고 7단계 PATCH 부터 돌리면 의존성 실패를 놓친다.
+네 경우 모두 CF Dashboard "Builds" 탭 / API build 로그(6단계)를 열기 전엔 안 보인다. **항상 로그부터 확인** — "토큰이겠지" 하고 7단계 PATCH 부터 돌리면 의존성·provisioning 실패를 놓친다.
 
 복구 (60초):
 ```bash
@@ -61,7 +62,9 @@ athsra run <repo> -- curl -s -X POST \
   -d '{"branch":"main"}' | jq ".result | {build_uuid, status}"
 ```
 
-이게 어떤 sibling 에서든 작동. **build token 자동 만료/roll 은 CF 의 보안 정책 (개별 token TTL) — 영구 fix 는 불가능, 주기적 갱신 필요.** 분기별로 모든 sibling 의 trigger build_token 점검 권장.
+이게 어떤 sibling 에서든 작동. **build token 자동 만료/roll 은 CF 의 보안 정책 (개별 token TTL) — 영구 fix 는 불가능, 주기적 갱신 필요.**
+
+> **자동화 (2026-07-01, "분기별 점검"의 정공법 대체)**: 손수 점검 대신 `scripts/ops/cf-build-token-refresh.py` 가 전 worker 의 trigger→token→최근 build 결과를 훑어, **현재 실패 중이면서 비-canonical 토큰을 쓰는** trigger 를 canonical 토큰(= 성공 중인 trigger 가 가장 많이 쓰는 토큰, 날짜 추측 아닌 관측된 success 기준)으로 PATCH 한다. report-only 기본, `--apply` 로 적용, `--rebuild` 로 즉시 재빌드, `--json` 머신출력. owner-reserved 도메인(`NEVER_TOUCH`, 예: pdgd 의 `yeonsoo`)은 flag 만 하고 건드리지 않음. 월 1회 `.forgejo/workflows/cf-build-token-refresh.yml`(NAS runner, $0)이 self-heal. 실측(2026-07-01): yeonsoo 2 trigger 가 `2026-03-27` rolled 토큰에 묶여 5연속 fail 중인 것을 검출. ⚠ schedule 발동 전 Forgejo secret `CLOUDFLARE_API_TOKEN`+`CLOUDFLARE_ACCOUNT_ID` 1회 등록 필요. 실행: `athsra run modfolio-ecosystem -- python3 scripts/ops/cf-build-token-refresh.py`(athsra 는 child exit code 미전파 → CI 는 `$?` 아닌 `--json` 의 `stranded`/`patch_failed` 폴링).
 
 ## 사람 1회 작업 = Cloudflare GitHub App 설치 (org/account 단위)
 
