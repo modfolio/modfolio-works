@@ -78,7 +78,8 @@ supersedes: [ecosystem.json domainModel 의 "app.{domain} 폐기 대상" 문구(
 
 | App | landing | app | 비고 |
 |---|---|---|---|
-| modfolio / connect / pay / admin / docs / ecosystem | 🟢 | 🟢 | ✅ Workers |
+| **modfolio (parent — app-first flip ✅ 2026-07-09)** | www.modfolio.io→`modfolio` 🟢 | **apex modfolio.io→`modfolio-app`** 🟢 | apex=앱 front door, www=랜딩, app.modfolio.io→앱 유지+HTML 301→apex. 인프라 서브도메인 패턴 예외(브랜드 parent, ADR-011 app-first) |
+| connect / pay / admin / docs / ecosystem | 🟢 | 🟢 | ✅ Workers (서브도메인 유지) |
 | modfolio-dev | dev 🟡 Pages | terminal 🟢 | landing Pages→Workers |
 | modfolio-on | on 🟡 Pages | live 🟢 | landing Pages→Workers |
 | modfolio-press | press 🟡 Pages | imprint 🟡 Pages | landing+app Pages→Workers |
@@ -94,6 +95,7 @@ supersedes: [ecosystem.json domainModel 의 "app.{domain} 폐기 대상" 문구(
 - **Group C (Pages→Workers, repo 코드 작업)**: naviaca·worthee·sincheong — repo 에 Workers 셋업 → onboard → 도메인 rebind → Pages 폐기 → 파킹 www 정리.
 - **Group D (rename + apex flip + SSO sync, 건별 신중)**: munseo(네이밍 인버전 교정)·umbracast(`-landing`→base + apex→landing flip)·atelier-and-folio(apex→landing flip + `app.atelierfolio.com`). **각각 Connect `redirect_uri` 동기 필수.**
 - **Track 인프라 (Pages→Workers, 서브도메인 유지)**: modfolio-dev/on(landing)·modfolio-press·modfolio-ls·modfolio-axiom(app). 도메인/네이밍 변경 없음 — 기존 서브도메인 CNAME 을 Pages.dev→worker custom domain 으로 repoint.
+- **Track modfolio-parent (✅ 완료 2026-07-09) — app-first apex flip 레퍼런스**: apex `modfolio.io` custom_domain 을 `modfolio`(landing)→`modfolio-app`(app)로 `PUT /workers/domains {override_existing_origin:true}` idempotent move, `www.modfolio.io`→`modfolio` 신설. app wrangler `PUBLIC_APP_URL=https://modfolio.io`+routes[apex,app.]·landing routes[www]·capabilities.ts explore→www. connect `redirect_uri` `https://modfolio.io/auth/callback` 사전 등록 확인(라이브 D1). 스모크: apex→앱 200·www→랜딩 200·app.→apex 301·apex/home→www 301·SSO 왕복. Group D(umbracast/atelier)와 동형 절차 — 이 flip 이 작동 레퍼런스.
 
 ## 표준 실행 절차 (per-app)
 

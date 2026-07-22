@@ -32,6 +32,7 @@ import {
 	rmSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
+import { failClosed } from "./_fail-closed.ts";
 import { bashCommand, gitRoot, readHookInput } from "./_lib.ts";
 
 type Tier = "critical" | "high" | "medium";
@@ -40,6 +41,12 @@ interface Rule {
 	re: RegExp;
 	vector: string;
 	why: string;
+	/**
+	 * Presence-only vectors (a credential STRING appears) may be suppressed when
+	 * the surrounding text is an obvious placeholder. Money-MOVEMENT vectors must
+	 * never set this — a charge is a charge regardless of nearby words.
+	 */
+	placeholderSuppressible?: boolean;
 }
 interface Hit {
 	tier: Tier;
@@ -72,6 +79,44 @@ const SAFE_ALLOW: RegExp[] = [
 const INERT_LEAD =
 	/^\s*(echo|printf|cat|grep|rg|ls|head|tail|less|more|true|sed|awk|test|git|\[|:)\b/i;
 
+/**
+ * A credential-SHAPED string that is definitionally not a credential.
+ *
+ * Found 2026-07-22 by dogfooding: this guard blocked a `git commit` because the
+ * COMMIT MESSAGE contained `sk_live_your_key_here` while documenting a
+ * placeholder-detection fix. Prose about a key is not a key.
+ *
+ * Scope is deliberately tiny — it ONLY suppresses key-PRESENCE vectors
+ * (`stripe-live-key` and friends), never a money-MOVEMENT verb. A command that
+ * actually charges is still blocked no matter what words surround it, so this
+ * cannot be used to smuggle a spend past the guard.
+ *
+ * Same family as the svelte-MCP carve-out (v3.17.6) and the `/home` fix
+ * (v3.21.2): the guard stays absolute about real spend, and stops firing on
+ * text that merely looks like it.
+ */
+const PLACEHOLDER_CRED =
+	/x{4,}|\.{3}|_{4,}|0{6,}|(?<![a-z])(your|here|placeholder|example|dummy|changeme|change_me|replace|redacted|todo|fake|sample)(?![a-z])/i;
+
+/**
+ * True when the MATCHED credential token itself is a placeholder.
+ *
+ * Deliberately scoped to the token, NOT the whole segment: testing the segment
+ * would let `stripe pay --key sk_live_REAL --note "example"` suppress a real
+ * key just by containing an innocent word. Here only
+ * `sk_live_your_key_here` — the token — can suppress itself.
+ */
+function isPlaceholderCredential(seg: string, re: RegExp): boolean {
+	const m = re.exec(seg);
+	if (!m || m.index === undefined) return false;
+	// Widen the match to the full credential-ish token it sits in.
+	const start = m.index;
+	let end = start;
+	while (end < seg.length && /[A-Za-z0-9_\-<>.]/.test(seg[end] ?? "")) end += 1;
+	const token = seg.slice(start, end);
+	return PLACEHOLDER_CRED.test(token) || /<[^>]*>/.test(token);
+}
+
 const CRITICAL: Rule[] = [
 	{
 		re: /\bstripe\s+(charges?|payment_?intents?|payouts?|transfers?|refunds?|invoiceitems?|subscriptions?)\s+(create|capture|confirm|pay|finalize)\b/i,
@@ -82,6 +127,8 @@ const CRITICAL: Rule[] = [
 		re: /\b(sk|rk)_live_[0-9A-Za-z]/i,
 		vector: "stripe-live-key",
 		why: "live Stripe secret key present",
+		/** Presence-only vector — suppressible by placeholder text. */
+		placeholderSuppressible: true,
 	},
 	{
 		re: /\btoss-?payments?\b[^\n]*\b(confirm|approve|charge|billing)\b/i,
@@ -255,6 +302,16 @@ const GITHUB_SAFE_MCP = /^mcp__github__/;
 const CF_READONLY_MCP =
 	/__(workers_get_worker|workers_get_worker_code|workers_list|d1_databases_list|d1_database_get|d1_database_query|kv_namespaces_list|kv_namespace_get|r2_buckets_list|r2_bucket_get|hyperdrive_configs_list|hyperdrive_config_get|search_cloudflare_documentation|migrate_pages_to_workers_guide)$/;
 
+// Svelte MCP server — documentation lookup + `svelte-autofixer` (static code analysis / a11y +
+// runes lint). NO payment surface: it reads/analyzes component CODE, provisions nothing, moves no
+// money. Its serialized args are the Svelte SOURCE being analyzed — in the payments app that source
+// legitimately contains "payment"/"billing"/결제 identifiers, so MCP_PAYMENT.test(haystack) matched
+// and HARD-BLOCKED a pure `svelte-autofixer` analysis (observed 2026-07-04, pay session27). Skipped
+// wholesale (same class as GITHUB_SAFE_MCP: args = CODE/TEXT, not an executed spend). The svelte MCP
+// exposes no write/provision/billing tools, so `^mcp__svelte__` wholesale is safe — UNLIKE CF/neon
+// which CAN provision paid resources and stay guarded (CF via read-verb allowlist above).
+const SVELTE_SAFE_MCP = /^mcp__svelte__/;
+
 function resolveMode(): Mode {
 	const raw = (process.env.PAYMENT_GUARD_MODE ?? "block").toLowerCase();
 	return raw === "off" || raw === "warn" || raw === "block" ? raw : "block";
@@ -382,9 +439,12 @@ function classifySegment(seg: string, projectAllow: RegExp[]): Hit | null {
 	for (const re of projectAllow) if (re.test(seg)) return null;
 	const curl = curlSpend(seg);
 	if (curl) return curl;
-	for (const r of CRITICAL)
-		if (r.re.test(seg))
-			return { tier: "critical", vector: r.vector, why: r.why };
+	for (const r of CRITICAL) {
+		if (!r.re.test(seg)) continue;
+		if (r.placeholderSuppressible && isPlaceholderCredential(seg, r.re))
+			continue;
+		return { tier: "critical", vector: r.vector, why: r.why };
+	}
 	for (const r of HIGH)
 		if (r.re.test(seg)) return { tier: "high", vector: r.vector, why: r.why };
 	for (const r of MEDIUM)
@@ -427,9 +487,10 @@ function classify(
 			SESSION_SAFE_MCP.test(toolName) ||
 			SCHEDULER_SAFE_MCP.test(toolName) ||
 			GITHUB_SAFE_MCP.test(toolName) ||
-			CF_READONLY_MCP.test(toolName)
+			CF_READONLY_MCP.test(toolName) ||
+			SVELTE_SAFE_MCP.test(toolName)
 		) {
-			// Claude Code environment / remote-scheduling / GitHub content tool — not a payment
+			// Claude Code environment / remote-scheduling / GitHub content / Svelte code-analysis tool — not a payment
 			// surface. Its payment-mentioning or command-describing args are TEXT, not an executed
 			// spend. Skip BOTH the MCP_PAYMENT match and the Bash-segment fallthrough (same as athsra).
 			return null;
@@ -544,6 +605,8 @@ function validateApproval(
 
 const mode = resolveMode();
 if (mode === "off") process.exit(0);
+
+failClosed("pre-payment-guard");
 
 const input = await readHookInput();
 const toolName = input.tool_name ?? "";

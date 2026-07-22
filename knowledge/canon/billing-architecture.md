@@ -167,7 +167,9 @@ if (!parsed.success) return new Response(null, { status: 400 });
 |---|---|---|
 | gistcore | **LIVE** | 구독 + 크레딧 rate |
 | umbracast | **LIVE** | 일일 크레딧 쿼터 + 실패 자동환불 |
-| modfolio-press | 진행중 (2026-07-03 실연동) | 주문 결제 |
+| modfolio-press | **LIVE** (2026-07-03 실연동) | 주문 결제 |
+| pdgd | 시임 완료·활성화 대기 (2026-07-04) | `@modfolio/contracts/billing` BalanceResponse safeParse 소비 — `PAY_SERVICE_KEY` 미주입 시 honest degrade |
+| modfolio-connect | entitlements SSO claim **LIVE** (2026-07-04) | coarse-entitlement 소비(SSO 토큰 claim), pay=provider |
 | 나머지 sibling | 미통합 | Step 0 부터 |
 
 ## `payment-safety.md` 와의 구분

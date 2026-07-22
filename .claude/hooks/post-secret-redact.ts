@@ -23,6 +23,7 @@
  */
 
 import { readHookInput } from "./_lib.ts";
+import { SECRET_PATTERNS } from "./secret-patterns.ts";
 
 interface HookInput {
 	tool_name?: string;
@@ -34,19 +35,6 @@ interface HookInput {
 		[key: string]: unknown;
 	};
 }
-
-const SECRET_PATTERNS: ReadonlyArray<{ id: string; re: RegExp; tag: string }> =
-	[
-		{
-			id: "anthropic-key",
-			re: /\bsk-ant-[A-Za-z0-9_-]{20,}\b/g,
-			tag: "sk-ant-",
-		},
-		{ id: "athsra-token", re: /\batk_[A-Za-z0-9_-]{20,}\b/g, tag: "atk_" },
-		{ id: "github-pat", re: /\bghp_[A-Za-z0-9]{30,}\b/g, tag: "ghp_" },
-		{ id: "hf-token", re: /\bhf_[A-Za-z0-9]{30,}\b/g, tag: "hf_" },
-		{ id: "resend-key", re: /\bre_[A-Za-z0-9_]{30,}\b/g, tag: "re_" },
-	];
 
 type Mode = "off" | "warn" | "redact" | "block";
 function resolveMode(): Mode {

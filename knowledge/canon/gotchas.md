@@ -107,6 +107,18 @@ consumers: [preflight]
 - 배포 = **CF Workers Builds** (push-to-deploy). SoT = `cf-deploy.md` 「확정」. GitHub Actions 배포/CI **전면 금지** (`gh-actions-policy.md` v2.0) — CI 컴퓨트는 NAS Forgejo Actions/local. (옛 `.github/deploy-map.json`·wrangler-action·workflow_dispatch 기반 GHA 파이프라인은 폐기됨.)
 - 모노레포: Worker 별 **build-watch-paths** 로 바뀐 앱만 rebuild (build-min 절약). `root_directory = apps/<app>` 면 monorepo-root `bun.lock` 캐싱 경고 → symlink 또는 `cd ../..` 패턴.
 - **build token silent expire** = 가장 흔한 무음 배포 실패. 진단/복구 + 분기 점검 = `cf-workers-builds-api.md`.
+- **연속 실패가 쌓이면 CF 가 빌드 큐잉 자체를 멈춘다 (2026-07-18 connect 실사건)**: 체크런이 아예 생성되지 않아 **CF 장애처럼 보인다**. 실제로는 backoff 로 추정 — **수정 커밋을 push 하면 트리거가 자연 부활**한다(대시보드 개입 불필요). 그 사이 prod 유지는 `bunx wrangler deploy` 수동. 즉 "빌드가 아예 안 뜬다"를 인프라 장애로 오진하기 전에 **직전 연속 실패 이력**부터 본다.
+- **레지스트리 전환은 `.npmrc` 만으로 끝나지 않는다 — lockfile 은 `.npmrc` 의 그림자가 아니다** (같은 사건의 원인1): `@modfolio` scope 를 pkg.modfolio.io 로 바꿔도 `bun.lock` 은 여전히 `npm.pkg.github.com` + `always-auth` 로 해상 → 토큰 없는 CI 에서 전 빌드 설치 실패. **전환 = `.npmrc` 수정 + `bun install` 재해상까지가 한 커밋.** harness 3.22.0 부터 `harness-pull` 이 이 반쪽 상태를 감지해 경고한다(`scripts/harness-pull/lock-drift.ts`, 자동 수정은 하지 않음 — lock 재생성은 실제 install 이라 멤버 판단).
+- **wrangler 4.112+ 는 `@astrojs/cloudflare` 의 `legacy_env` 를 거부**한다 → Astro 앱은 `~4.110.0` 홀드 핀 또는 어댑터 상향까지 대기. wrangler 를 caret 으로 띄워두면 어느 날 갑자기 전 빌드가 깨진다.
+- **CF cron 트리거 한도 = 계정당 5(Free) / 250(Paid)** — **per-Worker 한도는 공식 문서에 없다**([Workers Limits](https://developers.cloudflare.com/workers/platform/limits/), 2026-07-22 확인). ⚠ **2026-07-21 에 이 항목을 "계정당 3개"로 적었던 것은 오류다** — athsra 커밋 메시지(`계정 cron 트리거 3개 한도`)를 출처 확인 없이 canon 으로 승격했다. athsra 가 무언가에 막힌 것은 사실이나 그 수치는 문서와 불일치하므로, **한도를 근거로 설계를 바꾸기 전에 위 문서를 직접 확인**할 것. 우리 fleet 실측(2026-07-22): cron 선언 Worker 4개 · 트리거 합계 16 — Paid 기준 여유(16/250). 별건으로 DB-touching cron 은 `<=*/5` 금지(`cron-safety.md`, Neon autosuspend resonance).
+  - 교훈: **커밋 메시지는 1차 출처가 아니다.** 벤더 한도·API 계약처럼 공식 문서가 존재하는 사실은 그 문서로 검증한 뒤 canon 에 올린다(`.claude/rules/agent-evidence.md`).
+
+## Claude Code 훅 (차단형 가드)
+
+- **exit 2 만 차단이고, 나머지 exit code 는 전부 "통과"다** ([Hooks reference](https://docs.claude.com/en/docs/claude-code/hooks), 2026-07-22 확인: *"Other exit codes represent a non-blocking error. stderr is shown to the user and execution continues."*). 따라서 **가드 안에서 예외가 나면 막으려던 그것이 조용히 실행된다** — 크래시는 곧 fail-open. 실사건(2026-07-22): `pre-payment-guard` 내부 TypeError 로 live Stripe 키 명령이 exit 1 = 허용으로 통과.
+  - 대책 = `scripts/hooks/_fail-closed.ts` 의 `failClosed(name)` 을 **차단형 가드 첫 줄에** 배선(uncaughtException/unhandledRejection → exit 2). 현재 payment·destructive·orbit-writ 3종 적용. **advisory/notice 훅에는 적용 금지** — 고장난 알림이 작업을 막으면 그게 사고다.
+- **stdout 에 JSON 을 쓰지 말 것**(차단형 가드): 스키마 검증에 실패하면 exit 2 여도 차단되지 않던 버그가 있었다(업스트림 수정됨). 우리 가드는 **stderr + exit 2** 만 쓴다 — 이 관례를 유지한다.
+- **훅은 도구 호출을 가로챌 뿐, 그 호출이 띄운 자식 프로세스는 못 본다.** `bun run orbit:execute` 는 한 번의 Bash 호출이라 그 안의 git 명령들은 훅에 보이지 않는다 — 스크립트 내부에서 스스로 정책을 평가해야 한다(그래서 orbit executor 에 env 우회 스위치를 두지 않았다).
 
 ## Vitest 4 Migration
 - `vi.fn().mockImplementation(() => ...)` arrow functions can't be used with `new` — use `function` keyword
@@ -190,3 +202,13 @@ consumers: [preflight]
 - **Workflows V2 limits**: 50K concurrent, 2M queued, 300/sec creation. 기존 Queue 패턴과 중복 투자 주의 — 앱별 ADR
 - **`[1m]` context variant**: Claude Opus 4.8/4.7/4.6 모두 1M 지원 (`/model claude-opus-4-8[1m]`). 새 토크나이저가 최대 +35% 토큰 소비 가능 — 실효 비용 관찰 필요
 - **`CLAUDE_CODE_EFFORT_LEVEL max` 다운그레이드 버그** (Issue #30726, #40093): agent frontmatter `effort` + env 이중 설정으로 완화. `/effort` slash 런타임 재확인 가능. Claude Code v2.1.111+ 확인 필수
+
+## WSL 개발 워크스테이션
+
+- **`networkingMode=mirrored` 금지 (2026-07-12)**: VS Code Remote-WSL **"freeze + 무한 reopen"의 원인** — MS 인정 버그(vscode-remote-release#9222/#10818/#11091, WSL#11184). mirrored 는 Windows/WSL 네임스페이스를 공유시켜 vscode-server localhost 연결을 깨뜨린다. 제거→NAT 복귀가 공식 해법(localhostForwarding 기본 ON 이라 Windows→WSL dev 서버 접속은 그대로). **재발 시 메모리를 의심하지 말고 `~/.vscode-server/data/logs/*/remoteagent.log` 부터**("The client has reconnected" 반복 = 이 버그). Windows 앱(Paper 등) localhost 접속은 게이트웨이 IP(`ip route list default`)로 — canon `design-tooling.md` §Paper.
+- **/mnt/c 에 코드 금지**: 파일 생성 69배 느림(ext4 18ms vs 9p 1248ms, 500파일 실측). 코드는 항상 `~/code/`(ext4).
+- **에이전트 셸의 `bun` 이 Windows shim 으로 해석됨 (2026-07-21 실측)**: Claude Code 의 Bash 도구는 세션 시작 시 **셸 스냅샷**(`~/.claude/shell-snapshots/snapshot-zsh-*.sh`)을 만들고 매 호출마다 `source` 한다. 그 안의 `export PATH='…'` 가 **`~/.bun/bin` 없이** 고정돼 있어서, zsh 시작 시 `~/.zshenv` 가 넣어준 prepend 를 **덮어쓴다**(증거: `BUN_INSTALL` 은 살아남고 PATH 만 유실 — 스냅샷은 PATH 만 명시 재설정). 결과로 `bun` 이 `/mnt/c/Users/…/Roaming/npm/bun`(**다른·구버전** 1.3.11)으로 잡히고, 그 bun 은 자식을 cmd.exe 로 띄워 `CMD.EXE was started with the above path` / `UNC paths are not supported` 로 죽는다.
+  - **증상 구분**: 단일 `bun run check` 는 통과하는데 `bun run quality:all` 만 "command not found: biome" 로 죽으면 이것이다 — `quality:all` 스크립트 문자열이 **중첩 `bun run`** 을 부르고, 그 중첩 `bun` 만 PATH 로 해석되기 때문. "게이트 FAIL" 이 코드가 아니라 환경 때문인 전형적 **가짜 빨간불**.
+  - **세션 내 workaround**: `env PATH="$HOME/.bun/bin:$PATH" bun run <script>`.
+  - **영구 수정(오너 1줄, sudo 필요)**: `sudo ln -sf ~/.bun/bin/bun /usr/local/bin/bun` — `/usr/local/bin` 은 스냅샷 PATH **2번째**라 `/mnt/c` shim(37번째)을 항상 이긴다. 스냅샷 재생성과 무관하게 영구.
+  - **코드 측 근본 수정(완료)**: 우리 스크립트의 자식 spawn 은 더 이상 PATH 를 신뢰하지 않는다 — `scripts/lib/bun-exec.ts` / `scripts/hooks/_lib.ts` 의 `bunExec()`(= `process.execPath`, "나를 실행 중인 bun 과 같은 bun")을 쓴다. `bunx foo` = `bun x foo`. 회귀 테스트 `scripts/__tests__/bun-exec.test.ts`.

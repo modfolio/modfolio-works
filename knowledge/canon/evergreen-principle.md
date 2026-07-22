@@ -1,8 +1,8 @@
 ---
 title: Evergreen Principle — 권고 + 정보 공유 (+ 절대 불변: no direct sibling edit)
-version: 2.5.0
-last_updated: 2026-06-18
-source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립, v2.3 drift 재정의 2026-05-18, v2.4 절대불변 'ecosystem 은 다른 repo 직접 수정 X' cement 2026-06-09 사용자 명시, v2.5 session-open = 기본 advisory·자동 pull 은 opt-in 2026-06-18 (harness v3.12)]
+version: 2.5.1
+last_updated: 2026-07-04
+source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립, v2.3 drift 재정의 2026-05-18, v2.4 절대불변 'ecosystem 은 다른 repo 직접 수정 X' cement 2026-06-09 사용자 명시, v2.5 session-open = 기본 advisory·자동 pull 은 opt-in 2026-06-18 (harness v3.12), v2.5.1 자매 canon fact-ownership 연결 2026-07-04 (ADR-014)]
 sync_to_siblings: true
 applicability: always
 consumers: [preflight, harness-pull, sso-integrate, ecosystem]
@@ -160,3 +160,7 @@ v3.1 default-ON 의 "프로젝트 열기 = 자동 `bun update` + `--apply` + 자
 Hub-not-enforcer·"최신 = canonical" 은 불변. 단지 **drift 해소를 사용자 행동(수동 pull)으로 되돌렸다** — ecosystem 이 sibling 세션에 자동 개입하는 표면을 줄인 정공법.
 
 관련 — `scripts/hooks/session-start-pickup.ts` `harnessDriftPickup`/`isBehindUpstream`, `scripts/harness-pull/types.ts` `HarnessLockConfig.autoPull`, `knowledge/journal/20260618-harness-v3.12-session-pickup-advisory.md`.
+
+## 자매 canon — fact-ownership (2026-07-04, ADR-014)
+
+evergreen 은 **hub-owned 표준**(harness·canon·contracts)의 축이다 — "최신 하네스 = canonical" 은 그 축에서만 성립한다. **member-owned 사실**(각 repo 자신의 버전·배포 상태·이슈 resolution)의 축은 `fact-ownership.md` v1.0 — SoT 는 그 repo 실측이고, hub 의 `knowledge/projects/*`·`ecosystem.json` 기록은 **미러(관측 기록)**이며 불일치 시 실측이 옳다(미러 staleness = hub 버그, harness 3.17.0+ 는 자기 버전을 pull 시점 로컬 판독으로 표기). 두 축은 충돌하지 않는다: sibling 은 hub 표준을 참고해 최신을 유지하되, hub 기록 때문에 자기 사실·자기 판단이 뒤로 밀리지 않는다.

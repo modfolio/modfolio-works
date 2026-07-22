@@ -25,7 +25,10 @@
  *   - ASI09 Human-Agent Trust — 복구 불가 행위만 게이트 (정공법: 근본 footgun만)
  */
 
+import { failClosed } from "./_fail-closed.ts";
 import { bashCommand, readHookInput } from "./_lib.ts";
+
+failClosed("pre-destructive-guard");
 
 const input = await readHookInput();
 const cmd = bashCommand(input);
@@ -35,12 +38,17 @@ const CATASTROPHIC: ReadonlyArray<{ re: RegExp; why: string }> = [
 	// 1a. rm with -r and -f (either order, combined or split) targeting a
 	//     catastrophic path. `rm -rf node_modules` / `rm -rf dist` are NOT
 	//     matched — only root, home, system dirs, bare cwd, or a bare glob.
+	//     System-root depth ≤2 (+`/*` glob)까지만 재앙으로 본다 — `/home`,
+	//     `/home/mod`, `/home/mod/*` 는 차단하되 `/home/mod/code/<repo>` 같은
+	//     깊은 하위 경로는 통과 (2026-07-12 오탐 정정: 절대경로가 `/home` 으로
+	//     시작한다는 이유만으로 승인된 개별 디렉토리 삭제가 막히던 것.
+	//     git 원격이 있는 작업물 삭제는 복구 가능 — v3.1 철학 그대로).
 	{
-		re: /\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)\b)/i,
+		re: /\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)(?:\/[\w.@-]+)?(?:\/\*)?\/?(?=\s|$|[;&|)]))/i,
 		why: "recursive force-remove of root/home/system/cwd/glob",
 	},
 	{
-		re: /\brm\s+-[a-z]*f[a-z]*r[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)\b)/i,
+		re: /\brm\s+-[a-z]*f[a-z]*r[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)(?:\/[\w.@-]+)?(?:\/\*)?\/?(?=\s|$|[;&|)]))/i,
 		why: "recursive force-remove of root/home/system/cwd/glob",
 	},
 	// 3. Deleting secret material.

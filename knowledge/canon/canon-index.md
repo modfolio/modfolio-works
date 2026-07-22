@@ -1,7 +1,7 @@
 ---
 title: Canon INDEX
-version: 1.6.6
-last_updated: 2026-06-24
+version: 1.8.0
+last_updated: 2026-07-12
 sync_to_siblings: true
 applicability: always
 consumers: [preflight]
@@ -38,6 +38,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [billing-architecture.md](billing-architecture.md) v1.0 (신설 2026-06-22) — 결제·크레딧·구독·entitlement **SoT**. pay=merchant-of-record(Toss)·통합 크레딧 지갑+구독(사용자당 단일·프로젝트별 rate)·실시간 전달(pay API 권위+웹 live push, SSO claim=coarse only)·atomic debit(idempotent). contracts 1.3.0 events/billing/sso. payment-safety(agent 지출가드)와 직교. `applicability: always`.
 - [velocity-mode.md](velocity-mode.md) v1.0 (신설 2026-06-18) — fast-MVP hook 프로필. `velocity`(가드 2개, 기본)/`strict`(전체, opt-in). 훅=0토큰·실비용=지연. `harness-lock.json profile`. solo-main-workflow 자매. `applicability: conditional`.
 - [fleet-harness-propagation.md](fleet-harness-propagation.md) v1.0 (신설 2026-06-18) — harness release 의 fleet 전파 runbook. pull-first·dirty-stash·active reset-to-origin·opt-out skip·역흡수. `harness-propagate-all.sh`. `applicability: conditional`.
+- [orbit.md](orbit.md) v1.0 (신설 2026-07-21) — **Orbit(궤도) 순회 캠페인 + Orbit Writ**. universe 한 바퀴(관측→판정→집행→전파→기록)를 세션·머신 넘어 재개하는 스테이지 머신. **cross-repo 쓰기는 순회 중·패킷 scope 안에서만** 열리고 자동 회수되며 `pre-orbit-writ-guard` 가 exit 2 로 집행(종전 🔒 는 프로즈뿐 = 실집행 0 이었다). 오너 호출 = `/orbit`. ADR-016. `applicability: always`.
 - [secrets-policy.md](../../.claude/rules/secrets-policy.md) (rule) — 하드코딩 금지, 로테이션 주기.
 - [lethal-trifecta.md](../../.claude/rules/lethal-trifecta.md) (rule) — private+untrusted+outward 동시 차단. payment-safety 의 자매 룰.
 
@@ -50,6 +51,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [email-domain-aliases.md](email-domain-aliases.md) — 도메인 alias (CF Email Routing + GW Send-as). `applicability: per-app-opt-in`.
 - [totp-microsoft-authenticator.md](totp-microsoft-authenticator.md) — 23 dev 서비스 TOTP 통합 가이드 (M365 Authenticator). `applicability: per-app-opt-in`.
 - [m365-graph-integration.md](m365-graph-integration.md) — Microsoft Graph SDK 통합 표준 (Personal MSA + OAuth refresh token). `applicability: per-app-opt-in`.
+- [typescript-7-readiness.md](typescript-7-readiness.md) v1.0 (신설 2026-07-12) — **TS 7 채택 불가 근거 + side-by-side 카나리아 표준**. TS 7 은 JS API 미탑재(svelte-check/@astrojs/check 크래시) + tsgo 가 three/TSL 에서 미종료. TS 6 유지, 해제 조건 = TS 7.1 + 상류 포팅. 가짜 초록불(tsc 의 .svelte/.astro silent skip)·peer 불신 함정 포함. modfolio 실측. `applicability: always`.
 
 ## AI · Context · Cost
 
@@ -65,8 +67,12 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [eval-patterns.md](eval-patterns.md) — 6-layer eval stack + LLM-judge.
 - [memory-architecture.md](memory-architecture.md) — 커스텀 Memory Tool 설계.
 - [harness-dreaming.md](harness-dreaming.md) v1.0 (신설 2026-06-14) — 하네스 자가개선. 내부 텔레메트리 통합 → 반복 패턴 추출 → 개선 제안 (report-only, human-gated). `/dream`. retro·evolve 자매. `applicability: always`.
+- [reasoning-playbooks.md](reasoning-playbooks.md) v1.1 — **Muse (뮤즈)**: reasoning distillation 루프 — 프론티어(Fable/GPT-5.x) 판단을 `/debrief` 카드로 캡처 → 결정적 curator 가 `knowledge/playbooks/` bullet 로 축적 → 하위 모델이 top-k 3-5 주입. rung-2 사전 질의·escalate→debrief. 호칭=오너 명명 2026-07-12. `applicability: always`.
+- [debrief-format.md](debrief-format.md) v1.0 (신설 2026-07-11) — 좋은 debrief 카드의 조건 (authoring prior — 전략>일지, H2T trap 질문, outcome 정직). frontier-authored (Fable 5 S1). `applicability: always`.
+- [frontier-day.md](frontier-day.md) v1.0 (신설 2026-07-11) — 프론티어 복귀 표준 agenda: queue drain → candidate 리뷰 → GEPA → 경계맵 → self-debrief. `memory/frontier-queue.jsonl` 형식. `applicability: conditional`.
 - [agents-sdk-v2-patterns.md](agents-sdk-v2-patterns.md) — CF Agents SDK V2 + Project Think.
 - [ai-patterns.md](ai-patterns.md) — 멀티 프로바이더 fallback/cache.
+- [llm-markdown-safety.md](llm-markdown-safety.md) v1.0 (신설 2026-07-12) — **LLM/사용자 마크다운 렌더 XSS 차단**: marked 는 raw HTML 통과(기본값) → 구성상 안전(escape + URL 허용목록 + 이미지→alt) + 단일 모듈, DOMPurify 계열 workerd 금지. 테스트 = 태그 전수 열거 + 메타 테스트(약한 프록시 금지). modfolio P0 실측. `applicability: always`.
 
 ## 운영 / 신뢰성
 
@@ -188,3 +194,4 @@ CF Workers 비용/지연 분석? → perf-profiler
 - 2026-05-24: v1.6.2. **2026-04~05 신기술 도입 결과** — Adopt 4 canon 신설: icon-system v1.0 (UnoCSS preset-icons + Iconify), standard-schema v1.0 (Zod 4 + Valibot interop), anthropic-agent-skills-standard v1.0 (agentskills.io 표준 인지), cf-workflows-v2 v1.0 (Trial — POC spike). attention-budget v1.3 (Context Engineering 5 criteria 보강). tech-trends-2026-05 v1.1 (Adopt/Trial/Watch/Skip 표 + Better Auth 1.6 / Forgejo v15 / Astro 6 / Svelte 5 attachments / Zod 4 마이그 등 별도 plan 권고).
 - 2026-06-24: v1.6.6. **ui-enterprise-baseline.md v1.0 신설** (디자인 섹션) — fleet 27-repo 완성도 감사에서 도출한 상태 표면(loading/empty/error) + WCAG 2.2 AA 완성 floor. 핵심: 공유 UI 패키지가 아니라 **표준 + copy-paste**(ADR-001 "공유 라이브러리 엄금"·design-tokens §11 "공용 토큰 소스 금지" 정합). 감사 종합 §6 의 "@modfolio/ui-* 패키지" 제안을 이 canon-기반 표준으로 대체(ADR 충돌 근본 정정).
 - 2026-06-30: v1.6.7. **cron-safety.md v1.0 신설** (운영/신뢰성 섹션) — DB-touching Worker cron 의 `<=*/5` 금지(Neon Free 5분 고정 autosuspend 와 resonance → compute 24/7 → ~180 CU-h >> 100 한도 → HTTP 402). 최소 안전 `*/15`·권장 `*/30`·실시간은 인라인 `ctx.waitUntil()` + cron 안전망. **modfolio-pay 402(2026-06-20 fix) + modfolio-press 사고 직전(2026-06-30 fix)** 출처 — 지식이 wrangler 주석에만 살아 전파 안 되던 것을 canon + `governance.ts checkCronAutosuspendResonance` 결정적 검출(release-gate, HIGH)로 cement. `sync_to_siblings: true`.
+- 2026-07-12: v1.8.0. **modfolio 피드백 canon 승격 2건** — [typescript-7-readiness.md](typescript-7-readiness.md) v1.0 (개발 환경 — TS 7 채택 불가 2중 장벽 실측 + side-by-side 카나리아 + 가짜 초록불/peer 불신 함정), [llm-markdown-safety.md](llm-markdown-safety.md) v1.0 (AI 섹션 — marked raw HTML 통과 → 구성상 안전 + 단일 모듈 + DOMPurify workerd 금지). cf-deploy v1.3 — workerd SSR 런타임 검증 규칙("인증 게이트 뒤 SSR 은 익명 스모크로 검증된 적 없다") 추가. 출처 = modfolio P0 프로덕션 실측 (feedback 2026-07-12).

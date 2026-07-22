@@ -1,8 +1,8 @@
 ---
 title: Cloudflare 배포 — 정공법 (Workers Builds + 비대화형 wrangler v4)
-version: 1.2.0
-last_updated: 2026-06-21
-source: [2026-05-18 속도회복 세션 §E, 2026-05-24 사용자 토큰 measurement + hallucination 차단 세션, 2026-06-21 배포 정공법 cement(문서 분산·모순 제거) + Workers Builds 비용 웹검증, developers.cloudflare.com]
+version: 1.3.0
+last_updated: 2026-07-12
+source: [2026-05-18 속도회복 세션 §E, 2026-05-24 사용자 토큰 measurement + hallucination 차단 세션, 2026-06-21 배포 정공법 cement(문서 분산·모순 제거) + Workers Builds 비용 웹검증, 2026-07-12 modfolio P0 실측(workerd SSR 500 — 익명 스모크 구조적 미검출), developers.cloudflare.com]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops, observability]
@@ -144,6 +144,10 @@ athsra run <repo> -- bash -c 'curl -s -X PUT -H "Authorization: Bearer $CLOUDFLA
   "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/<worker>/schedules" \
   -d "[{\"cron\":\"0 3 * * *\"}]"'
 ```
+
+**검증 — workerd SSR 런타임 (인증 게이트 앱 필수, modfolio P0 실측 2026-07-12)**: **"인증 게이트 뒤의 SSR 라우트는 익명 스모크로 검증된 적이 없다."** 익명 스모크는 302 로 튕겨 페이지 청크를 로드하지 않고(SSR 미실행), 로컬 `vite dev` 는 Node 런타임(jsdom)이라 정상 동작하며, `build` 성공은 런타임 throw 를 못 잡는다 — 세 수단 전부 구조적 사각. DOM 의존 의존성(`isomorphic-dompurify` 등)은 workerd 모듈 init 시 throw → **로그인 사용자에게만 프로덕션 500** 이 산다. 검증은 **`wrangler dev`(workerd) + 인증 우회 픽스처**(비커밋 — `+page.server.ts` 임시 교체 → 실렌더 200 확인 → `git checkout` 복원) 조합만 유효. **`build` 성공 ≠ workerd 런타임 성공.** 렌더 안전 표준은 `llm-markdown-safety.md`.
+
+**검증 — CSP (정적 자산 앱·라이브 enforce 후 필수, athsra 2026-07-09 실측)**: 정적 사이트(Astro `security.csp` 해시 기반 등)의 CSP 는 **로컬 preview 로 검증되지 않는다** — CF 엣지가 배포 후 주입하는 리소스가 소스에 없어 로컬엔 위반이 안 보인다. 배포 후 **브라우저 콘솔에서 enforce 위반을 재검증**한다. 실관측된 엣지-주입 위반 2종: ① CF Browser Insights 비콘(`static.cloudflareinsights.com` — 엣지 주입, 소스 부재) → `script-src`/`connect-src` 허용 필요, ② `font-src 'self'` 가 base64 `data:` 폰트(pretendard 등 한글 fallback) 차단 → `font-src` 에 `data:` 추가. 이메일 난독화·Web Analytics 등도 CSP 를 조용히 위반할 수 있다.
 
 ## compatibility_date 정책 (F, 2026-05-18 명문화)
 

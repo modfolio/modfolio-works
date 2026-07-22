@@ -2,7 +2,6 @@
 description: Multi-Agent Research 3-tier 의 Tier 1 — orchestration only. 사용자 요청을 task decomposition + Generator subagent 에 structured artifact 로 delegate. untrusted input 직접 처리 금지 (lethal-trifecta 회피).
 model: claude-opus-4-8
 effort: xhigh
-thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "v2.35 P1.5 신설 (plan crystalline-sparking-sky). orchestration role — overthinking 회피 위해 xhigh 시작. quality regression 시 max 검토."
 trust_class: trusted-input-only

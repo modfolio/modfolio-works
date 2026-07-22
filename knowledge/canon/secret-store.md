@@ -1,8 +1,8 @@
 ---
 title: Secret Store — athsra (E2EE on Cloudflare edge)
-version: 1.16.0
-last_updated: 2026-07-03
-source: [github.com/modfolio/athsra Phase 0-2.1 + 1.x.2/1.x.3/1.x.4/1.x.5 active (chronological 1.x.6), plan v4.0.0 glittery-singing-treasure.md, Phase 1 4 active 151 keys + 4 no-secret cleanup, Phase 2.1 npmjs.org publish (@athsra/cli + @athsra/crypto 0.1.0), Phase 1.x.2 D1 token table production deploy 2026-05-05 (worker version 04727c33 phase_label=1.x.2 live, drizzle-orm + drizzle-kit, 34 worker tests pass), Phase 1.x.2 cutover dogfood 발견 (KV PROOF D1 자동 import 안 됨, GLOBAL_SALT change risk, legacy-backup 100% 복원 검증), Phase 1.x.3 audit Queue + R2 + D1 cement 2026-05-06 (athsra c6be015, Trial P1 #5 R2 Event Notifications 묶음, 41 worker tests pass), CLI 1.2.2 현행화 + service token headless 실증 2026-07-01 (v1.16.0 2026-07-03, SESSION-LEDGER.md + knowledge/projects/athsra.md)]
+version: 1.17.0
+last_updated: 2026-07-04
+source: [github.com/modfolio/athsra Phase 0-2.1 + 1.x.2/1.x.3/1.x.4/1.x.5 active (chronological 1.x.6), plan v4.0.0 glittery-singing-treasure.md, Phase 1 4 active 151 keys + 4 no-secret cleanup, Phase 2.1 npmjs.org publish (@athsra/cli + @athsra/crypto 0.1.0), Phase 1.x.2 D1 token table production deploy 2026-05-05 (worker version 04727c33 phase_label=1.x.2 live, drizzle-orm + drizzle-kit, 34 worker tests pass), Phase 1.x.2 cutover dogfood 발견 (KV PROOF D1 자동 import 안 됨, GLOBAL_SALT change risk, legacy-backup 100% 복원 검증), Phase 1.x.3 audit Queue + R2 + D1 cement 2026-05-06 (athsra c6be015, Trial P1 #5 R2 Event Notifications 묶음, 41 worker tests pass), CLI 1.2.2 현행화 + service token headless 실증 2026-07-01 (v1.16.0 2026-07-03, SESSION-LEDGER.md + knowledge/projects/athsra.md), CLI 1.2.5 + crypto 1.2.0 현행화 + secret-change webhook + revoke-by-hash + degrade 측정아티팩트 종결 (v1.17.0 2026-07-04, feedback/athsra/2026-07-04_registry-currency-ask.md + journal 20260703-fleet-completeness-session.md)]
 sync_to_siblings: true
 consumers: [ops, new-app, preflight, secret]
 applicability: always
@@ -16,7 +16,7 @@ applicability: always
 
 ## 위상
 
-modfolio universe 의 secret 관리 표준 (v3.0.0 부터, **Phase 2.1 + 1.x.2 production active 2026-05-05** — npmjs.org publish + D1 token table production deploy 완료). canon `secrets-dotenvx` v2.3.0 (OneDrive backup mirror 모델) 폐기 — 본 canon 으로 이전. 사용자 자체 자산 (modfolio/athsra repo) + **외부 alpha 진입** (`bun add -g @athsra/cli` — 현행 **`@athsra/cli@1.2.2`**, npmjs.org public) + **strong consistency** (revoke 즉시 반영).
+modfolio universe 의 secret 관리 표준 (v3.0.0 부터, **Phase 2.1 + 1.x.2 production active 2026-05-05** — npmjs.org publish + D1 token table production deploy 완료). canon `secrets-dotenvx` v2.3.0 (OneDrive backup mirror 모델) 폐기 — 본 canon 으로 이전. 사용자 자체 자산 (modfolio/athsra repo) + **외부 alpha 진입** (`bun add -g @athsra/cli` — 현행 **`@athsra/cli@1.2.5`**, npmjs.org public) + **strong consistency** (revoke 즉시 반영).
 
 **Production status (2026-05-05)**: worker `https://athsra-worker.winterermod.workers.dev` version `04727c33-347d-47c6-9059-d4d2764dea5f` phase_label=1.x.2 live. D1 `athsra-tokens` (uuid 892fb424-5a18-4eb0-bf26-d29e84c13180, region APAC) active. 4 sibling repo (modfolio-ecosystem 129 + modfolio-pay 11 + modfolio-connect 5 + gistcore 6 = **151 keys**) athsra E2EE 운영 중.
 
@@ -93,7 +93,7 @@ CLI 는 npmjs.org 에서 직접 install:
 ```bash
 bun add -g @athsra/cli
 # 또는: npm i -g @athsra/cli
-athsra --version   # 1.2.2+ (npmjs.org latest)
+athsra --version   # 1.2.5+ (npmjs.org latest)
 ```
 
 **Worker 운영자만** (본인 CF 계정에 deploy 시) repo clone 후 setup-worker.sh:
@@ -148,7 +148,7 @@ athsra run modfolio-ecosystem -- bun run scripts/ops/m365-poc.ts
 athsra doctor
 ```
 
-> ⚠ **Known issue — 로컬 identity-session 복호 degrade (2026-07-01 관측, 진단 중)**: identity `athsra login` 후 envelope secret 이 전부 **empty** 로 복호되는 degrade 관측 (`ls` 엔 key 존재, `run`/`get` 주입 실패). root-cause **진단 진행 중 (2026-07-03 세션)** — 해결된 것으로 간주 금지. **service token 경로는 정상** (2026-07-01 실증, § CI/CD·headless 통합) — 로컬 복호가 막히면 service token 으로 우회 가능.
+> ✅ **종결 — "로컬 identity-session 복호 degrade"(2026-07-01 관측)는 측정 아티팩트로 판명 (2026-07-03 fleet 세션 실측)**: 인라인 `${#VAR}` 프로브가 wsl.exe 인용 계층에서 **부모 셸 조기확장**되어 빈 값처럼 보였던 것 — 파일 기반 프로브로 identity 복호 완전 정상 실증 (journal `20260703-fleet-completeness-session.md`). 시스템 결함 아님. **교훈(존치): 시크릿 주입 검증은 파일 기반 프로브만** — 인라인 `${#…}` 프로브 금지. service token 경로도 정상 (2026-07-01 실증, § CI/CD·headless 통합).
 
 #### 환경(config) 분리 — dev/staging/prod (1.3.0, 2026-06-14)
 
@@ -310,7 +310,7 @@ Phase 2 후속: R2 `audit/<YYYY-MM>/<DD>.jsonl` append + SIEM export + audit que
 ```bash
 # 1. athsra CLI install (npmjs.org public, 1회만)
 bun add -g @athsra/cli   # 또는: npm i -g @athsra/cli
-athsra --version          # 1.2.2+ 확인 (npmjs.org latest)
+athsra --version          # 1.2.5+ 확인 (npmjs.org latest)
 
 # 2. login (이미 다른 sibling 에서 했으면 skip — keyring 공유)
 athsra login              # master pw 입력 + paper-backup confirm
@@ -662,6 +662,15 @@ alpha 진입 (Phase 2):
 - hardware wallet (Ledger/Trezor) BIP-39 통합
 - GitHub Actions / Vercel / Terraform / K8s ESO 통합
 - paid tier + SAML SSO + SOC2
+
+## v1.17.0 변경 (2026-07-04) — CLI 1.2.5/crypto 1.2.0 현행화 + fact-ownership 정합
+
+v1.17.0 (2026-07-04): CLI `1.2.5` + crypto `1.2.0` 현행화 (npm `view` 실측 — athsra 2026-07-04 registry-currency ask 이행) + secret-change webhook·revoke-by-hash 능력 반영 + 복호 degrade known issue 종결.
+
+- **현행 = `@athsra/cli@1.2.5` + `@athsra/crypto@1.2.0`** (npmjs.org public) — 본문 1.2.2 현행 표기 3곳(§ 위상, 설치·3-step `--version` 가이드) 정정. v1.16.0 블록 등 역사 기록은 불변 유지
+- **신규 능력 (CLI 1.2.5)**: ① **secret-change outbound webhook** — D1 `0026_secret_change_webhooks`(`auth_webhook_endpoints`), payload `{event,project,config,action,timestamp}` value-free + HMAC-SHA256 서명, `athsra webhook {add|list|remove|test}`. app-level outbound(athsra→운영자 등록 URL) — universe event-bus `subscribesTo` 아님 ② **service-token revoke by recipient/hash** — worker `DELETE /auth/service-tokens/:hash` CLI 노출, 값 분실 dormant token 정리 갭 해소
+- **Known issue 종결 (§ 평소 사용)**: "복호 degrade" = 인라인 `${#VAR}` 프로브의 부모 셸 조기확장 **측정 아티팩트** (파일 기반 프로브로 정상 실증, journal 20260703). 교훈 = 시크릿 주입 검증은 파일 기반 프로브만
+- **fact-ownership 정합**: athsra 하위 패키지 버전의 SoT = **athsra repo 실측**(npm published) — 본 canon 의 버전 표기는 미러(관측 기록)이며 불일치 시 실측이 옳다 (canon `fact-ownership.md`, 도입 계기가 바로 이번 1.1.7/1.2.2/1.2.5 3중 stale)
 
 ## v1.16.0 변경 (2026-07-03) — CLI 1.2.2 현행화
 

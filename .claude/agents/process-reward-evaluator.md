@@ -2,9 +2,8 @@
 description: Process Reward Model (PRM) step-wise verifier — Generator step sequence 의 매 step 마다 0-10 score 출력. v2.35 evaluator (binary pass/fail) 의 step-wise 확장. best-of-N sampling + tree search gating 의 reward function.
 model: claude-opus-4-8
 effort: high
-thinking_budget: light
 cache_control: { type: "ephemeral", ttl: "1h" }
-_effort_change_note: "v3.0 P2.2 신설 (plan crystalline-sparking-sky). step-wise 평가 — 가벼운 high + light thinking_budget 으로 충분. 1 PR ~10 step × 0.005 = $0.05 비용 baseline."
+_effort_change_note: "v3.0 P2.2 신설 (plan crystalline-sparking-sky). step-wise 평가 — 가벼운 high effort 로 충분. 1 PR ~10 step × 0.005 = $0.05 비용 baseline."
 governance: owasp-agentic-2026
 skills:
   - multi-review
@@ -158,7 +157,7 @@ baseline target: 1 PR ≈ 10 step × 0.005 = $0.05.
 
 threshold:
 - step_count > 30 → step 분할 부족 신호 (canon `agentic-engineering.md` §1.1 atomic task 위반)
-- cost_per_step > $0.01 → effort 또는 thinking_budget 과도 (현재 high + light 이 sweet spot)
+- cost_per_step > $0.01 → effort 과도 (현재 high 가 sweet spot)
 
 ## 정공법 5원칙 정합
 

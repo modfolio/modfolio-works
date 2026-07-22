@@ -20,6 +20,12 @@ prefix/DB 타입 조회 → schema-builder agent → typecheck
 4. **schema-builder agent 실행**: 스키마 생성
 5. **검증**: `bun run typecheck`
 
+## 동시성 체크 (canon `concurrency-safety.md`)
+
+- 중복이 비즈니스 오류인 컬럼/조합 = **unique constraint** 필수 (멱등키·주문번호·`(userId, resourceId)`) — 앱 로직이 뚫려도 DB 가 거부하는 최후 방어선
+- 동시 갱신되는 행(잔액·수량·상태) = 조건부 UPDATE 전제로 설계, 다단계 필요 시 version 컬럼(낙관적 잠금) 고려
+- DB 별: Neon 은 `FOR UPDATE` 가용, **D1 은 없음**(조건부 UPDATE·`batch()`·Durable Object)
+
 ## 사용 예시
 
 ```

@@ -2,7 +2,6 @@
 description: Vitest 테스트 스위트 생성기. 단위/통합/스키마 테스트 커버리지 확보
 model: claude-opus-4-8
 effort: high
-thinking_budget: light
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 skills:

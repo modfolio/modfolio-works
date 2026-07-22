@@ -32,6 +32,7 @@ import { execSync, spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import {
+	bunExec,
 	findEcosystemRoot,
 	gitRoot,
 	readHookInput,
@@ -226,7 +227,7 @@ export function harnessDriftPickup(
 		//    구 binary/assets 로 돌아간다 (Codex 점검: sibling 들이 3.2~3.5 에 멈춰 있음).
 		//    @modfolio/contracts 미보유 sibling 은 no-op (bun update 는 기존 dep 만 갱신).
 		const upd = spawnSync(
-			"bun",
+			bunExec(),
 			["update", "@modfolio/harness", "@modfolio/contracts"],
 			{
 				cwd: root,
@@ -239,13 +240,19 @@ export function harnessDriftPickup(
 		// bun update 실패(보통 GITHUB_TOKEN 부재) → advisory degrade. 구 binary pull 은 무의미.
 		if (upd.status !== 0) return advisory;
 		// 2. 갱신된 binary 로 pull.
-		const pull = spawnSync("bunx", ["modfolio-harness-pull", "--apply"], {
-			cwd: root,
-			encoding: "utf-8",
-			timeout: 120_000,
-			shell: process.platform === "win32",
-			env,
-		});
+		// `bunx foo` == `bun x foo` — routed through bunExec() so the child uses the
+		// same bun as this hook rather than whatever $PATH resolves.
+		const pull = spawnSync(
+			bunExec(),
+			["x", "modfolio-harness-pull", "--apply"],
+			{
+				cwd: root,
+				encoding: "utf-8",
+				timeout: 120_000,
+				shell: process.platform === "win32",
+				env,
+			},
+		);
 		if (pull.status !== 0) return advisory;
 		// tree 가 시작 시 clean 이었으므로 이후 변경(package.json/lockfile + pull 산출물)은
 		// 전부 self-heal 결과 → 안전 commit (revert 가능 기록).

@@ -18,12 +18,20 @@ user-invocable: true
    - **design-critic**: 디자인 토큰/레이아웃/모션 검증
    - **accessibility-auditor**: WCAG AA/접근성 검증
    - **architecture-sentinel**: 불변 원칙/생태계 규칙 검증
-   - **security-hardener**: OWASP Top 10 + 시크릿 노출 + 인증/인가 검증 (v2.13.0 추가)
+   - **security-hardener**: OWASP Top 10 + 시크릿 노출 + 인증/인가 검증 (v2.13.0 추가) — 인증 gate 신설·중첩 diff 는 이중 session authority 의심: 동일 IdP 의 proxy gate + 앱 OIDC 공존, bare URL 진입만 4xx, 인증 cookie 2개 동시 요구, 인증 통과 후 같은 IdP 재redirect 가 검출 신호
 3. **결과 처리**:
-   - **ALL PASS** → 완료
-   - **FAIL (기계적)** → quality-fixer agent로 자동수정 → 재검증
+   - **ALL PASS** → 완료. 단 PASS 는 **최약 필수 게이트** 기준으로 판정: 리뷰·테스트 결과에 timedOut/skipped/incomplete 신호가 있으면 aggregate PASS 를 전체 성공으로 승격하지 말고 미완료 범위를 재실행해 종료 코드·전체 count 확보
+   - **FAIL (기계적)** → quality-fixer agent로 자동수정 → 재검증 — fixer/subagent 의 "green" claim 은 증거가 아니다: 메인이 게이트를 직접 재실행해 exit code 원문을 확인한 뒤에만 PASS 기록
    - **FAIL (아키텍처)** → 사용자 에스컬레이션
 4. **최대 2회 반복** 후에도 FAIL → 사용자에게 보고
+
+## 발견 → triage 2-단계 (Opus 4.8 under-reporting 보정)
+
+> Anthropic `prompting-claude-opus-4-8`: Opus 4.8 은 "확실한 것만" 류 지시를 과충실히 따라 발견을 **누락**할 수 있다(precision↑ measured recall↓). 그래서:
+> - **step 2 (multi-review 4-agent) = 발견 / coverage**: 리뷰어는 불확실·저심각까지 `[conf]` + severity 를 태깅해 **전수** 보고(스스로 버리지 않음).
+> - **step 3 (P0-P3 triage) = filter / rank**: 올라온 전량을 여기서 랭킹·취사선택. 필터는 이 단계에서만 (uncertain 은 P3, 버리지 않음).
+>
+> 상세 원칙은 `multi-review` skill 의 "발견 → triage 2-단계" 참조.
 
 ## Agent Teams (선택적 강화)
 

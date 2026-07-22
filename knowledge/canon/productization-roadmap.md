@@ -103,7 +103,7 @@ modfolio 는 22+ repo 의 "앱 묶음" 이 아니라, **자기 자신을 첫 고
 3-plane 토폴로지(`platform-plane.md` v1.0.0)가 외부 제품의 기반:
 
 - **Edge Runtime (Cloudflare)** — 외부 제품이 실제 구동. Workers + D1 + R2 + KV + Queues. p50<20ms / 200+ PoP(athsra 차별점). **배포 = CF Workers Builds**(push-to-deploy, GHA 0분, `cf-deploy.md`).
-- **Platform (NAS, modfolio-infra)** — **GHA-독립** CI·build·registry. Forgejo Actions self-hosted runner(CI 컴퓨트 $0), pkg.modfolio.io(2차 registry), Postgres-dev, Restic→R2 백업(3-2-1), 경량 ai-inference. ADR-010 면제(유일 self-hosted). **NAS = CI/registry/backup SPOF 이므로 모든 역량이 `fallbackWhenDown` 명시** — 1차 배포/소비 경로(CF Workers Builds + GitHub Packages)는 NAS 다운에 무영향.
+- **Platform (NAS, modfolio-infra)** — **GHA-독립** CI·build·registry. Forgejo Actions self-hosted runner(CI 컴퓨트 $0), pkg.modfolio.io(2차 registry — ⚠ §결정 2026-07-05 단일 registry 전환 중, `registry-redundancy.md` §결정), Postgres-dev, Restic→R2 백업(3-2-1), 경량 ai-inference. ADR-010 면제(유일 self-hosted). **NAS = CI/registry/backup SPOF 이므로 모든 역량이 `fallbackWhenDown` 명시** — 1차 배포/소비 경로(CF Workers Builds + GitHub Packages)는 NAS 다운에 무영향.
 - **Core Services (CF edge, 전역 소비)** — athsra(secret) · connect(SSO) · pay(billing). 외부 제품도 이 셋을 표준 어댑터(`platform-adapter.json` / `@modfolio/contracts/platform`)로 소비.
 
 **핵심**: 외부 제품의 build/deploy 는 **GHA 에 의존하지 않는다**(빌링 장애 모드 회피 — `gh-actions-policy.md`). 배포 currency 는 CF Workers Builds, 품질/publish 컴퓨트는 NAS Forgejo.

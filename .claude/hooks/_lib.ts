@@ -31,6 +31,9 @@ export interface HookInput {
 	tool_response?: Record<string, unknown>;
 	stop_hook_active?: boolean;
 	hook_event_name?: string;
+	/** Stop/SessionEnd events — absolute path to the session jsonl transcript. */
+	transcript_path?: string;
+	session_id?: string;
 }
 
 /** Maximum ms to wait for the Claude Code hook runner to close stdin. */
@@ -41,9 +44,37 @@ const STDIN_TIMEOUT_MS = 5000;
  * empty, unparseable, or not closed within STDIN_TIMEOUT_MS. The timeout
  * is defensive — in practice Claude Code pipes the JSON and closes stdin
  * immediately, but a misconfigured runner must never hang the commit.
+ *
+ * ⚠ FAIL-OPEN RACE, fixed 2026-07-21 — read this before "simplifying" it.
+ *
+ * The old implementation attached `for await (const chunk of stdin)` to the
+ * Node-compat stream. When the hook's module graph took slightly longer to
+ * resolve (one extra non-builtin import is enough), the parent had already
+ * written the payload AND closed the pipe before the async iterator attached,
+ * and the iterator then yielded ZERO chunks — `readHookInput()` returned `{}`,
+ * every field came back undefined, and the guard exited 0. A *guard that
+ * silently allows* is worse than no guard.
+ *
+ * Measured on the hub: `pre-orbit-writ-guard` blocked only 25/30 identical
+ * spawnSync invocations; `pre-destructive-guard` passed 30/30 purely because
+ * its module graph was smaller — i.e. every hook carried the same latent bug,
+ * masked by boot speed. This is the same failure family as the v2.10 note
+ * above about a relative import; the real variable was never "which import"
+ * but "how long until the first stdin read".
+ *
+ * `Bun.stdin.text()` reads the whole stream from its buffered start, so a
+ * closed-but-buffered pipe still yields its bytes regardless of boot timing.
+ * The iterator path stays as a fallback for non-Bun runtimes.
  */
 export async function readHookInput(): Promise<HookInput> {
 	const read = (async () => {
+		// Preferred: Bun's whole-stream read — immune to late-attach data loss.
+		const bunStdin = (
+			globalThis as { Bun?: { stdin?: { text?: () => Promise<string> } } }
+		).Bun?.stdin;
+		if (typeof bunStdin?.text === "function") {
+			return await bunStdin.text();
+		}
 		let data = "";
 		for await (const chunk of stdin) data += chunk;
 		return data;
@@ -53,7 +84,7 @@ export async function readHookInput(): Promise<HookInput> {
 		setTimeout(() => resolveTimer(""), STDIN_TIMEOUT_MS).unref?.();
 	});
 
-	const data = await Promise.race([read, timer]);
+	const data = await Promise.race([read, timer]).catch(() => "");
 	if (!data.trim()) return {};
 	try {
 		return JSON.parse(data) as HookInput;
@@ -123,6 +154,39 @@ export const DETECTOR_SOURCE_FILES: ReadonlySet<string> = new Set([
 	"scripts/hooks/stop-pattern-history.ts",
 	"scripts/hooks/pre-commit-guard.ts",
 ]);
+
+/**
+ * Is `file` one of the detector sources, in EITHER location?
+ *
+ * The set above lists hub paths (`scripts/hooks/…`), but harness-pull installs
+ * these same two files into members at **`.claude/hooks/…`**. A plain
+ * `DETECTOR_SOURCE_FILES.has(file)` therefore never matched inside a member, so
+ * every member repo has been logging its own synced detector sources as
+ * `ts_ignore_or_any` / `biome_ignore_file` violations — the exact false positive
+ * the set was created to stop, reintroduced by the sync path.
+ *
+ * Measured 2026-07-22 across the fleet: 27/27 member repos showed exactly 2
+ * ts-ignore files and 1 biome-ignore file, and in every case they were these
+ * two synced hooks. That noise fed `memory/pattern-history.jsonl`, which feeds
+ * `/dream` and the Muse corpus — so the learning signal was being polluted.
+ *
+ * Matching on the trailing `hooks/<name>` segment is location-agnostic and
+ * survives any future move of the sync target.
+ */
+export function isDetectorSource(file: string): boolean {
+	const normalized = file.replace(/\\/g, "/");
+	for (const known of DETECTOR_SOURCE_FILES) {
+		const base = known.slice(known.indexOf("hooks/")); // "hooks/<name>.ts"
+		if (
+			normalized === known ||
+			normalized.endsWith(`/${base}`) ||
+			normalized === base
+		) {
+			return true;
+		}
+	}
+	return false;
+}
 
 /**
  * Record a hook execution duration to the OTLP collector when reachable.
@@ -256,6 +320,37 @@ export function spawnSyncWithSvelteKitRetry(
 	if (!isSvelteKitRace) return result;
 	sleepSync(100);
 	return spawnSync(cmd, args, options);
+}
+
+/**
+ * Absolute path to the bun binary running THIS process — use it instead of the
+ * bare string `"bun"` when spawning child processes.
+ *
+ * Why (2026-07-21, WSL workstation 실측): a bare `spawnSync("bun", …)` resolves
+ * through `$PATH`, and `$PATH` is not ours to trust. On this WSL box the Claude
+ * Code Bash-tool shell snapshot pins `export PATH=…` **without** `~/.bun/bin`,
+ * so `bun` resolved to the Windows npm shim at
+ * `/mnt/c/Users/…/Roaming/npm/bun` — a *different, older* bun (1.3.11 vs the
+ * native 1.3.14) that spawns its children through cmd.exe and dies on WSL paths
+ * with "UNC paths are not supported". The failure is silent-ish and worse than a
+ * crash: a gate spawned that way reports FAIL for an environment reason, not a
+ * code reason.
+ *
+ * `process.execPath` is whatever bun is actually executing us, so the child gets
+ * the same runtime as the parent — no PATH lookup, no version skew. Falls back
+ * to `"bun"` when execPath is not a bun binary (e.g. a script run under node),
+ * which keeps behaviour identical to before on every other host.
+ *
+ * `bunx foo` → `spawnSync(bunExec(), ["x", "foo", …])` (`bunx` is an alias of
+ * `bun x`).
+ *
+ * NOTE this helper is duplicated in `scripts/lib/bun-exec.ts` for hub scripts.
+ * The duplication is deliberate: `_lib.ts` is copied standalone into member
+ * `.claude/hooks/`, where `scripts/lib/` does not exist. Keep the two in sync.
+ */
+export function bunExec(): string {
+	const exec = process.execPath;
+	return exec && /(?:^|[\\/])bun(?:\.exe)?$/i.test(exec) ? exec : "bun";
 }
 
 /**

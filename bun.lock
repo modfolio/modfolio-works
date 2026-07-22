@@ -6,11 +6,11 @@
       "name": "modfolio-works",
       "dependencies": {
         "@modfolio/connect-sdk": "^9.2.0",
-        "@modfolio/contracts": "^1.9.0",
+        "@modfolio/contracts": "^1.10.0",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.5.2",
-        "@modfolio/harness": "^3.21.2",
+        "@modfolio/harness": "^3.22.2",
         "typescript": "^6.0.3",
       },
     },
@@ -292,9 +292,9 @@
 
     "@modfolio/connect-sdk": ["@modfolio/connect-sdk@9.2.0", "https://pkg.modfolio.io/api/packages/modfolio/npm/@modfolio/connect-sdk/-/connect-sdk-9.2.0.tgz", { "dependencies": { "jose": "^6.2.3" } }, "sha512-+O3hT7YNqw/T8QLHigYibc59sDwBbgt2Wgd0xtKHstvZiznpCchzOkEeR5IrPQtgIlL9IG6CmhgQr+tz1J+V2w=="],
 
-    "@modfolio/contracts": ["@modfolio/contracts@1.9.0", "https://pkg.modfolio.io/api/packages/modfolio/npm/@modfolio/contracts/-/contracts-1.9.0.tgz", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-f8ruEqUhzckJ03cpOiWfMVVNyLrELacfnb9BrCswOfXsMQEX9aJ4/w4wRxEIb+KazC9y/32JTPPC1cFEZQeJTQ=="],
+    "@modfolio/contracts": ["@modfolio/contracts@1.10.0", "https://npm.pkg.github.com/download/@modfolio/contracts/1.10.0/13e3bfb4f3b62191c36743b84040593374282c6c", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-8wePrWK8tOpQeq38j6/FT0lRi9xGKkzSTkgJDegwnOR4o3f114gCagahUZ20vBtmlbOukFumDbSquUNGJe6adA=="],
 
-    "@modfolio/harness": ["@modfolio/harness@3.21.2", "https://pkg.modfolio.io/api/packages/modfolio/npm/@modfolio/harness/-/harness-3.21.2.tgz", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^4.4.3" }, "bin": { "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-check": "scripts/modfolio/check.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts", "modfolio-debrief": "scripts/debrief/cli.ts" } }, "sha512-lV0rNobXkOMNDZkt2mshG8HpGiVlXO6ZQ8132lJcA/A8OVoWbu6hw0lFf9Ee1T7fCRefIaciYL28M+nVhFA/Qg=="],
+    "@modfolio/harness": ["@modfolio/harness@3.22.2", "https://npm.pkg.github.com/download/@modfolio/harness/3.22.2/974066b62e872bfa2ae322cd9bef1b3f65db53ee", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^4.4.3" }, "bin": { "modfolio-check": "scripts/modfolio/check.ts", "modfolio-debrief": "scripts/debrief/cli.ts", "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts" } }, "sha512-tSFVL4bS2VzpFYUePr+e5CTFau0dd6fNhxTMQ8RQ0HcZ2mMVxt8RZo90fLRx0k9peAHoe3yA84xjBFanvEooVA=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.6", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg=="],
 

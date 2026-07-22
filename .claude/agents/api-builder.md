@@ -2,7 +2,6 @@
 description: API 엔드포인트 생성기. 프레임워크별 라우팅 + Zod 검증 + JWT 인증
 model: claude-opus-4-8
 effort: xhigh
-thinking_budget: standard
 cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. 엔드포인트 + Zod 정형 — overthinking 회피. quality regression 시 revert."
 governance: owasp-agentic-2026

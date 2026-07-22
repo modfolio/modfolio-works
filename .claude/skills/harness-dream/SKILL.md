@@ -1,6 +1,6 @@
 ---
 name: harness-dream
-description: 하네스 자가개선 — 내부 텔레메트리(pattern-history·feedback·payment-approvals·loop·cost)를 주기적으로 통합해 반복 실수·선호를 추출하고 canon/feedback 개선안을 제안. 반영은 사용자 승인 후. 단축어 /dream.
+description: 하네스 자가개선 — 내부 텔레메트리(pattern-history·feedback·payment-approvals·loop·cost·reasoning-playbooks)를 주기적으로 통합해 반복 실수·선호를 추출하고 canon/feedback 개선안을 제안. playbook 승격/은퇴 게이트 포함. 반영은 사용자 승인 후. 단축어 /dream.
 user-invocable: true
 ---
 
@@ -26,16 +26,24 @@ bun run dream -- --out .evolve-state/dream-report.md   # 파일로 (cron report-
 - `memory/payment-approvals.jsonl` — 결제 가드 활동(차단·자율 거부 추세 = 파산 방지 신호)
 - `.evolve-state/loop-events.jsonl` — loop 반복·종료 사유
 - `.evolve-state/cost-ledger.jsonl` — 비용 합계
+- **`memory/debriefs/` + `knowledge/playbooks/` + `memory/frontier-queue.jsonl`** — reasoning-playbook 큐레이션 상태 (4번째 학습 입력, v3.20): 미병합 카드·Active/Candidate/Retired 분포·curator 제안(PROMOTE/RETIRE/EVICT)·frontier-queue depth. `reasoning-playbooks.md` 참조.
 
-산출: "Dream Consolidation Report" — 반복 위반 / 피드백 테마 / 결제 가드 활동 / loop·cost / **제안(human-gated)**.
+산출: "Dream Consolidation Report" — 반복 위반 / 피드백 테마 / 결제 가드 활동 / loop·cost / 모델 사용 / **reasoning playbooks** / **제안(human-gated)**.
 
 ### 2. 제안 검토 → 승인 게이트 (AskUserQuestion)
 
 리포트의 "Proposed actions" 를 사용자에게 제시:
 - 어떤 제안을 적용할까? (multiSelect)
-- 적용 형태: canon 갱신 / rule 보강 / `/evolve` 핸드오프 / payment-allowlist 등록 / 보류
+- 적용 형태: canon 갱신 / rule 보강 / `/evolve` 핸드오프 / payment-allowlist 등록 / **playbook 승격·은퇴** / 보류
 
 **자동 쓰기 금지** — 승인한 항목만 반영. ecosystem: canon/feedback. sibling: 자기 `memory/` 만 (sibling canon 직접수정 X).
+
+playbook 결정의 집행은 결정적 executor 로만 (인간이 bullet 문법을 손편집하지 않는다):
+
+```bash
+bun run debrief:curate -- --apply-decision PB-SEC-0007:promote   # 승인된 승격
+bun run debrief:curate -- --apply-decision PB-SEC-0007:retire    # 승인된 은퇴 (tombstone)
+```
 
 ### 3. 통합 핸드오프
 

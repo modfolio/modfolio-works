@@ -58,11 +58,11 @@ Effort 레벨을 언제 쓰는지 명문화된 정책이 없어, 신규 agent가
 
 ## Claude Code 인터페이스
 
-- `/effort` (v2.1.111+): 세션 내 슬라이더로 토글. arrow key + Enter.
-- `CLAUDE_CODE_EFFORT_LEVEL` env (운영 체제 수준, 가장 강): `max` 권고.
-- agent frontmatter `effort:` 필드: 해당 agent만의 오버라이드.
+- `/effort` (v2.1.111+): 세션 내 슬라이더로 토글. arrow key + Enter. 메인 세션 단위 opt-in (xhigh=코딩 baseline, max=최난도).
+- `CLAUDE_CODE_EFFORT_LEVEL` env (최상위 우선순위, 가장 강): **전역 `max` 금지** — env 는 subagent frontmatter 를 덮어써 전 subagent 를 그 값으로 강제한다(fleet-wide overthinking). 미설정 권고.
+- agent frontmatter `effort:` 필드: 해당 agent만의 오버라이드 (env 미설정 시 세션이 존중).
 
-우선순위: **agent frontmatter > env > slash command 세션 토글**.
+우선순위 (실측, 2026-07-09 정정): **env (`CLAUDE_CODE_EFFORT_LEVEL`) > subagent frontmatter > 세션 기본값**. env 가 최상위 — 그래서 전역 env-max 를 두지 않는다. 현행 authoritative effort 정책 = `opus-4-7-effort-policy.md` (v1.4.0).
 
 ## 관련 문서
 

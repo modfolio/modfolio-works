@@ -48,7 +48,7 @@ Canva 통합은 `claude.ai Canva` MCP — `authenticate` + design 생성. 양방
 claude mcp add paper --transport http http://127.0.0.1:29979/mcp --scope user
 ```
 
-WSL 환경: `~/.wslconfig`에 `networkingMode=mirrored` 필수.
+WSL 환경 (⚠ 2026-07-12 정정 — 구 "mirrored 필수" 폐기): **`networkingMode=mirrored` 금지** — VS Code Remote-WSL **"freeze + 무한 reopen"의 원인**(MS 인정 버그, vscode-remote-release #9222/#10818/#11091; modfolio 실측 — 메모리 무관, mirrored 제거→NAT 복귀로 해소). Windows 쪽 Paper(`127.0.0.1:29979`) 접속은 NAT 에서 **Windows 호스트 IP** 로: `claude mcp add paper --transport http http://$(ip route list default | awk '{print $3}'):29979/mcp --scope user` (게이트웨이 IP 는 부팅마다 바뀔 수 있음 — 접속 실패 시 재확인). freeze 재발 시 메모리를 의심하지 말고 `~/.vscode-server/data/logs/*/remoteagent.log` 부터 (modfolio journal `20260712-p0-xss-stack-ts7.md` §개발 환경).
 
 ## 코드 → Paper (푸시)
 

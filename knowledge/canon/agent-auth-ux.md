@@ -1,9 +1,9 @@
 ---
 title: Agent Auth UX — 에이전트가 시작하고 브라우저로 승인하는 인증 표준
-version: 1.1.0
-last_updated: 2026-06-14
-source: [사용자 피드백 2026-06-14 (athsra/connect 터미널 떠넘기기 마찰), athsra device-login(RFC 8628)/MCP login_start 구현 실측, oidc-flow.ts, 2026-06-14 athsra_run MCP CF 직접조작 실증]
-changelog: ["1.1.0 (2026-06-14): 인증 후 direct-operation 섹션 추가(athsra_run MCP 직접조작, CF=cf-api-mastery 레퍼런스, 게이트 유지). 1.0.0: 초판(login UX 표준)"]
+version: 1.2.1
+last_updated: 2026-07-04
+source: [사용자 피드백 2026-06-14 (athsra/connect 터미널 떠넘기기 마찰), athsra device-login(RFC 8628)/MCP login_start 구현 실측, oidc-flow.ts, 2026-06-14 athsra_run MCP CF 직접조작 실증, athsra 2026-07-04 device-login root-cause 회신(폴링 예산·MCP teardown, feedback/athsra/2026-07-04_device-login-root-cause.md), pay 2026-07-04 session27 장세션 복호 만료 관측]
+changelog: ["1.2.1 (2026-07-04): §3 장세션 mid-session 복호(decryption) 만료 → athsra doctor 근거 시에만 device-login 재인증 추가(pay session27).", "1.2.0 (2026-07-04): device flow 폴링 지속성 + MCP 세션 수명 섹션 추가(athsra root-cause 반영 — 45s give-up 금지, teardown 금지, TTL 오귀속 정정). 실행 패턴 step 4 강화.", "1.1.0 (2026-06-14): 인증 후 direct-operation 섹션 추가(athsra_run MCP 직접조작, CF=cf-api-mastery 레퍼런스, 게이트 유지). 1.0.0: 초판(login UX 표준)"]
 sync_to_siblings: true
 applicability: always
 consumers: [all-agents, sso-integrate, secret, ops, connect, athsra]
@@ -58,11 +58,36 @@ universe 의 모든 인증 표면은 **에이전트-시작 가능 + 브라우저
 2. (athsra 예) athsra_login_start 호출 → { user_code, verification_uri_complete, device_key_fingerprint }
 3. 사용자에게: "브라우저에서 승인하세요: <verification_uri_complete> (코드 <user_code>,
    화면 fingerprint 가 <device_key_fingerprint> 와 같은지 확인). 승인하면 이어서 진행합니다."
-4. athsra_login_status 를 retry_after_seconds 준수하며 poll → approved
+4. athsra_login_status 를 retry_after_seconds 준수하며 approved/denied/expired 까지 poll
+   (~45s/9폴 give-up 금지 — 오너 승인은 수 분 걸릴 수 있다. 아래 §폴링 지속성)
 5. 원래 작업 재개. 사용자는 터미널 입력 0.
 ```
 
 CLI 만 가능한 경우: 에이전트가 `wrangler login` / `gh auth login --web` / `athsra login --device` 를 **직접 Bash 실행** → OS 가 브라우저 오픈 → 사용자 승인 → 에이전트가 계속.
+
+## Device flow 폴링 지속성 + MCP 세션 수명 (2026-07-04, athsra root-cause)
+
+device-login 이 "45s 만에 만료 → 재발급 필요"로 관측된 사건의 **근본은 harness/agent 측**이다(athsra 2026-07-04 실측 회신). athsra device-code TTL 은 이미 10→15분이고 "45s 상수는 athsra 코드에 부재" — 오해였던 "TTL 짧음" 을 정정한다. 근본 2축:
+
+### 1. 폴링 지속성 (MUST)
+
+- 에이전트는 `athsra_login_status`(또는 device `poll`)를 **approved / denied / expired 가 나올 때까지** 폴링한다. 서버 `expires_in`(현 15분)이 유일한 종료 시한이다.
+- **~45s(≈9폴 × 5s) give-up 금지.** 오너의 브라우저 승인은 **수 분** 걸릴 수 있다 — 조기 포기가 관측된 "재발급 필요"의 근본원인이었다.
+- `retry_after_seconds`(5s) 를 준수해 간격을 지킨다. athsra 는 hint("approved/expired 까지 계속 폴링, owner 가 수 분 걸릴 수 있음")를 주지만, **얼마나 폴링할지는 호출 에이전트가 결정**한다.
+- tool hint 만으로는 ~5% 우회(adversarial) — polling budget 은 결정적 hook 으로 강제할 수 없는 **의미론적** 행동이다(grep 불가, `concurrency-safety.md` 선례와 동일 판단). 따라서 이 canon + rule `agent-auth-flow.md` 명문화가 **최강 레버**다. 하네스 정책/루프가 있으면 그것으로 보장.
+
+### 2. MCP 세션 수명 (MUST)
+
+- device-login **진행 중 MCP 서버 프로세스를 teardown 하지 않는다**(또는 flow-resume 훅 제공).
+- `activeFlow`(= `device_code` 보유)는 **모듈 메모리 전용** — athsra 가 `device_code` 를 **의도적으로 디스크에 미저장**(no-persistence = 보안 gold standard). MCP 프로세스가 재시작/종료되면 flow 가 유실되고 다음 `athsra_login_start` 가 **새 코드**를 발급한다(= 관측된 "재발급"). 재개 책임은 athsra 가 아니라 **harness 세션관리**에 있다.
+
+### fact-ownership 사례
+
+hub 가 harness-owned 이슈("45s TTL")를 athsra 로 **오귀속**했고 athsra 가 실측으로 회신해 정정했다 → **미러 기록 ≠ SoT, 실측 우선**(`fact-ownership.md`). athsra 측 보조완화(worker `DEVICE_TTL_MS` 10→15분 + `POST /auth/device/refresh`, dashboard `/device` countdown, cli/MCP **1.2.6** poll-hint + near-expiry auto-refresh relay)는 전부 배포됨 — 나머지 근본은 위 2축의 harness 몫.
+
+### 3. 장세션 mid-session 복호(decryption) 만료 (2026-07-04, pay session27)
+
+장세션 중 athsra **project decryption 세션만** 만료될 수 있다 — Bearer token·worker 는 정상인데 `athsra run`/`get` 이 갑자기 복호 실패. **빈 `.env`·`master-pw missing` 을 "시크릿 없음/미인증"으로 오판 금지**(secrets-policy athsra-forgetting) — 재인증 근거는 **`athsra doctor` 가 실제 복호/토큰 부재를 보고할 때만**. 재인증 = `athsra login --device --project <repo>`(터미널 떠넘기기 X — 에이전트 시작→사용자 브라우저 1회 승인, 위 폴링 지속성 준수). 관련: `long-running-harness.md`(장세션).
 
 ## 인증 후 — 직접 조작 (direct operation)
 

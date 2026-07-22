@@ -50,6 +50,7 @@ read-only. **CLI 체크는 stdout 을 폐기**(exit code 만 읽음) → 토큰 
   `@modfolio:registry=GH` .npmrc 로도 `bun update @modfolio/connect-sdk` 가 8.2.1 수신(블로커 해소).
   구조적 caveat(per-scope 라우팅)은 유지 — 상세 `project-infrastructure-registry.md` §dual-registry.
 - **pkg.modfolio.io** 는 alive 면 200/401 모두 정상(부차 채널). 1차 consume 은 GitHub Packages 단일.
+- **pkg.modfolio.io 프로브는 반드시 prefixed base** `/api/packages/modfolio/npm/` 로 한다(예: `.../@modfolio%2Fharness`). **bare root 경로**(`/@modfolio/harness`)는 Worker open-proxy guard 가 by-design **404(text/plain)** 로 reject → 이걸로 "회귀"를 판정하면 오진(2026-07-09 사건, `feedback/modfolio-registry-proxy/...-retraction.md`). origin 토큰 만료는 404 아닌 **401/403 passthrough** 로 드러난다.
 
 ## 도구 추가 시
 

@@ -1,8 +1,8 @@
 ---
 title: Opus Effort Policy (baseline Opus 4.8)
-version: 1.3.0
-last_updated: 2026-06-10
-source: [knowledge/canon/opus-4-7-effort-policy.md, Anthropic effort docs 2026-05 (xhigh sweet spot policy), 2026-05-13 v2.0 dogfood Adopt P0 #7 (max → xhigh recalibration), harness v2.34 P0.3 (thinking_budget 정책 신설 — Adaptive thinking Opus 4.7 4/16 + Extended thinking Sonnet 4.6 2/17)]
+version: 1.4.0
+last_updated: 2026-07-09
+source: [knowledge/canon/opus-4-7-effort-policy.md, Anthropic effort docs 2026-05 (xhigh sweet spot policy), 2026-05-13 v2.0 dogfood Adopt P0 #7 (max → xhigh recalibration), harness v2.34 P0.3 (thinking_budget 정책 신설 — Adaptive thinking Opus 4.7 4/16 + Extended thinking Sonnet 4.6 2/17), 2026-07-09 v1.4.0 (Claude Code effort precedence 실측: env > frontmatter > session — 전역 env-max 가 subagent 보정 override 하는 근본버그 정정; thinking_budget = Claude Code no-op 정정; Sonnet 5 fallback)]
 sync_to_siblings: true
 applicability: always
 consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-api, context-engineering]
@@ -22,7 +22,7 @@ consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-a
 | Standard | `claude-opus-4-8` | 200,000 tokens | 대부분의 reasoning / 코딩 / 리뷰 |
 | Fast | `claude-haiku-4-5-20251001` | 200,000 tokens | 검색·요약·결정적 검증 (비용 효율) |
 
-**가격** (2026-06-10): Opus 4.8 $5/$25 per MTok (input/output) — Opus 4.6/4.7과 동일. 1M variant 프리미엄 없음, long-context 프리미엄 없음. (참고: Fable 5 `claude-fable-5` 는 $10/$50 = 2배, available-optin — `claude-code-2026h1-features.md`.) 4.7→4.8 토크나이저는 동일 surface.
+**가격** (2026-07-09): Opus 4.8 $5/$25 per MTok (input/output) — Opus 4.6/4.7과 동일. 1M variant 프리미엄 없음, long-context 프리미엄 없음. **Opus 4.8 effort 기본값 = `high`** (전 surface: API·Claude Code·claude.ai). fallback rung: Sonnet 5 `claude-sonnet-5` $3/$15(도입가 $2/$10, ~2026-08-31), Haiku 4.5 `claude-haiku-4-5` $1/$5. (참고: Fable 5 `claude-fable-5` 는 $10/$50 = 2배, available-optin — `claude-code-2026h1-features.md`.) 4.7→4.8 토크나이저는 동일 surface. **권위 단가 SoT = `ecosystem.json` `pricing.genai`** — 본문 가격은 사람용 미러(스크립트는 SoT 를 읽는다).
 
 ## Effort 5단계
 
@@ -32,44 +32,26 @@ consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-a
 | medium | 균형 | 저 | 보통 검증 |
 | high | 일반 기본값 | 중 | 표준 리뷰·테스트·QA |
 | xhigh | 깊은 reasoning (4.7 신규) | 중-고 | 코드 리뷰·아키텍처 판정 |
-| max | 제약 없는 최대 reasoning | 가변 (비용 ↑) | design·코딩·복잡 태스크 |
+| max | 제약 없는 최대 reasoning | 가변 (비용 ↑) | 보안/장애/디자인 1M 등 최난도 (overthinking 위험 — 일반 코딩은 xhigh) |
 
-**중요**: `max`는 세션 전용. 영구 persist하려면 `CLAUDE_CODE_EFFORT_LEVEL=max` 환경변수 필요.
+**중요 (2026-07-09 정정)**: `max`는 **세션 전용 opt-in** 이다(`/effort max`). `CLAUDE_CODE_EFFORT_LEVEL=max` 를 **전역 설정하지 않는다** — env 가 최상위 우선순위라 모든 subagent 의 보정된 frontmatter effort 를 덮어써 fleet-wide overthinking 을 유발한다(근거·권고 → 아래 「환경변수 정책」).
 
 ### Known issues (2026-04-17 시점)
 
 - #30726: settings `effortLevel: "max"`가 UI 인터랙션 시 silently downgrade
 - #40093: banner는 max 표시되지만 runtime은 medium으로 실행
-- 완화책: agent frontmatter `effort:` 필드 + 환경변수 **이중 설정** + Claude Code v2.1.111+ 확인
+- 완화책 (2026-07-09 정정): env 최상위 우선순위 탓에 **전역 env-max 는 완화책이 아니라 per-agent 보정을 잃는 원인**. 올바른 완화 = subagent 는 **frontmatter effort 의존**(env 미설정 시 세션이 존중) + 메인 세션은 `/effort` 세션 토글 + Claude Code v2.1.111+ 확인
 
-## 환경변수 권장 설정
+## 환경변수 정책 (2026-07-09 정정 — 전역 max 금지)
 
-### Windows (PowerShell/CMD)
+**`CLAUDE_CODE_EFFORT_LEVEL` 를 전역으로 `max` 로 설정하지 않는다.**
 
-```powershell
-setx CLAUDE_CODE_EFFORT_LEVEL max
-# 세션 재시작 필요
-```
+**우선순위 (실측)**: `CLAUDE_CODE_EFFORT_LEVEL` env > subagent frontmatter > 세션 기본값. env 계층 안에서는 OS env > settings.json `env` > settings.local.json `env` 순. **핵심: env 계층 전체가 frontmatter 보다 위** — 그래서 전역 env 값은 각 subagent 의 보정된 frontmatter effort(max=3·xhigh=13·high=5·medium=3)를 **전부 덮어써** 전 subagent 를 그 값으로 강제한다. env=max = fleet-wide overthinking (Anthropic: "max 는 overthinking + 비용 대비 quality 작음").
 
-### macOS / Linux
-
-```bash
-# ~/.bashrc 또는 ~/.zshrc
-export CLAUDE_CODE_EFFORT_LEVEL=max
-```
-
-### 프로젝트 단위 (`.claude/settings.json`)
-
-```jsonc
-{
-  "env": {
-    "CLAUDE_CODE_EFFORT_LEVEL": "max",
-    "CLAUDE_CODE_MAX_OUTPUT_TOKENS": "32768"
-  }
-}
-```
-
-**우선순위**: OS env > settings.json env > settings.local.json env > agent frontmatter. 가장 가까운 값이 이긴다.
+**권고**:
+- env 변수를 **미설정**으로 둔다 → 각 subagent 는 자기 frontmatter effort 로, 메인 세션은 Opus 4.8 기본값 `high` 로 돈다.
+- 메인 대화에서 더 깊은 reasoning 이 필요하면 `/effort xhigh`(코딩 sweet spot) / `/effort max`(최난도) 를 **세션 단위**로 토글(아래 런타임 토글).
+- non-effort env(`CLAUDE_CODE_MAX_OUTPUT_TOKENS` 등)는 이 정책과 무관 — 필요 시 설정 가능.
 
 ## 런타임 토글
 
@@ -153,6 +135,8 @@ _effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. Revert if qua
 
 ## Thinking Budget 정책 (v1.2, 2026-05-13 신설)
 
+> **⚠ 정정 + 제거 완료 (2026-07-09)**: `thinking_budget` 는 **Claude Code agent-frontmatter 지원 필드가 아니다** — Claude Code 는 무시한다(v2.1.198+ subagent 는 메인 대화 thinking 설정 상속, per-subagent thinking 설정 없음). Opus 4.8 thinking 깊이 = **effort 가 제어**(adaptive; 수동 `budget_tokens` 는 400). **이 세션(2026-07-09)에서 no-op 필드 제거 완료**: 21 agent frontmatter 에서 삭제 + `sync-thinking-budget.ts` 폐기 + diagnostic `thinking-budget-drift` 트랙 제거. **아래 하위 섹션(v3.0 의무화·4-level 표·'Claude Code 추상화'·측정 트랙)은 이 정정으로 SUPERSEDED — 역사 보존**이며, 그 매핑/budget 값은 **Anthropic SDK 를 직접 호출하는 sibling 앱**에만 참고용(Claude Code agent 에는 무효).
+
 Anthropic 2026 Q2 신기능:
 - **Opus 4.7 Adaptive thinking** (2026-04-16 출시) — 자동 thinking budget 조절, extended thinking 미지원
 - **Sonnet 4.6 Extended thinking** (2026-02-17 출시) — 명시 thinking_budget 지정, visible thinking
@@ -200,7 +184,7 @@ const response = await client.messages.create({
 });
 ```
 
-Claude Code 내부는 agent frontmatter `thinking_budget` 으로 추상화 — SDK 호출 코드 직접 작성 없음.
+**[정정 2026-07-09]** — Claude Code 는 `thinking_budget` frontmatter 를 지원/추상화하지 **않는다**(위 박스). 이 SDK 코드 예시는 **Anthropic SDK 직접 호출 sibling** 전용이며 Claude Code agent 와 무관하다(Claude Code agent 는 effort 로 thinking 제어).
 
 ### Haiku 4.5 미지원
 

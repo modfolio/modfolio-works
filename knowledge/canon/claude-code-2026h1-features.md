@@ -33,7 +33,7 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 - **Claude Code 사용** `/model fable` (또는 `claude-fable-5`) 로 세션 선택. agent frontmatter `model: claude-fable-5` 도 유효.
 - **API surface** Opus 4.7/4.8 과 동일 (adaptive thinking only, `budget_tokens`/`temperature`/`top_p`/`top_k` 제거 = 400). **단 하나 차이**: explicit `thinking: {type: "disabled"}` 가 400 → `thinking` 파라미터를 **생략**해야 함.
 - **universe 정책 (2026-07-02 재평가 확정)**: baseline agent 기본 모델은 여전히 **Opus 4.8**(비용 효율·대량 fan-out 용). **Fable 5 = 오너 세션 opt-in**(`/model fable`) — 오너가 세션별로 명시 선택 시 그 세션의 심층 작업(설계·보안·auth-critical·복잡 리팩)에 사용. 2026-07-02 G15 세션이 첫 대규모 Fable 실사용(오너 "fable로 작업해줘 다 허락"). `ecosystem.json.harnessFableStatus: "available-optin"` 유지.
-- **선택 기준(재평가 결론)**: Fable 값어치가 비용(2×)을 정당화하는 곳 = (a) auth/payment/secret 등 **틀리면 비싼** 코드의 설계·구현(connect eject·athsra E2EE·pay idempotency), (b) 다차원 트레이드오프 판단(아키텍처·마이그 경로). **기계적 fan-out**(TS6 전파·dep bump·포맷)은 Opus/Sonnet 로 내려 비용 절감 — Workflow 스테이지에서 `model`/`effort` per-agent 조정. cost-attribution.md 정합.
+- **선택 기준(재평가 결론)**: Fable 값어치가 비용(2×)을 정당화하는 곳 = (a) auth/payment/secret 등 **틀리면 비싼** 코드의 설계·구현(connect eject·athsra E2EE·pay idempotency), (b) 다차원 트레이드오프 판단(아키텍처·마이그 경로). **기계적 fan-out**(TS6 전파·dep bump·포맷)은 Opus/Sonnet 로 내려 비용 절감 — Workflow 스테이지에서 `model`/`effort` per-agent 조정. cost-attribution.md 정합. task-class → effort/모델 사다리(sweet spot 유지·언제 max/Fable·fan-out 은 Sonnet subagent) = `model-escalation.md`.
 
 ## Dynamic Workflows (Trial)
 

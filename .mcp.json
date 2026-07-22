@@ -12,6 +12,19 @@
 			"command": "bunx",
 			"args": ["--bun", "-y", "@playwright/mcp"]
 		},
+		"knowledge-rag": {
+			"type": "stdio",
+			"command": "bun",
+			"args": [
+				"run",
+				"node_modules/@modfolio/harness/scripts/mcp/knowledge-rag-server.ts"
+			],
+			"env": {
+				"RAG_TRANSPORT": "cf-access",
+				"CF_ACCESS_CLIENT_ID": "${CF_ACCESS_CLIENT_ID}",
+				"CF_ACCESS_CLIENT_SECRET": "${CF_ACCESS_CLIENT_SECRET}"
+			}
+		},
 		"astro": {
 			"type": "http",
 			"url": "https://mcp.docs.astro.build/mcp"

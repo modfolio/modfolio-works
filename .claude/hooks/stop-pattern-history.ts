@@ -25,7 +25,7 @@ import {
 	writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { changedFiles, DETECTOR_SOURCE_FILES, gitRoot } from "./_lib.ts";
+import { changedFiles, gitRoot, isDetectorSource } from "./_lib.ts";
 
 interface PatternRule {
 	id: string;
@@ -56,7 +56,7 @@ const RULES: PatternRule[] = [
 		// sources themselves — a naive scan treats those strings as violations.
 		test: (file, content) =>
 			TS_EXT.test(file) &&
-			!DETECTOR_SOURCE_FILES.has(file) &&
+			!isDetectorSource(file) &&
 			/@ts-ignore|as\s+any\b/.test(content),
 	},
 	{

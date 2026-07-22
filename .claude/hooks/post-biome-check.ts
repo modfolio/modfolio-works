@@ -14,7 +14,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { readHookInput, recordHookDuration } from "./_lib.ts";
+import { bunExec, readHookInput, recordHookDuration } from "./_lib.ts";
 
 function hasCheckScript(): boolean {
 	try {
@@ -35,7 +35,7 @@ const augment = process.env.BIOME_CHECK_AUGMENT === "1";
 
 const start = performance.now();
 
-const result = spawnSync("bun", ["run", "check"], {
+const result = spawnSync(bunExec(), ["run", "check"], {
 	encoding: "utf-8",
 	// Windows needs shell:true so the OS resolves `bun` via PATHEXT rather
 	// than failing on native cmd.exe.

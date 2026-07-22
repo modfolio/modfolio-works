@@ -25,7 +25,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
-import { bashCommand, DETECTOR_SOURCE_FILES, readHookInput } from "./_lib.ts";
+import { bashCommand, isDetectorSource, readHookInput } from "./_lib.ts";
 
 const input = await readHookInput();
 const cmd = bashCommand(input);
@@ -85,7 +85,7 @@ if (mode !== "off") {
 			if (!TS_EXT.test(file)) continue;
 			// Self-exclusion: detector source files carry the pattern regex as a
 			// string literal — false positive. See DETECTOR_SOURCE_FILES for list.
-			if (DETECTOR_SOURCE_FILES.has(file)) continue;
+			if (isDetectorSource(file)) continue;
 			const abs = join(process.cwd(), file);
 			if (!existsSync(abs)) continue;
 			try {

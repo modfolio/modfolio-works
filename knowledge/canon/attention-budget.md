@@ -1,7 +1,7 @@
 ---
 title: Attention Budget — Context as Finite Resource
-version: 1.3.0
-last_updated: 2026-05-24
+version: 1.4.0
+last_updated: 2026-07-09
 source: [Anthropic 2026 Agentic Coding Trends Report (https://resources.anthropic.com/2026-agentic-coding-trends-report), Anthropic Engineering "Effective context engineering for AI agents" (https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents), Claude Cookbook "Context engineering: memory, compaction, and tool clearing" 2026-03-20 (https://platform.claude.com/cookbook/tool-use-context-engineering-context-engineering-tools), harness-evolve 첫 dogfood Adopt P0 #4, 2026-05-13 v2.0 dogfood Trial P1 (Memory tool L3), harness v2.34 P0.2 (context-engineering canon 분리)]
 sync_to_siblings: true
 consumers: [harness-evolve, modfolio, preflight, claude-api, multi-review, generate-review, plan, ralph-loop, context-engineering]
@@ -49,7 +49,17 @@ attention budget 운영의 5 가지 평가 축. agent / skill / canon 추가 시
 
 **cache_read_input_tokens** > 0 검증이 가장 빠른 sanity check. 0 이면 cache_control 미적용 = budget 낭비.
 
+## Context Rot — 토큰이 늘수록 recall 이 저하된다 (2026-07-09 추가, Anthropic "Effective context engineering for AI agents")
+
+> **핵심** (Anthropic, "Effective context engineering for AI agents"): context window 의 토큰 수가 늘어날수록 모델이 그 안에서 **정확히 recall 하는 능력이 저하**된다. 하드 리밋(1M)에 닿기 전에도 이미 **토큰당 가치(value-per-token)가 떨어진다** — 더 채울수록 채운 것의 신뢰도가 낮아지는 **context rot**.
+
+attention budget 이 "매 토큰이 예산을 소모한다"는 **총량** 관점이라면, context rot 은 그 소모의 **질적 저하** 면이다 — 같은 원리의 두 얼굴. budget 이 남아 있어도 (hard limit 미도달) 신호는 이미 희석된다. 그래서 정공법은 context window 를 키우는 게 아니라 **highest-signal token 만 유지**하고 나머지를 외부로 밀어내는 것 (정공법 3원칙 "장기 시야 + 확장성"의 직접 근거).
+
+**long-horizon 대응 3축** — 긴 세션·다단계 작업에서 rot 을 구조적으로 막는 Anthropic 권장 기법이 곧 아래 §"권장 패턴 3종": **Compaction** (stale history 요약 제거) · **Structured note-taking** (`knowledge/journal/`·`knowledge/canon/`·plan 파일을 외부 memory 로 cement) · **Multi-agent isolation** (sub-agent 마다 깨끗한 독립 컨텍스트 창). 세 기법의 modfolio universe 적용은 다음 절에 상술 — 이 절은 *왜* (rot 이라는 실패 모드), 다음 절은 *어떻게*.
+
 ## 권장 패턴 3종 (Anthropic 인용)
+
+세 기법 모두 **context rot 의 long-horizon 대응** (위 §Context Rot) — stale·저신호 토큰을 활성 컨텍스트에서 밀어내 recall 을 보존한다.
 
 ### 1. Compaction (대화 history 요약)
 
