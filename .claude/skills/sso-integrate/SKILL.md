@@ -1,15 +1,25 @@
 ---
 name: sso-integrate
-description: Connect SDK SSO OIDC PKCE 연동·업그레이드. 현행 latest = 8.8.0. 신규 연동, 버전 업그레이드, 콜백/JWT 문제 해결 시 사용
+description: Connect SDK SSO OIDC PKCE 연동·업그레이드. 현행 latest 는 ecosystem.json connectSdkLatest 가 SoT. 신규 연동, 버전 업그레이드(9.x major 포함), 콜백/JWT 문제 해결 시 사용
 user-invocable: true
 ---
 
 # /sso-integrate — Connect SDK SSO 연동
 
-> **현행 latest = `@modfolio/connect-sdk` 8.8.0** (2026-07-19, npmjs + Forgejo 양쪽 게시).
-> 권위 실측은 `curl https://registry.npmjs.org/@modfolio/connect-sdk` → `.dist-tags.latest`.
-> ⚠️ **`npm view @modfolio/connect-sdk version` 은 믿지 말 것** — `~/.npmrc` 의
-> `@modfolio:registry` 오버라이드가 scoped lookup 을 가로채 **동결된 레거시 미러 값**을 답한다.
+> **현행 latest = `@modfolio/connect-sdk` 9.4.0** (2026-07-27 실측 — connect `sdk/package.json`
+> · `ecosystem.json` · pkg.modfolio.io 익명 packument 3자 일치. 9.3.0 → 9.4.0 은 **마이너**라
+> `bun update` 로 넘어간다).
+> 이 숫자의 SoT 는 `ecosystem.json` 의 `connectSdkLatest` 이고, 이 문서의 값이 그와
+> 어긋나면 `bun run test:harness` 가 실패한다(`version-prose-drift.test.ts`).
+> 권위 실측은 `curl https://registry.npmjs.org/@modfolio%2fconnect-sdk` → `.dist-tags.latest`.
+> ⚠️ **`npm view`/`npm show` 는 `--registry=` 를 줘도 믿지 말 것** — scoped 패키지는
+> `--registry` 플래그가 **무시**되고 `.npmrc` 의 `@modfolio:registry` 가 lookup 을 가져간다.
+> 실측 2026-07-26: registry 3곳을 각각 지정한 `npm show` 가 전부 같은 레거시 값을 답했다.
+> 진짜 값은 packument 를 **HTTP 로 직접** 받아 읽는다(위 curl).
+
+> ⚠️ **9.0.0 은 breaking major 다** — `^8.x` 로 핀된 앱은 `bun update` 로 **넘어오지 않는다**.
+> 넘어가려면 `bun add @modfolio/connect-sdk@^9` 를 명시해야 하고, 그 전에 아래
+> **9.0.0 — 무엇이 깨지나** 를 읽는다. 거부된 입력이 있는 변경이라 무점검 승격은 금물.
 
 ## 설치 — 토큰 불필요
 
@@ -58,12 +68,39 @@ client 레지스트리를 확인할 것 — 잘못된 clientId 는 Connect 에�
 
 | 버전 | 성격 | 내용 |
 |---|---|---|
-| **8.8.0** | additive | **실렌트 SSO 가 브랜디드 핸드오프로 이동** (아래 상세) |
+| **9.3.0** | additive | webhook/URL 견고화 — `parseWebhookEvent` 런타임 shape 검증, 중복 `t`/`v1` 서명 헤더 fail-closed 거부, `connectUrl` 트레일링슬래시 정규화 |
+| 9.2.0 | additive | OIDC **nonce 검증**(8 어댑터 전부) + `quickLogin` fast-path 를 Nuxt/Next/Hono/Qwik/SolidStart 로 이식 |
+| 9.1.0 | additive | SolidStart `onRequest` 미들웨어 + Hono/Qwik/SolidStart 경로보호 옵션(`protectedPaths`/`publicPaths`/`allowAllLocked`) |
+| **9.0.0** | **breaking** | 인증 가드 2건이 **기존 허용 입력을 거부**한다 (아래 상세) |
+| 8.8.0 | additive | 실렌트 SSO 가 브랜디드 핸드오프로 이동 (아래 상세) |
 | 8.7.0 | additive | `allowAllLocked` opt-out (warnRootProtectedPath 오탐), Forgejo dual-publish |
 | 8.3.0~8.6.0 | additive | quick-login, `publicPaths`, `verifyToken` aud 검증, FedCM 전 어댑터 브리지 |
 | 8.0.0 | **breaking** | `registerApp()` / `createClient()` 가 `redirectUris`(1–10) **필수** |
 | 7.0.0 | additive | MCP agent (`/agent` export), `ConnectUser` +4 필드 |
 | 5.0.0 | **breaking** | `tokens.token` 제거 → **`tokens.access_token`** |
+
+## 9.0.0 — 무엇이 깨지나
+
+두 가지 모두 **가드가 조용히 통과시키던 입력을 거부하는 방향**이다. 즉 업그레이드 후
+"인증은 되는데 권한이 막힌다" 로 나타난다. 500 이 아니라 403 으로 보인다.
+
+1. **`createPermissionGuard()` 에 빈 목록을 주면 전원 통과가 아니라 전원 거부다.**
+   구버전은 빈 목록에 vacuous true 를 돌려줘 **아무 권한도 요구하지 않는 가드**가
+   "모두 허용" 으로 동작했다. 9.0.0 은 deny 한다. 빈 목록을 실제로 넘기고 있었다면
+   그건 보호되지 않던 라우트라는 뜻이므로, 우회하지 말고 필요한 권한을 명시한다.
+
+2. **`requireOrg(minRole)` 에 미지의 role 을 주면 member 동급이 아니라 전 tier 미달이다.**
+   구버전은 모르는 role 을 member 로 강등해 통과시켰다. 9.0.0 은 미달 처리한다.
+   오타난 role 문자열이 여태 통과하고 있었을 수 있으니 철자를 먼저 확인한다.
+
+**fleet 감사 결과(2026-07-21)**: 이 두 API 의 실사용 소비자는 **0개**였고, 변경된 API 를
+실제로 쓰는 앱은 `modfolio` 하나(`verifyWebhookSignature`·`createSSFReceiver` — 둘 다 개선
+방향)였다. 그래서 대부분의 앱에서 9.x 승격은 실질 무위험이지만, **위 두 API 를 쓰는지
+grep 한 뒤** 올리는 것이 절차다.
+
+```bash
+rg -n "createPermissionGuard|requireOrg" src/ app/ 2>/dev/null || echo "미사용 — 9.x 승격 안전"
+```
 
 ## 8.8.0 — 무엇이 바뀌었나
 
@@ -83,8 +120,11 @@ client 레지스트리를 확인할 것 — 잘못된 clientId 는 Connect 에�
 ## 업그레이드 — `bun update` 하나면 끝, 단 함정 4종
 
 ```bash
+# ^8.x 에 핀돼 있으면 update 로는 9.x 가 오지 않는다 — major 는 명시 승격이다.
+bun add @modfolio/connect-sdk@^9
+# 이미 ^9.x 면 bun update 로 충분
 bun update @modfolio/connect-sdk
-# lockfile 이 8.8.0 으로 갱신됐는지 확인 후 커밋
+# lockfile 이 9.3.0 으로 갱신됐는지 확인 후 커밋
 ```
 
 실측으로 확인된 함정들이다. 해당하면 밟는다:
@@ -93,10 +133,11 @@ bun update @modfolio/connect-sdk
    `package.json` 의 deps 에 `@modfolio/connect-sdk` 가 **잘못 추가**된다(루트엔 `src/` 가
    없어 실제로 쓰지 않는 의존성). 2026-06 8.2.1 범프 때 15개 repo 가 이렇게 오염된 채
    커밋됐다. **처방**: 루트 항목 제거 → `bun install` 재조정 → **lockfile 만** 커밋.
-   앱 워크스페이스의 선언(`^8.x`)은 그대로 두면 SemVer 가 8.8.0 으로 resolve 한다.
+   앱 워크스페이스의 선언은 그대로 두면 SemVer 가 해당 major 안에서 resolve 한다
+   (`^9.x` → 9.4.0). `^8.x` 는 8 계열 최신에서 멈춘다 — 이게 major 의 정상 동작이다.
 
 2. **exact pin 은 `bun update` 가 안 움직인다** — 선언이 `"8.7.0"`(캐럿 없음)이면
-   `bun update` 는 **무동작**이다. `bun add @modfolio/connect-sdk@8.8.0` 으로 명시 지정.
+   `bun update` 는 **무동작**이다. `bun add @modfolio/connect-sdk@9.4.0` 으로 명시 지정.
    (핀이 그 repo 의 의도된 하우스 스타일이면 **핀을 유지**한 채 값만 올릴 것.)
 
 3. **install root 가 워크스페이스와 다를 수 있다** — 루트 `package.json` 에 `workspaces`
@@ -136,5 +177,7 @@ curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' \
 ## 업그레이드 여부와 시점
 
 **Evergreen Principle 은 권고이지 강제가 아니다.** 이 앱의 owner 가 자율 결정한다.
-다만 8.8.0 은 additive(breaking 0)이고 사용자 체감(빈 스피너 소멸)에 직접 닿으므로
-다음에 이 repo 를 열 때 함께 처리하는 것을 권한다.
+9.1.0~9.3.0 은 additive 이고 8.8.0 의 사용자 체감(빈 스피너 소멸)까지 포함하므로,
+다음에 이 repo 를 열 때 함께 처리하는 것을 권한다. 다만 **경유해야 하는 9.0.0 이
+breaking** 이므로 위 grep 한 줄로 두 API 사용 여부를 확인한 뒤 올린다 —
+미사용이면(대부분 그렇다) 승격은 lockfile 변경 하나로 끝난다.

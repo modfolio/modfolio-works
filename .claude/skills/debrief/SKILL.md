@@ -21,7 +21,11 @@ user-invocable: true
 - **H2T 질문**: "이 태스크를 더 약한 모델이 했다면 무엇을 놓쳤을까, 어떤 원칙이 막나?" → `weaker_model_traps[]` (검출 신호 포함).
 - **escalation 이었다면 필수**: `escalation{from_model, trigger, what_weaker_missed}` — 능력 경계의 정확한 위치가 최고가치 캡처.
 
-이번 태스크 중 참조한 playbook bullet 이 있으면 `used_playbook_ids[]` 에 `PB-*` ID 기록 (카운터가 이것으로만 갱신됨). 채우지 않는 필드: `capture_id`·`captured_at`·`provenance.tier`·`task.repo` — CLI 가 결정적으로 주입/산정 (tier 자기신고는 덮어써짐).
+**`used_playbook_ids[]`** — 이번 태스크에서 **실제로 판단에 쓴** bullet 의 `PB-*` ID. 카운터(h/x)는 이 경로로만 갱신된다.
+
+> 이제 기억해 낼 필요가 없다: `UserPromptSubmit` 훅이 매 프롬프트마다 관련 bullet 을 자동 주입하므로, **이번 세션 컨텍스트에 이미 떠 있는 `PB-*` 목록에서 고르면 된다.** 주입됐지만 판단에 쓰지 않았다면 **넣지 않는 것이 맞다** — 넣으면 "컨텍스트에 있었다"가 "도움이 됐다"로 둔갑해 게이트가 거짓 통과하고, 그 신호로 코퍼스가 28 repo 에 나간다.
+
+채우지 않는 필드 (CLI 가 결정적으로 주입/산정): `capture_id`·`captured_at`·`provenance.tier`·`task.repo`·**`injected_playbook_ids`**(세션 원장에서 자동 — 무엇이 주입됐나는 사실이지 판단이 아니다). tier 자기신고는 덮어써짐.
 
 ### 3. CLI 로 검증·적재
 

@@ -22,6 +22,20 @@
  * (`pre-ui-edit-notice`, `post-biome-check`, the Stop hooks) must NOT use this —
  * for them a crash should stay non-blocking, since blocking on a broken notice
  * would be its own outage.
+ *
+ * ## Mode-dependent guards (2026-07-27)
+ *
+ * Three hooks are advisory by DEFAULT and blocking only under an explicit opt-in
+ * (`PATTERN_HISTORY_MODE=block`, `SECRET_REDACT_MODE=block`,
+ * `INJECTION_DETECT_MODE=block`). The 2026-07-22 pass wired the three
+ * unconditional guards and deliberately left these out — correct for their
+ * default, but it left the opt-in half unprotected: a user who turns blocking ON
+ * still got a guard that fails OPEN, which is the worse of the two states
+ * because they have explicitly asked for enforcement.
+ *
+ * Such a hook calls {@link failClosed} **after** resolving its mode, and only
+ * when that mode is `block`. Advisory runs keep crashing harmlessly; enforcing
+ * runs refuse. Both halves then match the rule at the top of this file.
  */
 
 /** Install fail-closed handlers. Call once, at the top of a blocking hook. */

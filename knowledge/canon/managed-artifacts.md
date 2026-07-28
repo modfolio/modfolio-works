@@ -29,6 +29,7 @@ consumers: [preflight, ops]
 | CLAUDE.md `<!-- ECOSYSTEM_START -->…END` 구간 | harness-pull 재생성(self-facts 로컬 판독) | 매 pull 재생성 | ❌ 미러(fact-ownership) |
 | `ecosystem.json` 각 앱 `packages` | `version-sync --apply` 상향 미러 | 하위 패키지 버전 | ❌ 미러(fact-ownership) |
 | `memory/*.jsonl`, `memory/pattern-history.md` | Stop hook 자동갱신 | append | ❌ 텔레메트리 |
+| `memory/orbit/current.json` + `*.jsonl` | `/orbit` 스테이지 머신(`scripts/orbit/state.ts`) | 스테이지·repo 체크포인트·finding 판정 매 명령 재작성 | ❌ 캠페인 상태(**tracked** — 세션·머신 넘어 재개가 존재 이유. biome 제외 = 포매터와 라이터가 서로 되돌리는 churn 방지) |
 | `data/audit/*`, `docs/audit/latest*` | delta-audit 재생성 | 스냅샷 | ❌ 생성물 |
 
 ## 방법 — diff 를 읽고 주장하기 전 (MUST)

@@ -1,6 +1,7 @@
 ---
+name: component-builder
 description: 프레임워크별 UI 컴포넌트 생성기. 디자인 토큰 제약 내 구현. Figma Canvas to Code 지원
-model: claude-opus-4-8
+model: claude-opus-5
 effort: xhigh
 cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. UI 컴포넌트 정형 — overthinking 회피. quality regression 시 revert."

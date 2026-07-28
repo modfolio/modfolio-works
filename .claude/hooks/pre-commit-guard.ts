@@ -25,6 +25,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { failClosed } from "./_fail-closed.ts";
 import { bashCommand, isDetectorSource, readHookInput } from "./_lib.ts";
 
 const input = await readHookInput();
@@ -76,6 +77,10 @@ function loadPatternExceptions(): Set<string> {
 }
 
 const mode = resolvePatternMode();
+// Blocking only under an explicit opt-in — so fail-closed only then. An
+// advisory run must keep crashing harmlessly; an enforcing run must refuse
+// rather than silently permit (see _fail-closed.ts §Mode-dependent guards).
+if (mode === "block") failClosed("pre-commit-guard");
 if (mode !== "off") {
 	const exceptions = loadPatternExceptions();
 	if (!exceptions.has("ts_ignore_or_any")) {

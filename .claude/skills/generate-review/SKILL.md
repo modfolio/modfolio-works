@@ -27,7 +27,7 @@ user-invocable: true
 
 ## 발견 → triage 2-단계 (Opus 4.8 under-reporting 보정)
 
-> Anthropic `prompting-claude-opus-4-8`: Opus 4.8 은 "확실한 것만" 류 지시를 과충실히 따라 발견을 **누락**할 수 있다(precision↑ measured recall↓). 그래서:
+> Anthropic `prompting-claude-opus-5`: Opus 5 도 (4.8 과 동일하게) "확실한 것만" 류 지시를 과충실히 따라 발견을 **누락**할 수 있다(precision↑ measured recall↓). 그래서:
 > - **step 2 (multi-review 4-agent) = 발견 / coverage**: 리뷰어는 불확실·저심각까지 `[conf]` + severity 를 태깅해 **전수** 보고(스스로 버리지 않음).
 > - **step 3 (P0-P3 triage) = filter / rank**: 올라온 전량을 여기서 랭킹·취사선택. 필터는 이 단계에서만 (uncertain 은 P3, 버리지 않음).
 >

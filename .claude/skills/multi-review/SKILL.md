@@ -25,7 +25,7 @@ user-invocable: true
 
 ## 발견 → triage 2-단계 (Opus 4.8 under-reporting 보정)
 
-> Anthropic `prompting-claude-opus-4-8`: Opus 4.8 은 "확실한 것만 / 사소한 건 빼고" 류 리뷰 지시를 이전 모델보다 더 충실히 따라, 이슈를 찾아내고도 자기 bar 아래라고 보고 **누락**할 수 있다(precision↑ measured recall↓). 그래서 리뷰를 두 단계로 분리한다:
+> Anthropic `prompting-claude-opus-5`: Opus 5 도 (4.8 과 동일하게) "확실한 것만 / 사소한 건 빼고" 류 리뷰 지시를 이전 모델보다 더 충실히 따라, 이슈를 찾아내고도 자기 bar 아래라고 보고 **누락**할 수 있다(precision↑ measured recall↓). 그래서 리뷰를 두 단계로 분리한다:
 
 1. **발견 단계 (4-agent)** = **coverage-first**. 각 리뷰어는 불확실·저심각 항목까지 **전수** 보고하고, 항목마다 `[conf: high|med|low]` + severity 를 태깅한다. 리뷰어가 스스로 "minor / 애매" 라고 **버리지 않는다** — 각 agent md 의 "발견 원칙" 참조.
 2. **triage 단계 (본 skill 통합)** = **filter/rank**. 4-agent 가 올려보낸 전량을 여기서 P0-P3 로 랭킹·취사선택한다. 필터링은 **오직 이 단계**에서 (uncertain 은 버리지 않고 P3 로). 랭킹 시 각 finding 을 **이번 diff 도입 vs pre-existing** 으로 분류 — 판정은 추측이 아니라 변경 파일 목록(`git diff --name-only`)과 finding 파일의 교집합으로. pre-existing 은 버리지 않되(P3 + 근원 기록) 이번 변경의 회귀와 섞지 않는다.

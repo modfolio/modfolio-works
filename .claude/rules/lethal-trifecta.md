@@ -56,9 +56,8 @@ Lead Planner = orchestration role. private data access (modfolio internal canon 
 ```yaml
 ---
 name: lead-planner
-model: claude-opus-4-8
-effort: xhigh
-thinking_budget: standard
+model: claude-opus-5
+effort: max
 # trifecta 회피 — untrusted input 직접 처리 금지
 trust_class: trusted-input-only
 allowedTools:

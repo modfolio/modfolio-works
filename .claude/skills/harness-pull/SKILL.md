@@ -19,14 +19,21 @@ ecosystem 은 **참고서** 지 대장이 아니다. universe 는 최신 권고�
 ```bash
 bun run harness-pull              # 기본: diff 출력만 (report-only, v2.10+)
 bun run harness-pull -- --apply   # 검토 후 실제 적용
-# 또는 로컬 bin 해석
-bunx modfolio-harness-pull         # report-only
-bunx modfolio-harness-pull --apply # apply
 ```
+
+> **`bun run` 을 쓴다 — `bunx` 아님.** `bunx modfolio-harness-pull` 은 devDep 이 **이미 설치된
+> repo 에서도** 로컬 `node_modules/.bin/` 을 건너뛰고 public registry 를 조회하는 일이 있다:
+>
+> ```
+> error: GET https://registry.npmjs.org/modfolio-harness-pull - 404
+> ```
+>
+> modfolio-design 2026-07-26 실측 — **같은 repo·같은 셸에서 1회 성공 / 1회 실패**(비결정적).
+> `bun run harness-pull` 은 매번 안정적이었다. `bunx` 형태는 아래 최초 부트스트랩 설명에만 남긴다.
 
 ### 첫 도입 repo — 두 단계 필요
 
-`bunx modfolio-harness-pull` **전역 호출은 작동하지 않는다.** bunx 는 로컬 `.npmrc` 를 읽지 않아 scoped + private 패키지를 public registry (npmjs.org) 에서 찾아 404 반환. 반드시 `.npmrc` + `bun add -D` 로 로컬 설치부터.
+`bunx modfolio-harness-pull` **전역 호출은 작동하지 않는다.** bunx 는 로컬 `.npmrc` 를 읽지 않아 scoped + private 패키지를 public registry (npmjs.org) 에서 찾아 404 반환. 반드시 `.npmrc` + `bun add -D` 로 로컬 설치부터. (⚠ 위 실측대로 이 404 는 **설치 후에도 재현**되므로, 설치 뒤에도 `bun run harness-pull` 을 쓴다.)
 
 ```bash
 # 1) .npmrc 생성 (없거나 @modfolio scope 없는 경우)

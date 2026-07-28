@@ -1,4 +1,5 @@
 ---
+sor: modfolio-design/canon/design-innovation.md  # SoR 이관 2026-07-23; 이 파일은 mirror — 편집은 upstream(modfolio-design)
 title: Design Innovation — Detection & Self-Check Tools
 version: 2.0.0
 last_updated: 2026-04-14

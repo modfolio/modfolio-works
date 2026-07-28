@@ -1,7 +1,7 @@
 ---
 title: Velocity 모드 — fast-MVP hook 프로필 (lean 기본 / strict opt-in)
-version: 1.0.0
-last_updated: 2026-06-18
+version: 1.1.0
+last_updated: 2026-07-28
 source: [2026-06-18 v3.13 세션, 사용자 명시 결정 (fast-MVP ZERO 오버헤드)]
 sync_to_siblings: true
 applicability: conditional
@@ -10,7 +10,14 @@ consumers: [harness-pull, ops, release]
 
 # Velocity 모드 — hook 프로필
 
-> **무사용자 fast-MVP 단계: harness 가 wiring 하는 hook 을 결정적 안전 가드 2개로 축소(`velocity`, 기본). 전체 set 은 `harness-lock.json {"profile":"strict"}` opt-in. velocity 가 없애는 건 토큰이 아니라 지연(latency)이다.**
+> **무사용자 fast-MVP 단계: harness 가 wiring 하는 hook 을 결정적 안전 가드 2개 + debrief nudge 1개로 축소(`velocity`, 기본). 전체 set 은 `harness-lock.json {"profile":"strict"}` opt-in. velocity 가 없애는 건 토큰이 아니라 지연(latency)이다.**
+>
+> **v1.1.0 (2026-07-28, 오너 결정 "전부 제대로 작동하고 에러·워닝 없도록 정공법으로")** —
+> `stop-debrief-check` 가 velocity 기본에 편입됐다. 근거: opt-in(`autoDebrief:true`) 상태로
+> 7/7 repo 가 밤샘 판단을 카드 0장으로 끝냈고(Muse 코퍼스에 멤버 경험이 안 쌓임), 훅 자체는
+> velocity 비용 봉투 안에 있다 — 결정적·0토큰·Stop 1회, 그리고 **frontier 모델을 쓴 세션이
+> /debrief 없이 끝날 때만** 1회 안내(Opus 5 단독 세션은 아무것도 안 뜸 = canon "escalation 후
+> debrief 필수" 의 집행일 뿐). opt-out = `harness-lock.json {"autoDebrief": false}`.
 
 `applicability: conditional` — `velocity` 는 **무사용자 pre-production** 앱의 기본. 실사용자 보유 앱은 `strict` (trigger: `solo-main-workflow.md`).
 
@@ -80,7 +87,7 @@ ecosystem(관제탑) 본체엔 sibling 프로필과 **무관한** `session-start
 ## Anti-patterns
 
 - ❌ "hook 이 토큰을 태운다" 가정 → hook 제거로 토큰 절감 기대. hook 은 0 토큰. 토큰은 effort/context 문제.
-- ❌ velocity 를 "품질/안전 폐기"로 오해 — `/release` 게이트·안전 가드 2개 유지.
+- ❌ velocity 를 "품질/안전 폐기"로 오해 — `/release` 게이트·안전 가드 2개·debrief nudge 유지.
 - ❌ ecosystem 이 sibling settings.json 직접 편집해 lean 화 — sibling 이 pull(Hub-not-enforcer).
 - ❌ 실사용자 앱을 velocity 로 방치 — 트리거 도래 시 그 앱은 strict.
 

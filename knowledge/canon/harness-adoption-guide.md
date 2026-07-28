@@ -24,18 +24,22 @@ bash ~/code/modfolio-ecosystem/scripts/ops/adopt-harness.sh           # 미리�
 bash ~/code/modfolio-ecosystem/scripts/ops/adopt-harness.sh --apply   # 적용까지
 ```
 
-스크립트가 멱등으로: `.npmrc` 셋업 → `GITHUB_TOKEN` 확인 → `@modfolio/harness`+`@modfolio/contracts` `@latest` 설치(caret) → `harness-pull` 동기. **로컬 파일만**(commit/push 안 함).
+스크립트가 멱등으로: `.npmrc` 셋업(pkg.modfolio.io) → lockfile 정합 확인 → `@modfolio/harness`+`@modfolio/contracts` `@latest` 설치(caret) → `harness-pull` 동기. **로컬 파일만**(commit/push 안 함).
+
+> **토큰 불요 (2026-07-26 정정)**: 소비 좌표는 `pkg.modfolio.io` 하나이고 **anon-read** 다 — DEV·CI 어디서도 `GITHUB_TOKEN` 이 필요 없다(canon `registry-redundancy.md` 제1조). 종전 부트스트랩은 신규 repo 를 GitHub Packages + 토큰 의존 상태로 만들었는데, 그건 §결정과 정면으로 모순이었고 "새 repo 마다 CI 토큰 배포"라는 가장 어려운 제약을 되살리고 있었다.
 
 ### 수동 (스크립트 없이)
 
 1. `.npmrc` (프로젝트 루트) — `templates/npmrc.example` 복사:
    ```
-   @modfolio:registry=https://npm.pkg.github.com
-   //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
+   @modfolio:registry=https://pkg.modfolio.io/api/packages/modfolio/npm/
    ```
-2. 토큰(read:packages) — athsra: `athsra set <repo> GITHUB_TOKEN=ghp_...` 후 `athsra run <repo> -- <cmd>`. ⚠️ 리터럴 금지, `file:`/`link:` 금지(`contracts.md`).
+   토큰 줄 없음 — anon-read.
+2. **이 repo 가 `@modfolio/*` 를 게시한다면 위를 하지 않는다** (제2조 퍼블리셔 예외). `bun publish` 는 인증을 `publishConfig` 가 아니라 @modfolio scope registry 로 해석하므로, 무토큰 registry 로 돌리면 게시가 `missing authentication` 으로 깨진다. scope 는 게시 registry 에 고정하고 토큰은 athsra 로: `athsra set <repo> GITHUB_TOKEN=ghp_...` 후 `athsra run <repo> -- <cmd>`. ⚠️ 리터럴 금지, `file:`/`link:` 금지(`contracts.md`).
 3. 설치: `bun add -D @modfolio/harness@latest && bun add @modfolio/contracts@latest`
-4. 첫 동기: `bunx modfolio-harness-pull --dry-run` → 검토 → `--apply`
+4. **lockfile 재해상 확인** (제3조): `grep npm.pkg.github.com bun.lock` 이 잡히면 `.npmrc` 만 바뀐 반쪽 이관이다 — `rm bun.lock && bun install`. 레지스트리 전환은 **lock 재해상까지가 한 단위**다(connect 2026-07-18, CI 1.5일 정지).
+5. 첫 동기: `bunx modfolio-harness-pull --dry-run` → 검토 → `--apply`
+6. 법칙 자가 진단: `/adopt-laws` (또는 `bun run node_modules/@modfolio/harness/scripts/harness-pull/validate-law-compliance.ts`)
 
 **fully external** (ecosystem clone 없음, gh 인증만):
 ```bash

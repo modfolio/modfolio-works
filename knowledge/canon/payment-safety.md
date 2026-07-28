@@ -52,7 +52,14 @@ deploy(`wrangler deploy`) 자체는 게이트하지 않는다 — 표준 배포�
 
 검증(강화): `command_sha256` 일치(scope) + `expires_at` 미래 **AND 현재+10분 이내**(standing grant 금지) + **N개 DISTINCT named** `{by,at}`(bare `[1,2,3]`·중복 이름 불인정). **single-use** — 성공 소비 시 토큰 삭제(replay 불가, 다음은 새 승인).
 
-**결정적 방어 레버 = `permissions.deny`**: `bypassPermissions` 에서도 `deny` 살아있음(deny > bypass). 모든 sibling settings 에 `Write`·`Edit`·**`Bash(*payment-approval.json*)`** deny → agent 의 Write/Edit + 순진한 Bash 리다이렉트(`echo >`/`tee`/`cp`) 차단.
+**결정적 방어 레버 = `permissions.deny`**: `bypassPermissions` 에서도 `deny` 살아있음(deny > bypass). 모든 sibling settings 에 **`Edit(.claude/payment-approval.json)` + `Bash(*payment-approval.json*)`** deny → agent 의 편집 도구 전체 + 순진한 Bash 리다이렉트(`echo >`/`tee`/`cp`) 차단.
+
+> **정정 (3.43.0)** — 종전엔 `Write(...)` deny 도 함께 배포했으나 은퇴했다. Claude Code 의 파일
+> 권한 검사는 **`Edit(path)` 규칙만 평가하며 그것이 Write 를 포함한 모든 편집 도구를 덮는다** —
+> `Write(...)` 줄은 한 번도 평가된 적 없는 무효 규칙이었고, 매 세션 시작마다 경고를 찍었다
+> (원문: *"…is not matched by file permission checks — only Edit(path) rules are…"*, 허브·athsra
+> 트랜스크립트 실측). athsra 가 라이브로 증명했다: Write 시도는 **Edit 규칙이** 차단하고, `ls`
+> 프로브는 **Bash 규칙이** 차단한다(2026-07-27). 제거로 바뀌는 집행 표면은 정확히 0 이다.
 
 ### 정직한 한계 — 이건 bar-raising, full prevention 아님
 

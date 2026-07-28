@@ -1,4 +1,5 @@
 ---
+sor: modfolio-design/canon/icon-system.md  # SoR 이관 2026-07-23; 이 파일은 mirror — 편집은 upstream(modfolio-design)
 title: Icon System — UnoCSS preset-icons + Iconify 표준
 version: 1.0.0
 last_updated: 2026-05-24

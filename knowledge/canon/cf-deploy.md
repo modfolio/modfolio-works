@@ -1,7 +1,7 @@
 ---
 title: Cloudflare 배포 — 정공법 (Workers Builds + 비대화형 wrangler v4)
-version: 1.3.0
-last_updated: 2026-07-12
+version: 1.6.0
+last_updated: 2026-07-27
 source: [2026-05-18 속도회복 세션 §E, 2026-05-24 사용자 토큰 measurement + hallucination 차단 세션, 2026-06-21 배포 정공법 cement(문서 분산·모순 제거) + Workers Builds 비용 웹검증, 2026-07-12 modfolio P0 실측(workerd SSR 500 — 익명 스모크 구조적 미검출), developers.cloudflare.com]
 sync_to_siblings: true
 applicability: always
@@ -126,6 +126,31 @@ athsra run <repo> -- bunx wrangler deployments list
 
 ## 검증
 
+### ⚠ 먼저 — **"라이브 200" 은 배포 확인이 아니다** (modfolio-design 실측 2026-07-26)
+
+**배포 실패는 사이트를 죽이지 않는다. 안 바꿀 뿐이다.** 구버전 워커가 그대로 200 을 서빙하므로
+`curl` 이 200 을 돌려줘도 그건 *"뭔가가 살아 있다"* 는 뜻이지 *"내 커밋이 나갔다"* 는 뜻이 아니다.
+modfolio-design 은 **CF 빌드 6연속 실패를 200 만 보고 놓쳤다**.
+
+이 함정이 특히 고약한 이유는 200 이 **가장 안심되는 신호**라서다 — 확인했다는 느낌을 주면서
+아무것도 확인하지 않는다. 완료 판정을 200 에 걸어 두면 실패가 조용히 누적된다.
+
+**배포가 실제로 나갔다는 양성 증거 (하나 이상 필요)**
+
+| 증거 | 명령 / 확인 지점 |
+|---|---|
+| CF build outcome | `/builds/workers/{script_tag}/builds` → `build_outcome: "success"` (canon `cf-workers-builds-api.md`) |
+| 배포 Version ID 변화 | `bunx wrangler deployments list` — 배포 전후 ID 가 **달라야** 한다 |
+| 자산 해시 대조 | 빌드 산출물 해시 ↔ 라이브가 서빙하는 해시 |
+| 배포본 안의 실제 값 | 이번 커밋이 바꾼 문자열·버전이 응답에 **실제로 보이는지** |
+
+200 은 이 중 어느 것도 대신하지 못한다. **200 은 "죽지 않았다" 의 증거이고, 위 넷이 "바뀌었다" 의 증거다.**
+
+> 같은 축의 다른 사각지대: `build` 성공도 **workerd 런타임 성공이 아니다**(아래 SSR 항목).
+> 세 신호(200 · build 성공 · 로컬 dev)가 각각 다른 것을 놓치므로, 무엇을 확인하려는지 먼저 정하고
+> 그것을 실제로 보는 신호를 고른다.
+
+
 ```bash
 athsra run <repo> -- bunx wrangler whoami            # 토큰 유효 + account 일치
 athsra run <repo> -- bunx wrangler deployments list  # 최근 배포 = Workers Builds commit
@@ -146,6 +171,36 @@ athsra run <repo> -- bash -c 'curl -s -X PUT -H "Authorization: Bearer $CLOUDFLA
 ```
 
 **검증 — workerd SSR 런타임 (인증 게이트 앱 필수, modfolio P0 실측 2026-07-12)**: **"인증 게이트 뒤의 SSR 라우트는 익명 스모크로 검증된 적이 없다."** 익명 스모크는 302 로 튕겨 페이지 청크를 로드하지 않고(SSR 미실행), 로컬 `vite dev` 는 Node 런타임(jsdom)이라 정상 동작하며, `build` 성공은 런타임 throw 를 못 잡는다 — 세 수단 전부 구조적 사각. DOM 의존 의존성(`isomorphic-dompurify` 등)은 workerd 모듈 init 시 throw → **로그인 사용자에게만 프로덕션 500** 이 산다. 검증은 **`wrangler dev`(workerd) + 인증 우회 픽스처**(비커밋 — `+page.server.ts` 임시 교체 → 실렌더 200 확인 → `git checkout` 복원) 조합만 유효. **`build` 성공 ≠ workerd 런타임 성공.** 렌더 안전 표준은 `llm-markdown-safety.md`.
+
+**⚠ `bun install --frozen-lockfile` 은 락파일 표류의 로컬 확인 수단이 아니다 (2026-07-27 양쪽 실측)**:
+CF 는 이 명령으로 설치하고, 락파일이 워크스페이스 `package.json` 과 어긋나면 *CF 에서는* 죽는다
+(`lockfile had changes, but lockfile is frozen` — design 이 6연속 빌드 실패로 겪음). 그런데
+**로컬 bun 1.3.14 로는 같은 상태를 만들어도 통과한다**:
+
+```
+워크스페이스 version 을 9.9.9 로 bump(락파일 미갱신) → bun install --frozen-lockfile
+→ exit 0 · "Checked N packages (no changes)"      (--dry-run 도 동일)
+```
+
+modfolio-design 과 허브가 **독립적으로 같은 결과**를 얻었다. 즉 "로컬에서 frozen 이 통과했으니
+CF 도 통과한다" 는 **거짓**이고, 그 명령으로 게이트를 짜면 **무엇을 넣어도 초록인 게이트**가 된다.
+
+→ 이 표류의 유일하게 작동하는 확인은 **`harness-pull` 의 워크스페이스 락 표류 검사**다
+(`scripts/harness-pull/lock-drift.ts`). 락을 고친 뒤 그 검사를 다시 돌린다.
+
+**검증 — Workers + `assets` 조합의 미들웨어 (modfolio-design 2026-07-27 실측, 라이브 500 동반)**:
+`assets` 바인딩을 쓰는 워커에서 **정적 요청은 기본적으로 워커를 건너뛴다.** 그래서 워커에 붙인
+보안 헤더 미들웨어가 **`/api/*` 같은 동적 경로에만 붙고 HTML 문서 경로에는 안 붙는다** —
+**CSP 가 정작 필요한 쪽이 비는데** 로컬 테스트에는 안 보인다(로컬은 워커를 태우므로 통과).
+
+- **확인**: 라이브 HTML 문서 응답의 헤더를 직접 본다 — `curl -sI https://<host>/` 에 미들웨어가
+  넣는 헤더가 실제로 있는가. `/api/*` 만 보고 판단하지 않는다.
+- **해소**: `assets.run_worker_first`(전체 또는 경로 배열).
+- ⚠ **켜는 순간 따라오는 함정**: 자산 바인딩이 돌려주는 `Response` 의 **헤더는 불변(immutable)**
+  이다. 거기에 `headers.set()` 하면 **런타임 throw → 라이브 500**. 반드시 복사해서 쓴다:
+  `new Response(res.body, res)` 로 새 응답을 만든 뒤 헤더를 설정.
+- design 은 이 두 번째 함정을 모르고 켰다가 포털 500 을 냈다(인시던트 기록 보유). **워커+assets
+  조합은 fleet 다수가 쓰므로** 켜기 전에 헤더 복사를 같이 넣는다.
 
 **검증 — CSP (정적 자산 앱·라이브 enforce 후 필수, athsra 2026-07-09 실측)**: 정적 사이트(Astro `security.csp` 해시 기반 등)의 CSP 는 **로컬 preview 로 검증되지 않는다** — CF 엣지가 배포 후 주입하는 리소스가 소스에 없어 로컬엔 위반이 안 보인다. 배포 후 **브라우저 콘솔에서 enforce 위반을 재검증**한다. 실관측된 엣지-주입 위반 2종: ① CF Browser Insights 비콘(`static.cloudflareinsights.com` — 엣지 주입, 소스 부재) → `script-src`/`connect-src` 허용 필요, ② `font-src 'self'` 가 base64 `data:` 폰트(pretendard 등 한글 fallback) 차단 → `font-src` 에 `data:` 추가. 이메일 난독화·Web Analytics 등도 CSP 를 조용히 위반할 수 있다.
 

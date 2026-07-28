@@ -1,6 +1,7 @@
 ---
+name: quality-fixer
 description: 품질 위반 자동수정기. 리뷰 보고서 기반 P0/P1 기계적 수정. 정공법 원칙
-model: claude-opus-4-8
+model: claude-opus-5
 effort: xhigh
 cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. 기계 수정 정형 (정공법) — overthinking 회피. quality regression 시 revert."

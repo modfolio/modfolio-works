@@ -34,6 +34,8 @@ export interface HookInput {
 	/** Stop/SessionEnd events — absolute path to the session jsonl transcript. */
 	transcript_path?: string;
 	session_id?: string;
+	/** UserPromptSubmit — the prompt text, before Claude processes it. */
+	prompt?: string;
 }
 
 /** Maximum ms to wait for the Claude Code hook runner to close stdin. */

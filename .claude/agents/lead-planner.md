@@ -1,9 +1,10 @@
 ---
+name: lead-planner
 description: Multi-Agent Research 3-tier 의 Tier 1 — orchestration only. 사용자 요청을 task decomposition + Generator subagent 에 structured artifact 로 delegate. untrusted input 직접 처리 금지 (lethal-trifecta 회피).
-model: claude-opus-4-8
-effort: xhigh
+model: claude-opus-5
+effort: max
 cache_control: { type: "ephemeral", ttl: "1h" }
-_effort_change_note: "v2.35 P1.5 신설 (plan crystalline-sparking-sky). orchestration role — overthinking 회피 위해 xhigh 시작. quality regression 시 max 검토."
+_effort_change_note: "xhigh → max. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
 trust_class: trusted-input-only
 governance: owasp-agentic-2026
 skills:

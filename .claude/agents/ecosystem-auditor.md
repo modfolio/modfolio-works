@@ -1,6 +1,7 @@
 ---
+name: ecosystem-auditor
 description: ecosystem.json vs 실제 상태 검증. 읽기 전용
-model: claude-opus-4-8
+model: claude-opus-5
 effort: high
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026

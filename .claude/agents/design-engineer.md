@@ -1,6 +1,7 @@
 ---
+name: design-engineer
 description: Brand-First Generator. 디자인 의사결정 + Modern CSS + Figma 양방향.
-model: claude-opus-4-8[1m]
+model: claude-opus-5
 effort: max
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026

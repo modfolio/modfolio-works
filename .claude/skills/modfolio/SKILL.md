@@ -47,7 +47,7 @@ ExitPlanMode → 자동 실행 (분할 commit 까지)
 2. **knowledge-coverage** — canon 적용 (always 우선) + MEMORY.md
 3. **skill-agent** — `.claude/{skills,agents}` frontmatter + 권고 정합
 4. **stack-evergreen** — Bun/TS/Biome/Zod/wrangler 버전
-5. **effort-policy** — `CLAUDE_CODE_EFFORT_LEVEL=max` + agent effort 분포
+5. **effort-policy** — `CLAUDE_CODE_EFFORT_LEVEL` **부재** 확인(설정돼 있으면 위반) + agent effort 분포 + `[1m]` 잔재
 6. **feedback-cycle** — 마지막 send 시점 + pending 변경
 7. **secrets-ops** — athsra `<repo>` 등록 + `.gitignore` 정합 + 평문 `.env` 부재 (canon `secret-store.md` v1.13+)
 
@@ -142,7 +142,7 @@ bunx modfolio-check
   [P2] agentic-engineering canon 미수신
 
 [NEXT BEST ACTION] (시간 예산 30분)
-  [P1] @modfolio/harness@2.12.0 → ecosystem.harnessLatest=2.13.0
+  [P1] @modfolio/harness <설치된 버전> → ecosystem.harnessLatest <최신>
   -> bunx modfolio-harness-pull --dry-run && bunx modfolio-harness-pull --apply
      예상: 8분 / 3000 토큰 / 함께 해소 2건
 

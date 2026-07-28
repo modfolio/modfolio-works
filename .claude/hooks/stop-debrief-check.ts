@@ -2,30 +2,75 @@
 /**
  * scripts/hooks/stop-debrief-check.ts
  *
- * Stop hook (opt-in) — frontier 모델을 쓴 세션이 /debrief 없이 끝나려 하면
- * **1회 차단** + 안내. escalation 비용을 1회성 소비가 아닌 영속 자산(playbook
- * 카드)으로 바꾸는 캡처 규율의 자동 상기 장치. canon: reasoning-playbooks.md.
+ * Stop hook (fleet-default since 3.43.0) — frontier 모델을 쓴 세션이 /debrief
+ * 없이 끝나려 하면 **1회 차단** + 안내. escalation 비용을 1회성 소비가 아닌
+ * 영속 자산(playbook 카드)으로 바꾸는 캡처 규율의 자동 상기 장치.
+ * canon: reasoning-playbooks.md. opt-out = harness-lock `{"autoDebrief":false}`.
+ *
+ * ## 감지가 v3.20 → 3.43.0 에서 교체된 이유 (관측자가 자기 소음을 신호로 셌다)
+ *
+ * 종전 판정은 transcript 전체에 `"modfolio-debrief"` 가 **등장하기만 하면**
+ * debrief 완료로 봤다. 그런데 `bun install` 이 하네스 bin 목록을 출력하며
+ * `- modfolio-debrief` 줄을 찍는다 — **하네스를 설치/갱신한 모든 세션이 nudge 를
+ * 무장해제**했다. 실측: atelier 가 opt-in 을 켜고도 frontier 20-커밋 밤샘에서
+ * 카드 0장, 훅은 76ms 로 돌고 통과(2026-07-28). `scripts/debrief/cli.ts` marker
+ * 도 같았다 — 그 파일을 읽기만 해도 발화 해제.
+ *
+ * 새 판정 (산출물 우선, 결정적):
+ *   1. `.claude/last-debrief` 의 ISO timestamp ≥ 세션 시작 시각 — debrief CLI 가
+ *      성공 append 마다 쓰는 마커라, 세션-범위로 정확하고 위조 유인이 없다.
+ *   2. fallback: CLI 성공 출력 **원문**(`debrief: appended` / queued) 만 —
+ *      dry-run(`debrief: valid (dry-run)`)은 카드가 아니므로 세지 않는다.
  *
  * 결정성 (velocity 정합 — 0 토큰, LLM 없음):
  *   - frontier 사용 감지 = transcript 에서 frontier model id 문자열 grep
  *     (id 목록 = ecosystem.json `distillation.modelTiers.frontier`).
- *   - debrief 수행 감지 = 같은 transcript 에 debrief CLI 실행 흔적
- *     (`modfolio-debrief` / `scripts/debrief/cli.ts`) 존재 여부 — clock 비교
- *     없이 세션-범위로 정확.
  *   - block-once = `stop_hook_active` 재진입 시 무조건 통과 (세리머니 방지 —
  *     안내 1회 후에는 사용자/모델 판단에 맡긴다).
  *
- * 안전: opt-in 전용 (`harness-lock.json {"autoDebrief":true}` — settings-adapt
- * 가 게이트하지만 방어적 재확인). config/transcript 부재 등 모든 이상 경로는
- * exit 0 (절대 세션을 막는 원인이 되지 않는다).
+ * 안전: config/transcript 부재·판정 불능 등 모든 이상 경로는 exit 0
+ * (절대 세션을 막는 원인이 되지 않는다).
  */
 
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { findEcosystemRoot, gitRoot, readHookInput } from "./_lib.ts";
 
-/** Transcript fragments that prove /debrief ran this session. */
-const DEBRIEF_MARKERS = ["modfolio-debrief", "scripts/debrief/cli.ts"];
+/**
+ * CLI 성공 출력의 원문 접두 — 이 둘만 debrief 의 증거다. 넓은 단어 매칭은 위
+ * 헤더의 사고로 금지: marker 는 "그 일이 일어났을 때만 나타나는 문자열" 이어야
+ * 하고, 패키지 bin 이름은 그 조건을 만족하지 않는다.
+ */
+const DEBRIEF_SUCCESS_MARKERS = [
+	"debrief: appended ",
+	"debrief: ecosystem root not visible — queued ",
+];
+
+/** transcript 첫 timestamp = 세션 시작. 못 읽으면 undefined(판정 불능 → 억제). */
+function sessionStartMs(transcript: string): number | undefined {
+	const m = /"timestamp"\s*:\s*"([^"]+)"/.exec(transcript);
+	if (!m?.[1]) return undefined;
+	const ms = Date.parse(m[1]);
+	return Number.isFinite(ms) ? ms : undefined;
+}
+
+/** `.claude/last-debrief` 가 세션 시작 이후를 가리키면 true. */
+function debriefedByArtifact(
+	cwd: string,
+	startMs: number | undefined,
+): boolean {
+	if (startMs === undefined) return false;
+	try {
+		const raw = readFileSync(
+			join(cwd, ".claude", "last-debrief"),
+			"utf-8",
+		).trim();
+		const ms = Date.parse(raw);
+		return Number.isFinite(ms) && ms >= startMs;
+	} catch {
+		return false;
+	}
+}
 
 function frontierIds(cwd: string, ecoRoot: string | undefined): string[] {
 	const candidates = [
@@ -59,19 +104,18 @@ try {
 	if (input.stop_hook_active === true) process.exit(0);
 
 	const cwd = gitRoot();
-	// opt-in 재확인 — wiring 이 게이트하지만 방어적 재확인.
-	let optIn = false;
+	// fleet-default (3.43.0) — settings-adapt 이 autoDebrief:false 면 배선 자체를
+	// 빼지만, 방어적으로 opt-OUT 을 여기서도 존중한다(배선 잔재 대비).
 	try {
 		const lock = JSON.parse(
 			readFileSync(join(cwd, ".claude", "harness-lock.json"), "utf-8"),
 		) as {
 			autoDebrief?: boolean;
 		};
-		optIn = lock.autoDebrief === true;
+		if (lock.autoDebrief === false) process.exit(0);
 	} catch {
-		optIn = false;
+		// lock 부재/파손 = 기본(켜짐)
 	}
-	if (!optIn) process.exit(0);
 
 	const transcriptPath = input.transcript_path;
 	if (!transcriptPath || !existsSync(transcriptPath)) process.exit(0);
@@ -82,9 +126,9 @@ try {
 	const frontierUsed = ids.some((id) => transcript.includes(`"model":"${id}"`));
 	if (!frontierUsed) process.exit(0);
 
-	const debriefed = DEBRIEF_MARKERS.some((marker) =>
-		transcript.includes(marker),
-	);
+	const debriefed =
+		debriefedByArtifact(cwd, sessionStartMs(transcript)) ||
+		DEBRIEF_SUCCESS_MARKERS.some((marker) => transcript.includes(marker));
 	if (debriefed) process.exit(0);
 
 	console.log(

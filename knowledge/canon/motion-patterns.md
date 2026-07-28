@@ -1,4 +1,5 @@
 ---
+sor: modfolio-design/canon/motion-patterns.md  # SoR 이관 2026-07-23; 이 파일은 mirror — 편집은 upstream(modfolio-design)
 title: Motion Patterns
 version: 1.1.0
 last_updated: 2026-05-24

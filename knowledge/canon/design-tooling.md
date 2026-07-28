@@ -1,8 +1,9 @@
 ---
+sor: modfolio-design/canon/design-tooling.md  # SoR 이관 2026-07-23; 이 파일은 mirror — 편집은 upstream(modfolio-design)
 title: Design Tooling
-version: 1.1.0
-last_updated: 2026-05-24
-source: [knowledge/references/design-tooling-harness.md, 2026-05-24 staleness audit + Figma MCP 풀 카탈로그 갱신]
+version: 2.0.0
+last_updated: 2026-07-26
+source: [knowledge/references/design-tooling-harness.md, 2026-05-24 staleness audit + Figma MCP 풀 카탈로그 갱신, 2026-07-26 오너 결정 — Canva 단일 · Figma/Paper 미사용]
 sync_to_siblings: true
 applicability: always
 consumers: [design, design-engineer]
@@ -10,7 +11,25 @@ consumers: [design, design-engineer]
 
 # Design Tooling — Canonical Reference
 
-> Paper + Figma + Canva 3도구 워크플로우. 각 도구는 역할이 다르다.
+> **v2.0 (2026-07-26 오너 결정): 클라우드 크리에이티브 = Canva 단일. Figma·Paper 는 미사용(보류).**
+> 로컬 미디어(이미지 생성·배경제거·영상 변환·카피)는 infra `forge` — 우리가 아니라 infra 소유
+> (infra `ADR-014-creative-substrate`). 아래 §Figma/§Paper 절은 **참조용 보존**이며 현행 워크플로가 아니다.
+
+## 현행 도구 (v2.0)
+
+| 도구 | 역할 | 입구 | 상태 |
+|---|---|---|---|
+| **Canva** (Pro) | 브랜드 납품물 저작 — 소셜 카드·피치덱·PDF. 브랜드킷/브랜드템플릿 기반 | MCP `https://mcp.canva.com/mcp` (OAuth) | **1급 · 현행** |
+| **forge** (infra) | 이미지 생성/최적화/배경제거 · 영상 메타/포스터/변환 · 카피 초안 | MCP `https://forge.modfolio.io/mcp/` (Bearer `FORGE_API_TOKEN`) + `@modfolio/forge-sdk` | **소비 · 현행** |
+| Figma | 디자인 시스템·협업 | MCP `https://mcp.figma.com/mcp` | 미사용(보류) |
+| Paper | 개발 중 비주얼 이터레이션 | 로컬 `127.0.0.1:29979` | 미사용(보류) |
+
+**왜 단일화**: 도구 3개를 병행하면 브랜드 정체성의 SoT 가 흩어진다. `brand/registry.json` +
+Brand Passport 를 정본으로 두고 **Canva 브랜드킷 하나에 정렬**하는 편이 납품물 일관성에 유리하다.
+Figma/Paper 를 되살릴 필요가 생기면 이 절만 되돌리면 된다(설정·문서 모두 보존).
+
+> 미사용 도구를 문서에서 지우지 않는 이유: infra ADR-014 의 공유 어휘가 Canva/Adobe/**Figma** 를
+> design 소유로 명시한다. 소유는 유지하고 **운영 상태만** 끈다(어휘 재정의 금지).
 
 ## 2026-05 갱신 — Figma MCP 풀 카탈로그
 

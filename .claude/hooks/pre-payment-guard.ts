@@ -312,6 +312,19 @@ const CF_READONLY_MCP =
 // which CAN provision paid resources and stay guarded (CF via read-verb allowlist above).
 const SVELTE_SAFE_MCP = /^mcp__svelte__/;
 
+// ecosystem-state MCP server — the hub's OWN read-only projection of `@modfolio/contracts`
+// (registry + events). All 8 tools are `readOnlyHint:true` pure derivations: no fetch, no fs
+// write, no secrets, no provisioning (`scripts/mcp/ecosystem-state-tools.ts` header documents
+// trifecta 0/3). Its serialized args are CONTRACT EVENT NAMES — and the payment events are
+// precisely the ones a wiring audit has to ask about, so `subscription.cancelled` /
+// `payment.completed` make MCP_PAYMENT match on essentially every useful call. Observed
+// 2026-07-28 (fleet wiring sweep): `ecosystem_webhook_url({repo, eventType:
+// 'subscription.cancelled'})` was HARD-BLOCKED while auditing whether consumers are wired at
+// all. Blocking a read-only lookup protects no money — it blocks the audit that finds broken
+// money paths. Skipped wholesale (same class as SVELTE/GITHUB: args = DATA/TEXT, not a spend);
+// safe as a namespace because the server exposes no write tool at all, UNLIKE CF/neon.
+const ECOSYSTEM_STATE_SAFE_MCP = /^mcp__ecosystem-state__/;
+
 function resolveMode(): Mode {
 	const raw = (process.env.PAYMENT_GUARD_MODE ?? "block").toLowerCase();
 	return raw === "off" || raw === "warn" || raw === "block" ? raw : "block";
@@ -488,9 +501,11 @@ function classify(
 			SCHEDULER_SAFE_MCP.test(toolName) ||
 			GITHUB_SAFE_MCP.test(toolName) ||
 			CF_READONLY_MCP.test(toolName) ||
-			SVELTE_SAFE_MCP.test(toolName)
+			SVELTE_SAFE_MCP.test(toolName) ||
+			ECOSYSTEM_STATE_SAFE_MCP.test(toolName)
 		) {
-			// Claude Code environment / remote-scheduling / GitHub content / Svelte code-analysis tool — not a payment
+			// Claude Code environment / remote-scheduling / GitHub content / Svelte code-analysis /
+			// ecosystem-state contract-derivation tool — not a payment
 			// surface. Its payment-mentioning or command-describing args are TEXT, not an executed
 			// spend. Skip BOTH the MCP_PAYMENT match and the Bash-segment fallthrough (same as athsra).
 			return null;

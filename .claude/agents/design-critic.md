@@ -1,6 +1,7 @@
 ---
+name: design-critic
 description: Anti-Slop binary FAIL/PASS 판정. negative-space + indistinguishability만 본다. 읽기 전용
-model: claude-opus-4-8
+model: claude-opus-5
 effort: xhigh
 cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026

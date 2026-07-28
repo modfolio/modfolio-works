@@ -1,9 +1,9 @@
 ---
 title: Cloudflare Workers Builds — API 완전 자동화 + 진단 (build token silent expire + private/local dep 실패 포함)
-version: 1.5.0
+version: 1.6.0
 last_updated: 2026-07-01
 source: [2026-05-24 gistcore 진단 세션, 2026-05-31 modfolio-pay 3일 outage(file: dep) 회고, 2026-07-01 CF edge completeness round(build-token refresh 자동화), developers.cloudflare.com/workers/ci-cd/builds/api-reference, 실증 curl 시퀀스]
-changelog: ["1.5.0 (2026-07-01): build-token silent-expire 의 '분기별 수동 점검 권장'을 자동화로 대체 — scripts/ops/cf-build-token-refresh.py(canonical 토큰=관측된 success 다수결, NEVER_TOUCH owner-domain skip, report/--apply/--rebuild/--json) + 월 1회 .forgejo/workflows/cf-build-token-refresh.yml(NAS, $0). 실측: yeonsoo 2 trigger 가 rolled 2026-03-27 토큰에 5연속 fail 검출. athsra child-exit 미전파 → CI 는 --json 폴링. (knowledge/journal/20260701-cf-edge-completeness.md)", "1.4.0 (2026-06-28): @astrojs/cloudflare 14 SESSION KV 비멱등 provisioning 함정(#4) 추가 — adapter 13+ 가 세션을 SESSION KV 로 기본 활성화하고 wrangler automatic provisioning 이 create-only 라 재배포 시 code 10014 충돌; fix=KV 사전생성 + wrangler.jsonc id 명시 고정. dev/on + 3 브랜드(amberstella/fortiscribe/keepnbuild) astro 5→7 + adapter 12→14 마이그레이션 실증.", "1.3.0 (2026-06-24): 빌드 OOM(build container 힙 초과) 세 번째 실패 시나리오 추가 — vite build 큰 SvelteKit/SSR 번들이 ~2GB 기본 힙 OOM(rendering chunks), fix=NODE_OPTIONS max-old-space 6144 를 build script 에 내장(bun run 래퍼 = CF·WSL·Win 공통). pdgd 2026-06-24 실증, 큰 번들 fleet 공통 위험.", "1.2.1 (2026-06-22): stale-local-clone 진단 함정 추가 + athsra-in-CI fix 메커니즘 명확화 (trigger build_command = 일반 bun run build → repo package.json build 실행이라 fix = repo 한 줄, CF-side 아님). gistcore·docs·admin·modfolio 4 repo 1줄 제거 → 5 worker build success + live 200 실증.", "1.2.0 (2026-06-21): athsra-in-CI build script anti-pattern 함정 추가 (fleet-wide 진단 — apps/landing build 의 `athsra run` 이 CF runner 에서 command-not-found). build-token 만료 fleet 복구 + docs GITHUB_TOKEN 주입 실증.", "1.1.0 (2026-06-08): source 필드로 CI 판별 불가 정정(build history 사용) + private/local dep 설치 실패를 TL;DR·함정표에 추가(modfolio-pay 피드백)"]
+changelog: ["1.6.0 (2026-07-23, 항목 소급 기록 2026-07-28): pdgd 실측 3건을 함정표에 + TL;DR 최상단 '추측 API 호출 금지' 배너 — ① `12042 A trigger already exists` = 있을 때 재사용 분기 부재 ② `grant_id: null` 은 신뢰 지표가 아니다(연결 진단은 `build_outcome` 으로만) ③ wrangler OAuth 토큰은 Builds API 403(스코프 없음, athsra CLOUDFLARE_API_TOKEN 필요). ⚠ 이 줄은 645455d 가 버전만 1.6.0 으로 올리고 changelog 항목을 안 남겨 비어 있던 것을 뒤늦게 채운 것이다 — 버전과 이력이 어긋나면 '무엇이 언제 바뀌었나' 를 파일 자신에게 물을 수 없다.", "1.5.0 (2026-07-01): build-token silent-expire 의 '분기별 수동 점검 권장'을 자동화로 대체 — scripts/ops/cf-build-token-refresh.py(canonical 토큰=관측된 success 다수결, NEVER_TOUCH owner-domain skip, report/--apply/--rebuild/--json) + 월 1회 .forgejo/workflows/cf-build-token-refresh.yml(NAS, $0). 실측: yeonsoo 2 trigger 가 rolled 2026-03-27 토큰에 5연속 fail 검출. athsra child-exit 미전파 → CI 는 --json 폴링. (knowledge/journal/20260701-cf-edge-completeness.md)", "1.4.0 (2026-06-28): @astrojs/cloudflare 14 SESSION KV 비멱등 provisioning 함정(#4) 추가 — adapter 13+ 가 세션을 SESSION KV 로 기본 활성화하고 wrangler automatic provisioning 이 create-only 라 재배포 시 code 10014 충돌; fix=KV 사전생성 + wrangler.jsonc id 명시 고정. dev/on + 3 브랜드(amberstella/fortiscribe/keepnbuild) astro 5→7 + adapter 12→14 마이그레이션 실증.", "1.3.0 (2026-06-24): 빌드 OOM(build container 힙 초과) 세 번째 실패 시나리오 추가 — vite build 큰 SvelteKit/SSR 번들이 ~2GB 기본 힙 OOM(rendering chunks), fix=NODE_OPTIONS max-old-space 6144 를 build script 에 내장(bun run 래퍼 = CF·WSL·Win 공통). pdgd 2026-06-24 실증, 큰 번들 fleet 공통 위험.", "1.2.1 (2026-06-22): stale-local-clone 진단 함정 추가 + athsra-in-CI fix 메커니즘 명확화 (trigger build_command = 일반 bun run build → repo package.json build 실행이라 fix = repo 한 줄, CF-side 아님). gistcore·docs·admin·modfolio 4 repo 1줄 제거 → 5 worker build success + live 200 실증.", "1.2.0 (2026-06-21): athsra-in-CI build script anti-pattern 함정 추가 (fleet-wide 진단 — apps/landing build 의 `athsra run` 이 CF runner 에서 command-not-found). build-token 만료 fleet 복구 + docs GITHUB_TOKEN 주입 실증.", "1.1.0 (2026-06-08): source 필드로 CI 판별 불가 정정(build history 사용) + private/local dep 설치 실패를 TL;DR·함정표에 추가(modfolio-pay 피드백)"]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops]
@@ -12,9 +12,23 @@ supersedes: [cf-deploy.md 의 "AI 는 연결 자체 못 한다" 주장(line 42-4
 
 # Cloudflare Workers Builds — API 완전 자동화 + 진단
 
+> 🛑 **CF Builds 문제를 진단하기 전에 이 canon 을 먼저 읽어라. 엔드포인트를 추측으로 찔러보지 마라.**
+>
+> pdgd 2026-07-23: 세션이 이 문서를 안 보고 grant 엔드포인트 6개를 추측으로 호출해 404 를 받고
+> **"CF API 로는 불가, 대시보드 OAuth 뿐"이라고 두 번 잘못 결론**했다(30분+ 낭비). 오너가
+> "무조건 CF API 로 가능"이라 정정한 뒤 공식 문서를 보니 **이 canon 과 완전히 동일한 시퀀스로
+> 5분 만에 복구**됐다. 몇 개 찔러보고 "불가"라고 결론내는 것은 `agent-evidence.md` 위반이다 —
+> negative 결론은 검증 범위를 명시한 뒤에만. **오너가 "가능하다"고 하면 자신의 무지를 먼저 의심하라.**
+
 > **정정 (2026-05-24)**: `cf-deploy.md` v1.0 에 "Workers Builds 연결 자체(대시보드 OAuth)는 사람 1회 작업, AI 는 못 한다" 라고 적혀 있으나 **사실이 아니다**. Cloudflare GitHub App 이 org 에 한 번만 설치되면 (수동), 그 이후 모든 sibling Worker 의 repo 연결 + build trigger 설정 + 환경변수 + 매뉴얼 빌드는 **전부 CF Workers Builds API 로 자동 가능**. AI 가 100% 처리할 수 있다.
 
 이 canon 은 (1) API endpoints 카탈로그, (2) 한 번만 필요한 사람 작업 = Cloudflare GitHub App 설치, (3) **빈번하지만 진단하기 어려운 실패 — build token silent expire**, (4) athsra + curl 로 짠 진단/복구 명령 시퀀스를 못 박는다. `cf-deploy.md` 는 메커니즘·정책, 이 canon 은 **API 호출 source of truth**.
+
+> ⚠ **배포 완료 판정의 SoT 는 이 문서가 아니라 `cf-deploy.md` v1.4.0 §검증이다.** 아래 본문·changelog 는
+> 과거 복구 사례를 "live 200 실증" 으로 기록하고 있는데, **200 은 배포 확인이 아니다** — 배포 실패는
+> 사이트를 죽이지 않고 **안 바꾼다**(구버전이 계속 200 서빙). 그 기록들은 당시 build success 와 함께
+> 관측된 것이라 결론은 유효하지만, **200 만 보고 완료로 판정하지 말 것**. 양성 증거 4종
+> (build_outcome · **Version ID 변화** · 자산 해시 대조 · 배포본 안의 실제 값) = `cf-deploy.md` §검증.
 
 ## TL;DR (가장 흔한 실패 시나리오 + 복구)
 
@@ -246,6 +260,9 @@ done
 | build token silent expire | push 후 webhook 트리거 되나 build 5초 만에 fail. "Failed: The build token selected for this build has been deleted or rolled" | `GET /builds/tokens` 의 최신 token 으로 trigger PATCH (위 7단계) |
 | 매뉴얼 트리거 body 누락 | `POST /builds/triggers/{uuid}/builds` with `{}` → `12002 Invalid request body` | body = `{"branch":"main"}` (또는 deploy 브랜치) |
 | worker_tag 잘못 추출 | `/builds/workers/{tag}/...` 가 404 | `script.tag` 필드(`/workers/scripts/{name}` 또는 `/workers/services/{name}/default_environment/script_tag`) — `script_id` 아님 |
+| **trigger 중복 생성** (pdgd 2026-07-23) | trigger 가 이미 있는데 `POST /builds/triggers` → 409 `12042 A trigger already exists for this configuration` | 신규 POST 하지 말고 `GET /builds/workers/{tag}/triggers` 로 `trigger_uuid` 확보 → 곧장 `POST /builds/triggers/{uuid}/builds {"branch":"main"}`. 5단계는 "없으면 생성"만 다루므로 **있을 때 재사용 분기**를 여기서 명시 |
+| **`grant_id: null` 오독** (pdgd 2026-07-23) | `GET /builds/workers/{tag}` 응답의 `git_repository.grant_id` 가 null → "grant 끊김, OAuth 재연결 필요"로 오판 | **표시 필드는 신뢰 지표가 아니다.** null 이어도 connection PUT + 기존 trigger 로 빌드가 큐잉되고 success 한다. 연결 진단은 **`POST …/builds` 매뉴얼 트리거의 `build_outcome`으로만** 판정 |
+| **wrangler OAuth 토큰으로 Builds API 호출** (pdgd 2026-07-23) | `wrangler whoami`·`deployments list` 는 되는데 `/accounts/{acct}/builds/…` 만 전부 403 `Authentication error` | `wrangler login` OAuth 토큰에는 **Workers Builds 스코프가 없다.** athsra 의 `CLOUDFLARE_API_TOKEN`(Edit Cloudflare Workers)로만 접근 — `athsra run modfolio-ecosystem -- …`. "wrangler 는 되는데 builds 만 403" 이 이 함정의 지문 |
 | GitHub App 미설치 | `PUT /builds/repos/connections` 가 권한 에러 | `cloudflare-workers-and-pages` App 을 GitHub org 에 1회 설치 (`gh api /orgs/{org}/installations` 로 확인) |
 | repo connection 404 (GET) | `/builds/repos/connections` 가 빈 상태에서 404 반환 | 정상. PUT 으로 생성 시도 — idempotent |
 | monorepo bun.lock 캐싱 안 됨 | "No package-lock.json, ... bun.lock! Build caching not supported" | root_directory 가 `apps/<app>` 라 monorepo root 의 `bun.lock` 못 찾음. symlink (`apps/<app>/bun.lock → ../../bun.lock`) 또는 build_command 앞에 `cd ../.. &&` 패턴. 작동에는 문제 없으나 build 시간 증가 |

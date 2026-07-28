@@ -1,8 +1,8 @@
 ---
 title: Platform Plane — universe 자체호스팅 역량 + 코어 서비스 어댑터 토폴로지 (통합 지도)
-version: 1.2.0
-last_updated: 2026-07-03
-source: [2026-06-28 platform-plane 준비 세션 — infra↔universe 계약 공백·도구 SoT 부재 해소. nas-infra.md v1.1 + gh-actions-policy.md v2.1 + ADR-010 운영화. 2026-07-02 v1.1: subscribesTo 이벤트 구독 선언 + host-sibling scan(event_wiring_gaps 실데이터화). 2026-07-03 v1.2: 소비자 온보딩 1페이지(8 역량 × 3줄 — 얻는 것·연결 방법·fallback, ecosystem.json capabilities/nas-infra.md 실문서 기준·미문서 항목 정직 표기)]
+version: 1.3.0
+last_updated: 2026-07-24
+source: [2026-06-28 platform-plane 준비 세션 — infra↔universe 계약 공백·도구 SoT 부재 해소. nas-infra.md v1.1 + gh-actions-policy.md v2.1 + ADR-010 운영화. 2026-07-02 v1.1: subscribesTo 이벤트 구독 선언 + host-sibling scan(event_wiring_gaps 실데이터화). 2026-07-03 v1.2: 소비자 온보딩 1페이지(8 역량 × 3줄 — 얻는 것·연결 방법·fallback, ecosystem.json capabilities/nas-infra.md 실문서 기준·미문서 항목 정직 표기). 2026-07-24 v1.3: forge 역량 추가(8→9) — creative media substrate(infra ADR-014, image/video/copy 생성·처리 + 카피, @modfolio/forge-sdk @ pkg.modfolio.io). platform.capability_status_changed 재사용]
 sync_to_siblings: true
 applicability: always
 consumers: [deploy, ops, new-app, preflight, modfolio]
@@ -39,7 +39,7 @@ universe 는 세 평면으로 분리된다. 이 분리가 "GHA·외부 SaaS 의�
 
 ## 역량 카탈로그 (Platform Plane)
 
-8 역량. 계약 = `@modfolio/contracts/platform` `PlatformCapabilitySchema`. 데이터 SoT =
+9 역량. 계약 = `@modfolio/contracts/platform` `PlatformCapabilitySchema`. 데이터 SoT =
 `ecosystem.json` `infrastructure[modfolio-infra].capabilities`. **NAS = CI/registry/backup 의 SPOF
 이므로 모든 역량은 `fallbackWhenDown` 을 명시**(아래).
 
@@ -51,6 +51,7 @@ universe 는 세 평면으로 분리된다. 이 분리가 "GHA·외부 SaaS 의�
 | `postgres-dev` | nas | (mesh) | athsra-secret | dev DB 만; prod = Neon/D1 별개 → 무영향 |
 | `restic-backup` | nas | (internal) | athsra-secret | 백업 일시중단, 복구 후 재개; **R2 offsite 사본 보존** |
 | `ai-inference` | nas | (mesh) | athsra-secret | 경량 추론 중단 → 외부 API 대안(소비 metering 은 pay) |
+| `forge` | nas | forge.modfolio.io (CF Access) | cf-access | 로컬 미디어 생성/처리 중단 → design 클라우드(Canva/Adobe) 또는 재시도; 앱 런타임 무영향 |
 | `tunnel-access` | nas | (CF edge) | cf-access | 외부 HTTPS 노출 차단 → Tailscale 직접 경로 |
 | `tailscale-mesh` | nas | (mesh) | tailscale | mesh 차단 → CF Access HTTPS 경로로 우회 |
 
@@ -92,6 +93,11 @@ universe 는 세 평면으로 분리된다. 이 분리가 "GHA·외부 SaaS 의�
 - ① 자체호스팅 지식 RAG(RAPTOR+hybrid+rerank) + 경량 추론 — 외부 AI API 비용·유출면 절감(`nas-ai-platform.md`).
 - ② RAG = `rag.modfolio.io` `/query`·`/agentic_query`(CF Access — service token 은 athsra 주입, 원격 배선 P2 진행중) · 추론 = mesh ollama(workstation `mod-main:11434` Tailscale Serve + NAS-CPU fallback). ecosystem 세션은 MCP `knowledge_query`/skill `knowledge-rag-query`.
 - ③ 다운 시: 경량 추론 중단→외부 API 대안(metering=pay).
+
+**`forge` (creative media substrate)**
+- ① 자체호스팅 미디어 생성/처리 + 카피 — image.optimize/generate/remove_bg · video.metadata/poster/transcode · copy.draft/rewrite/alt_text (infra `ADR-014-creative-substrate`, 로컬·무료·비공개: NAS 상시 + workstation GPU). design 클라우드 크리에이티브(Canva/Adobe)의 **보완**(대체 아님) — 로컬 볼륨·개발리소스·프라이빗.
+- ② SDK `@modfolio/forge-sdk`(pkg.modfolio.io, `createForgeClient({baseUrl, token})`) · MCP `mcp.modfolio.io/forge/mcp` · HTTP `forge.modfolio.io/v1`(Bearer `FORGE_API_TOKEN` = athsra `modfolio-infra-nas`) · 콘솔 atlas `/studio`. 채택 = infra `docs/forge-adoption.md`. brand=호출자 제공·무저장(House of Brands).
+- ③ 다운 시: 로컬 미디어 생성/처리 중단→design 클라우드 크리에이티브(Canva/Adobe) 또는 재시도; 앱 런타임 무영향.
 
 **`tunnel-access`**
 - ① NAS 서비스의 외부 HTTPS 노출(CF Tunnel + Zero Trust Access) — Tailscale 없는 환경/브라우저 접근 경로.

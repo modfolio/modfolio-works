@@ -1,7 +1,7 @@
 ---
 title: Evergreen Principle — 권고 + 정보 공유 (+ 절대 불변: no direct sibling edit)
-version: 2.5.1
-last_updated: 2026-07-04
+version: 2.6.0
+last_updated: 2026-07-28
 source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립, v2.3 drift 재정의 2026-05-18, v2.4 절대불변 'ecosystem 은 다른 repo 직접 수정 X' cement 2026-06-09 사용자 명시, v2.5 session-open = 기본 advisory·자동 pull 은 opt-in 2026-06-18 (harness v3.12), v2.5.1 자매 canon fact-ownership 연결 2026-07-04 (ADR-014)]
 sync_to_siblings: true
 applicability: always
@@ -53,7 +53,15 @@ consumers: [preflight, harness-pull, sso-integrate, ecosystem]
 - ✅ harness-pull 보고서에 child SDK vs ecosystem.connectSdkLatest mismatch를 INFO로 표시
 - ✅ feedback에서 각 앱의 SDK 버전 수집해 ecosystem 상태 mirror
 - ✅ Connect SDK breaking change가 발생하면 `knowledge/journal/`에 변경 사실 기록 (각 앱이 참조)
-- ✅ sibling 에 대한 의견·권고는 **ecosystem 자기 공간**(`feedback/<repo>/ecosystem-opinion-*.md` 등)에 기록 — sibling 이 읽고 채택·적용·되돌림 판단은 **그 repo 자율**. sibling repo 의 파일에 ecosystem 이 직접 쓰지 않는다.
+- ✅ sibling 에 대한 의견·권고는 **ecosystem 자기 공간**(`feedback/<repo>/`)에 기록 — sibling 이 읽고 채택·적용·되돌림 판단은 **그 repo 자율**. sibling repo 의 파일에 ecosystem 이 직접 쓰지 않는다.
+  **파일명은 방향을 드러낸다** (2026-07-28 신설 — 이 줄이 종전엔 허브 시점 문장 그대로 멤버에
+  미러돼, 멤버 12곳이 자기 발신에 허브 이름을 쓰고 있었다):
+  - 허브 → 멤버 회신 = `ecosystem-opinion-YYYYMMDD-<slug>.md`, 첫 줄 `# ecosystem → <repo> · …`
+    + 본문에 `대상: <응답한 인바운드 파일명>` 1줄 (같은 날 짝짓기를 정확하게 만든다)
+  - 멤버 → 허브 발신 = `<repo>-finding-YYYY-MM-DD[-HHMM]-<slug>.md`, 첫 줄 `# <repo> → ecosystem · …`
+    (`feedback-send` 가 쓰는 `*_feedback.json` 은 그대로)
+  - **판정은 파일명이 아니라 첫 줄 화자**로 한다(구현 `scripts/lib/feedback-direction.ts`) —
+    이름은 사람이 디렉터리를 훑을 때를 위한 것이고, 옛 이름도 계속 인바운드로 처리된다.
 
 ## 적용 범위
 

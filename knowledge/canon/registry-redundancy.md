@@ -1,10 +1,11 @@
 ---
 title: Registry Redundancy — NAS↔GitHub 이중화 소비 독트린 (git + npm)
-version: 1.2.1
-last_updated: 2026-07-05
+version: 1.6.0
+last_updated: 2026-07-28
 source: [실측 2026-07-04 (pkg.modfolio.io 공개도달 200·git.modfolio.io CF-Access 401·Forgejo upstream-proxy 부재 404·Forgejo git=Tailscale SSH·modfolio-ecosystem dual-push 레퍼런스 세팅), connect 97920b2 (connect-sdk 8.7.0 → pkg.modfolio.io mirror 게시), modfolio-registry-proxy 6521ede (Stage 3 R2 durable registry mode, 104 tests), nas-infra.md dual-push, platform-plane.md npm 소비 polarity, journal 20260701-nas-primary-chain.md]
-changelog: ["1.2.1 (2026-07-12): edge Worker 코드 위치 현행화 — modfolio-registry-proxy repo 를 modfolio-infra registry/proxy 로 subtree 통합(오너 승인, 구 repo archive), ecosystem.json 은 infra.apps 중첩.", "1.2.0 (2026-07-05): §장기진화 Stage 3(R2 durable registry) 코드 완료 반영 — modfolio-registry-proxy 에 REGISTRY_MODE 토글 + R2 SoT publish/read/dist-tags(integrity·no-clobber·낙관적 동시성) 구현(6521ede). Stage 2(origin 클라우드 이전)=skip 결정(Stage 3 가 origin 대체). service-token lock=불요 평가. R2 bucket 생성 payment-gated 명시.", "1.1.0 (2026-07-05): connect-sdk pkg.modfolio.io 게시 완료(97920b2) → 이관 선행조건 ① 클리어·@modfolio 커버리지 전부 200. §결정(단일 registry)과 옛 §2 소비 폴라리티·anti-pattern 을 정합 — 구 'GH Packages 기본 유지·NAS-flip 금지' supersede, GH Packages=비상 수동 스위치로 강등. 앱 adopt 레시피(dev+CI 토큰, 원자적) 추가. 프록시 디커미션 반영.", "1.0.0 (2026-07-04): 초판 — git dual-push + npm dual-publish 이중화 소비 독트린 통합. git/npm 비대칭·npm 폴백 제약·Forgejo 프록시 부재·CI 경계 명문화. modfolio-ecosystem 을 dual-push 레퍼런스로 세팅."]
+changelog: ["1.6.0 (2026-07-28): 제4조 보강 — ① 프로브는 소비 런타임마다(bun+node)·서브패스마다(게시본 exports 에서 읽음), 런타임 부재=판정 불능=실패(infra forge-sdk 0.3.0 실증: bun-only 카나리가 Node ESM 파손 3/4 서브패스에 초록 · 허브 canary 도 같은 두 구멍) ② 네트워크-필요 게이트 실행 시점 규약 신설(발행 직후 + 인계 시점 — 허브·infra·design 3-repo 가 같은 문제를 같은 방식[수동]으로 풀고 있던 수렴).", "1.5.0 (2026-07-27): 제4조 신설 — 게시했다는 것과 멤버가 받는다는 것은 다른 주장이다. 릴리즈 검증은 게시본 익명 설치(`bun run canary:published`)로 한다. files 는 allowlist 라 로컬과 게시본이 자동으로 같지 않다: 빠져서 깨진 사례(secret-patterns.ts 미동봉 → 두 마이너 동안 전 멤버 ASI03 redaction 사망)·실려서 깨진 사례(런타임 락이 3.28.2 게시본에 탑승)·경로가 틀린 사례(2026-07-27 npm 설치 멤버의 pull manifest 가 node_modules 안에 기록 — 다음 install 에 소멸, 아무것도 실패하지 않음). 셋 다 quality:all·release:gate 에 안 보인다(둘 다 작업 트리를 본다).", "1.4.0 (2026-07-26): 게시 canonical 역전 — pkg.modfolio.io 가 fatal, GitHub Packages 는 backfill(비치명적). 종전 폴라리티는 GitHub 최신이면 publish 가 성공을 보고하는데 fleet 이 실제 resolve 하는 registry 는 릴리즈를 못 받은 상태를 허용했다(제1조와 정면 모순). publishConfig.registry 는 의도적으로 flip 하지 않는다 — bun publish 가 인증을 scope registry 로 해석하므로(제2조) flip 은 게시를 깬다. 토큰 부재 = exit 4(우회 플래그 없음). 부트스트랩 정합: adopt-harness.sh·harness-adoption-guide·npmrc 템플릿이 pkg+anon-read(토큰 불요)로, 신규 repo 를 GITHUB_TOKEN 의존으로 만들던 모순 제거 + lockfile 반쪽 이관 경고 추가.", "1.3.0 (2026-07-26): tier: law 승격 — §법칙 3조 신설(소비 좌표 단일 · 퍼블리셔 예외 · lockfile 은 .npmrc 의 그림자가 아니다). 실측 21/30 repo 의 bun.lock 이 아직 npm.pkg.github.com 해상 = 반쪽 이관 잔존(connect 2026-07-18 CI 1.5일 정지의 동일 상태). Verdaccio 평가 종결(도입 X — 우위는 upstream 캐시 하나뿐이고 NAS 상주는 CF Builds 에서 도달 불가, 우리 pkg Worker 에 흡수). JSR 종결(private 패키지 미지원).", "1.2.1 (2026-07-12): edge Worker 코드 위치 현행화 — modfolio-registry-proxy repo 를 modfolio-infra registry/proxy 로 subtree 통합(오너 승인, 구 repo archive), ecosystem.json 은 infra.apps 중첩.", "1.2.0 (2026-07-05): §장기진화 Stage 3(R2 durable registry) 코드 완료 반영 — modfolio-registry-proxy 에 REGISTRY_MODE 토글 + R2 SoT publish/read/dist-tags(integrity·no-clobber·낙관적 동시성) 구현(6521ede). Stage 2(origin 클라우드 이전)=skip 결정(Stage 3 가 origin 대체). service-token lock=불요 평가. R2 bucket 생성 payment-gated 명시.", "1.1.0 (2026-07-05): connect-sdk pkg.modfolio.io 게시 완료(97920b2) → 이관 선행조건 ① 클리어·@modfolio 커버리지 전부 200. §결정(단일 registry)과 옛 §2 소비 폴라리티·anti-pattern 을 정합 — 구 'GH Packages 기본 유지·NAS-flip 금지' supersede, GH Packages=비상 수동 스위치로 강등. 앱 adopt 레시피(dev+CI 토큰, 원자적) 추가. 프록시 디커미션 반영.", "1.0.0 (2026-07-04): 초판 — git dual-push + npm dual-publish 이중화 소비 독트린 통합. git/npm 비대칭·npm 폴백 제약·Forgejo 프록시 부재·CI 경계 명문화. modfolio-ecosystem 을 dual-push 레퍼런스로 세팅."]
 sync_to_siblings: true
+tier: law
 applicability: always
 consumers: [all-agents, ops, deploy, infra, connect]
 related_canon: [nas-infra, platform-plane, project-infrastructure-registry, cf-workers-builds-api, cf-deploy]
@@ -16,6 +17,52 @@ related_rules: [contracts]
 ## 한 줄
 
 내용은 **양쪽에 항상-최신**(git=dual-push · npm=dual-publish)으로 둔다. GitHub 이 죽어도 NAS(Forgejo `git.modfolio.io`/`pkg.modfolio.io`)에서 동일하게 받는다. **단 git 과 npm 은 소비 폴백 방식이 다르다** — 이 비대칭이 이 canon 의 핵심.
+
+## 법칙 (`tier: law`, 2026-07-26 승격)
+
+`tier` 계약: **무엇(what)은 예외 없음, 언제·어떻게(when/how)는 그 repo 자율.** hub 는 좌표와 진단을 배포할 뿐 일정을 잡지 않는다.
+
+**제1조 — 소비 좌표는 하나다.** `@modfolio/*` 는 `pkg.modfolio.io` 에서 받는다. anon-read 이므로 **DEV·CI 모두 토큰이 필요 없다.**
+
+**제2조 — 퍼블리셔는 예외다.** `@modfolio/*` 를 **게시하는** repo 는 `.npmrc` 의 `@modfolio:registry` 를 자기 publish registry 로 유지한다. `bun publish` 는 인증을 `publishConfig.registry` 가 아니라 **@modfolio scope registry** 로 해석하기 때문이다(2026-07-09 실측, 2026-07-19 hub 재발). `harness-pull` 의 `isModfolioPublisher` 가 자동 보호하지만, **루트 `package.json` 만 본다** — 퍼블리셔 패키지가 하위 워크스페이스에 있으면(connect 의 `sdk/`) 탐지되지 않으니 게시 스크립트에서 명시 override 해야 한다.
+
+**제3조 — lockfile 은 `.npmrc` 의 그림자가 아니다.** 레지스트리 전환은 **lock 재해상까지가 한 단위**다. `.npmrc` 만 바꾸고 `bun.lock` 을 두면 lock 에 남은 옛 resolved URL 로 설치가 계속 나가고, CI 는 토큰 없는 레지스트리를 때리며 전량 실패한다.
+
+> **이건 가정이 아니다.** 2026-07-18 modfolio-connect 가 정확히 이 상태로 **CI 가 1.5일 정지**했고, 연속 실패가 쌓이자 CF 가 빌드 큐잉 자체를 멈춰 **CF 장애처럼 보였다**. 워커 5개를 손으로 배포해 prod 를 유지했다.
+> connect 의 회신: *"lockfile은 .npmrc의 그림자가 아니다 — 레지스트리 전환은 lock 재해상까지가 한 단위."*
+>
+> **실측 2026-07-26: 30 repo 중 21개가 아직 이 상태다**(`bun.lock` 이 `npm.pkg.github.com` 으로 harness·contracts 해상). 해소는 각 repo 가 `bun update`(또는 `bun add`)로 스스로 한다 — `lock-drift.ts` 가 감지해 알릴 뿐 자동 수정하지 않는다.
+
+**제4조 — 게시했다는 것과 멤버가 받는다는 것은 다른 주장이다.** 릴리즈 검증은 **게시본을 익명으로 설치해** 확인한다. `bun run canary:published [harness|contracts]`.
+
+> 로컬 실행은 **코드가 동작함**을 증명하고, 게시본 실행은 **멤버가 실제로 받는 것이 동작함**을 증명한다. `package.json` `files` 는 allowlist 라 이 둘은 자동으로 같지 않다:
+>
+> - **빠져서 깨진 것** — `secret-patterns.ts` 가 ship 목록에 없어 v3.20.1~3.22.2 두 마이너 동안 **전 멤버의 ASI03 redaction 이 사실상 사망**했다(멤버에서만 나는 ENOENT).
+> - **실려서 깨진 것** — 런타임 락 파일이 `files` 를 타고 3.28.2 게시본에 실렸다. 같은 pid 를 가진 머신은 **ingest 를 영구 거부**당했다(G32 ④).
+> - **경로가 틀린 것** — 2026-07-27, npm 설치 멤버의 pull manifest 가 `node_modules` 안에 기록되고 있었다(다음 install 에 소멸·허브 미도달). **아무것도 실패하지 않았고** 리포트는 절대경로까지 자신 있게 찍었다. 이 canary 의 출력이 그걸 잡았다.
+>
+> 셋 다 `quality:all` 과 `release:gate` 에 보이지 않는다 — **둘 다 작업 트리를 검사하기 때문**이다. 익명 설치라 제1조(anon-read 소비)도 같은 실행에서 함께 확인된다.
+
+**제4조 보강 (1.6.0, 2026-07-28) — 두 repo 가 독립적으로 도달한 두 조항:**
+
+- **프로브는 소비 런타임마다, 서브패스마다.** Bun 은 Node 의 엄격함을 재현하지 않는다 —
+  `moduleResolution: bundler` 가 emit 한 확장자 없는 상대 import 를 Bun 은 통과시키고 Node ESM 은
+  `ERR_MODULE_NOT_FOUND` 로 거부한다(infra `forge-sdk@0.3.0`: 4 서브패스 중 3이 Node 에서
+  import 불가인데 bun-only 카나리는 초록이었다 · 허브 canary 도 같은 두 구멍 — 런타임 bun 하나,
+  서브패스 루트 하나로 contracts `exports` 8개 중 7개 미검사). 서브패스 목록은 손으로 적지 않고
+  **게시본 `package.json` 의 `exports` 에서 읽는다**(새 서브패스가 조용히 미검사로 남지 않게).
+  **런타임 부재 = 판정 불능 = 실패**(exit 2) — 스킵 스위치는 억제의 다른 이름이다.
+- **네트워크-필요 게이트의 실행 시점 규약: "발행 직후 + 인계 시점".** 게시본 검증은 레지스트리
+  왕복이 필요해 `quality:all` 에 못 들어간다 — 그 자리를 세 repo 가 같은 방식(수동)으로 풀고
+  있었다(허브 `canary:published` · infra 카나리 · design `verify:consumer` 4스택 43체크).
+  규약: **① 발행한 세션은 발행 직후 1회 실행 ② 세션 인계문의 "첫 명령" 목록에 포함**. 발행과
+  실행 사이 간격이 그대로 소비자 노출 창이다 — design 의 첫 실행이 qwik 소비자 빌드 실패를
+  잡았다(발행 후에야).
+
+### 평가 종결 (2026-07-26)
+
+- **Verdaccio 도입 ❌** — 유일한 우위가 upstream pull-through 캐시 하나인데, NAS 상주 서비스는 **CF Workers Builds 에서 도달 불가**(Tailscale/CF Access 게이트, 이 canon §CI 경계). 그 기능은 이미 엣지에 있는 우리 pkg Worker 에 얹는 것이 맞다
+- **JSR 병행 ❌** — JSR 은 **private 패키지를 지원하지 않는다**. `@modfolio/*` 가 비공개인 한 대상이 아니다
 
 ## 왜 (오너 결정 2026-07-04)
 
@@ -37,7 +84,11 @@ related_rules: [contracts]
 
 > ⚠ **소비 폴라리티 갱신 (§결정 2026-07-05 supersede)**: 기본 registry = **pkg.modfolio.io(단일)**, GH Packages = 비상 수동 스위치로 강등. 아래 §2 의 메커니즘·"npm 은 scope당 registry 1개·무자동폴백"·"Forgejo upstream 프록시 없음" 사실은 **유효**(단일 registry 의 SPOF 위험을 설명) — 단 "기본=GH Packages·NAS=DR" 프레이밍만 §결정이 대체.
 
-- **메커니즘**: `harness-publish.ts [5/5]` / `contracts-publish.ts` 가 GitHub Packages(canonical) + Forgejo `pkg.modfolio.io`(mirror) **양쪽 게시**. 내용 이중화 성립(harness·contracts 실측 200).
+- **메커니즘**: `harness-publish.ts` / `contracts-publish.ts` 가 **양쪽 게시**. 내용 이중화 성립(harness·contracts 실측 200).
+- **⚠ 게시 canonical 역전 (2026-07-26)**: `pkg.modfolio.io` = **canonical(실패 시 fatal)**, GitHub Packages = **backfill mirror(비치명적)**. 종전은 반대였고, 그건 이름 문제가 아니라 **실제 위험**이었다 — GitHub 이 최신이면 publish 가 성공을 보고하는데, **fleet 이 실제로 resolve 하는 registry** 는 그 릴리즈를 못 받은 상태가 될 수 있었다(제1조가 소비 좌표를 pkg 로 못박은 뒤로는 정면 모순).
+  - **`publishConfig.registry` 를 pkg 로 뒤집지 않는다** — 그게 자연스러운 수는 맞지만 게시를 깬다. `bun publish` 는 인증을 publishConfig 가 아니라 @modfolio scope registry 로 해석하므로(제2조), publishConfig 만 pkg 로 돌리면 GitHub 토큰이 pkg 로 가고, scope 까지 pkg(무토큰)로 돌리면 자격증명 자체가 사라진다. 그래서 canonical 경로는 **pack → 추출본에 publishConfig SET → 격리 `--userconfig` 로 publish** 라는 검증된 메커니즘을 쓴다(`scripts/lib/pkg-publish.ts`).
+  - **토큰 부재는 우회 플래그를 주지 않고 exit 4 로 멈춘다** — backfill 에만 올리고 끝내는 것이 바로 이 역전이 막으려는 상태다. 정상 경로 = `athsra run modfolio-ecosystem -- bun run publish:harness`.
+  - 재실행 안전: 게시 전 pkg 버전을 anon-read 로 확인하고 409 도 `already-current` 로 판정한다(best-effort 미러였을 땐 409 와 실패를 구분할 필요가 없었지만, fatal 이 된 지금은 필요하다).
 - **pkg.modfolio.io = 공개 도달**(CF 터널, HTTP 200 `server:cloudflare`) → git 과 달리 **CI 도 접근 가능**. auth = read 토큰 `FORGEJO_NPM_TOKEN`(athsra 주입).
 - **⚠ 하드 제약 — npm 은 자동 폴백 불가**:
   1. **npm/bun 은 scope 당 registry 1개** — `@modfolio:registry` = 단일 URL. NAS 지정 후 NAS 다운 → `bun install` **실패**, GH 로 자동 폴백 **안 함**. "1순위/2순위"는 npm 에 없는 개념.

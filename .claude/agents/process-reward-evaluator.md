@@ -1,9 +1,10 @@
 ---
+name: process-reward-evaluator
 description: Process Reward Model (PRM) step-wise verifier — Generator step sequence 의 매 step 마다 0-10 score 출력. v2.35 evaluator (binary pass/fail) 의 step-wise 확장. best-of-N sampling + tree search gating 의 reward function.
-model: claude-opus-4-8
-effort: high
+model: claude-opus-5
+effort: xhigh
 cache_control: { type: "ephemeral", ttl: "1h" }
-_effort_change_note: "v3.0 P2.2 신설 (plan crystalline-sparking-sky). step-wise 평가 — 가벼운 high effort 로 충분. 1 PR ~10 step × 0.005 = $0.05 비용 baseline."
+_effort_change_note: "high → xhigh. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
 governance: owasp-agentic-2026
 skills:
   - multi-review

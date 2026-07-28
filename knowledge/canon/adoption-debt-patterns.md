@@ -1,7 +1,7 @@
 ---
 title: Adoption Debt Patterns
-version: 1.6.0
-last_updated: 2026-06-18
+version: 1.9.0
+last_updated: 2026-07-28
 source:
   [
     v2.3.2 canary 확산,
@@ -10,6 +10,7 @@ source:
     v2.6 npm publish 경로,
     v2.9 biome musl glibc workaround,
     v2.10 exact-pin 주입의 함정,
+    v3.24.1 오너 요청 "harness pull 만 하면 되도록 세팅 다 해줘" — 카나리아(press·gistcore·connect) 실측,
   ]
 sync_to_siblings: true
 applicability: always
@@ -25,6 +26,8 @@ consumers: [harness-pull, preflight, ops]
 ## 왜 이 문서가 있는가
 
 하네스 자체는 pull 시 100% PASS했지만, member의 **이전 상태 debt**가 `pre-commit-guard` 실행 단계에서 드러나 commit이 막히는 사례가 여럿 나왔다. universe는 hub이므로 member debt를 직접 수정하지 않지만, 어떤 debt가 "adoption을 막는가"를 기록하고 **`bun run harness-pull -- --cleanup`** 자동 수정 가능한 것을 모아둔다.
+
+> **⚠ 구분 (2026-07-26)**: 이 문서의 debt 는 전부 **member 가 harness 이전부터 갖고 있던 것**이라 `--cleanup` opt-in 이 맞다(CRLF·`bun install`·biome 1.x 마이그레이션 — member 가 스케줄을 정할 몫). 반대로 **하네스가 방금 쓴 파일 때문에 member gate 가 빨개지는 경우**(`.claude/hooks/` 가 참조하는 env 를 `turbo.json` 이 선언 안 함, 하네스가 재생성하는 `.claude/app-registry.json` 을 `biome.json` 이 lint 함)는 원인이 하네스이므로 `--cleanup` 뒤에 숨기지 않는다 — `gate-compat.ts` 가 **모든 `--apply` pull 에서 자동** 처리한다(harness-pull.ts Phase 3.4). 아래 §17 참조.
 
 ## 16가지 패턴
 
@@ -319,6 +322,50 @@ bun install
 
 ---
 
+### 17. 하네스가 방금 쓴 파일이 member gate 를 빨갛게 만든다 — `--cleanup` 뒤에 숨기지 않는다 (v3.24.1)
+
+**증상** (2026-07-26, 오너 "harness pull 만 하면 되도록 세팅 다 해줘" 요청 실측):
+- `modfolio-press` 를 임시 클론해 **토큰 없이** `@modfolio/harness@latest` 설치 → `bunx modfolio-harness-pull --apply` → `bun run check` → **exit 1**.
+- 원인 둘 다 하네스가 그 세션에 쓴 파일:
+  1. `biome.json` `files.includes` 에 하네스 exclude(`!.claude/app-registry.json` 등)가 없어 하네스가 **매 pull 마다 재생성하는** 파일을 biome 이 formats-check → 영구 red.
+  2. `turbo.json` `globalPassThroughEnv` 가 동기된 `.claude/hooks/*.ts` 가 읽는 env 를 선언 안 해 `noUndeclaredEnvVars` **18건** (press 실측 — ORB2-harness-001).
+- 두 fix 는 이미 존재했다 — 단 **`--cleanup` 플래그 뒤에** 숨어 있었다. 오너가 요청한 건 "`harness pull` 만"이었지 "`harness pull -- --cleanup` 만"이 아니다.
+
+**원인**: cleanup-adoption.ts 의 철학("member 가 이전부터 갖고 있던 debt 만 자동수정, member 가 스케줄 결정")을 **원인이 하네스 자신인 항목에도 똑같이 적용**했다. CRLF 재정규화·`bun install`·biome 1.x 마이그레이션은 진짜 member 소유 debt 라 opt-in 이 맞지만, "하네스가 쓴 파일 때문에 하네스가 다음 pull 때 다시 빨개진다"는 그 repo 의 선택이 개입할 지점이 없다.
+
+**정공법 v3.24.1 수정**: 두 삽입(`biome.json` exclude · `turbo.json` env)을 `gate-compat.ts` 로 추출하고, `harness-pull.ts` 의 **모든 `--apply` 실행**(Phase 3.4, Phase 3 직후·3.5 포맷 패스 이전)에서 자동 호출. `--cleanup` 은 그대로 남되 같은 함수를 호출하도록 위임해 **`--cleanup` 이 superset** 이 되게 했다(두 구현이 갈라지는 게 다음 버그다).
+
+```
+Phase 3   — apply.ts: .claude/hooks 등 파일 쓰기
+Phase 3.4 — gate-compat.ts: biome.json exclude + turbo.json env (신규, 자동)
+Phase 3.5 — 위 파일들을 member 자신의 biome 로 포맷(JSON.stringify 는 indent 폭만 맞추고
+            배열 줄바꿈·따옴표 스타일은 못 맞춘다 — 이것도 실측으로 드러남, 아래 참고)
+```
+
+- **경계는 명확히 유지**: `biome.json`·`turbo.json` 이 **member 에 이미 있을 때만** 삽입한다. 없는 member 에게 새로 만들어주지 않는다 — 그건 다른 빌드 스토리를 가진 repo 의 구조를 바꾸는 일이라 `--cleanup` 의 영역도 아니다.
+- **한 겹 더 드러난 버그**: 첫 구현은 `JSON.stringify` 만으로 썼는데, connect 카나리아에서 `turbo.json` 자체 `format` 에러가 났다 — member 의 배열이 한 줄(`["dist/**", ".output/**"]`)인데 `JSON.stringify(x, null, indent)` 는 무조건 펼친다. Phase 3.5b(이미 존재하던 "하네스가 쓴 파일을 member biome 로 포맷" 패스)의 대상 목록에 `gate-compat.ts` 가 실제로 건드린 파일만 추가해 해결 — **하네스가 쓴 JSON 은 반드시 그 member 의 biome 를 거쳐야 한다**는 게 이 저장소가 이미 알고 있던 규칙이었는데, 새 삽입 지점이 처음엔 그 경로를 타지 않았다.
+
+**실측 검증 (임시 클론 3종, sibling 파일 미접촉)**:
+
+| repo | 프레임워크 | 이전 | 이후 |
+|---|---|---|---|
+| modfolio-press | SvelteKit | `check` exit 1 (1 error, 19 warning) | **exit 0** (0 error, 6 warning — 전부 member 소유) |
+| gistcore | 비-SvelteKit | (동일 결함군) | **0 error, 0 warning** |
+| modfolio-connect | 모노레포 퍼블리셔(`sdk/`) | — | **0 error** — `.npmrc` scope 미변경(제2조 정합), connect 자체 env 30+ 개 보존 확인 |
+
+anon-read 도 같은 자리에서 재확인: `GITHUB_TOKEN` 없이 `bun add -D @modfolio/harness@latest` 성공(제1조).
+
+**닫힘(closure) 잠금 2**: (a) `HARNESS_HOOK_ENV` 상수를 `scripts/hooks/*.ts` 소스에서 재도출해 대조하는 테스트 — 새 훅이 새 env 를 읽는데 상수 갱신을 잊으면 **여기서 실패**(패턴 15/16 류 스냅샷 부패 재발 방지). (b) `cleanup-adoption.test.ts` 의 옛 1b 상세 테스트를 `gate-compat.test.ts` 로 이관하고 얇은 위임 확인만 남김 — 같은 로직의 두 구현이 갈라지는 걸 막는다.
+
+**교훈**:
+1. **"원인이 누구인가"가 opt-in 여부를 가른다.** member 가 쌓은 debt = member 스케줄(`--cleanup`). 하네스가 방금 만든 파일 때문에 생기는 debt = 하네스 책임(자동).
+2. **"pull 만 하면 된다"는 문장 그대로 실측해야 검증이 끝난다.** `--cleanup` 을 알아야 초록불이 되는 상태는 "pull 만 하면 된다"가 아니다.
+3. **하네스가 쓰는 JSON 은 member biome 를 반드시 거친다** — `JSON.stringify` 는 indent 폭은 맞춰도 배열/따옴표 스타일은 못 맞춘다. 이미 있던 Phase 3.5b 포맷 패스를 재사용하는 게 새 패스를 만드는 것보다 안전했다.
+
+참조: `scripts/harness-pull/gate-compat.ts`, `scripts/harness-pull.ts` Phase 3.4/3.5, `knowledge/canon/registry-redundancy.md`(제1·2조), `knowledge/journal/20260726-harness-pull-only-onboarding.md`.
+
+---
+
 ## 대규모 debt는 owner 책임
 
 다음 종류는 **adoption 스코프 밖**:
@@ -328,6 +375,47 @@ bun install
 - Nuxt + bun upstream transformer 호환성 (패턴 12)
 
 이들은 harness가 정리할 수 없고, member owner가 먼저 다듬은 뒤 `bun run harness-pull`로 adoption을 완료한다.
+
+## 큰 부채를 하룻밤에 판정하지 않는다 — **래첫**이 정당화보다 정직하다 (v1.8.0, 2026-07-27)
+
+modfolio-connect 가 자기 서비스 계층에서 "**자기 파일·자기 스펙 밖 소비자가 0인 export**"
+**65건 / 40파일**을 셌다. 세 종류가 섞여 있고 밖에서는 구분이 안 된다 — ① 표면 미구현
+② 재작성이 대체 ③ 의도된 단계적 작업. **②만 즉시 삭제 가능**했다(575줄 + 초기화 순환 제거).
+
+나머지를 어떻게 할 것인가가 요점이다. 흔한 두 선택지가 둘 다 나쁘다:
+
+- **전부 정당화를 쓴다** → *"60개 정당화를 하룻밤에 쓰면 대부분을 지어내야 한다."* 지어낸
+  정당화는 다음 사람에게 **승인**으로 읽힌다.
+- **전부 무시하거나 게이트를 끈다** → 새 부채가 같은 속도로 들어온다.
+
+connect 가 쓴 제3의 길 = **래첫(ratchet)**:
+
+- baseline 에 기존 항목을 기록 → **새 항목만 실패**
+- 소비자가 생긴 함수는 baseline 에서 **빠져야 한다**(안 빼면 실패) → 숫자는 **내려가기만** 한다
+- baseline 이 가리키는 파일이 사라져도 실패(장부가 유령을 들고 있지 않도록)
+
+> **baseline 은 승인이 아니라 이름이 적힌 부채 장부다.**
+
+**stale 검사는 선택이 아니라 래첫의 필수 부품이다** (v1.9.0, athsra 2026-07-28 실증).
+"baseline 에 있는데 이제 해소됨(테스트 생김/삭제됨) → 실패" 가 빠지면 목록이 굳어
+**allowlist 로 퇴화**한다 — 래첫이 막으려던 바로 그것. athsra 의 api-coverage 래첫에서
+stale 검사가 실제로 일했다: 보안 표면 4개를 테스트로 덮자 stale 검출이 **정확히 그 4개를
+지목**해 장부에서 빼게 했다(104 → 100 → 89, 단조 감소가 측정으로 확인됨). 즉시 못 고치는
+부채는 래첫으로 — 단, **stale 검사 포함**일 때만 래첫이라 부른다.
+
+`lethal-trifecta` allowlist 의 *"6개 이상이면 패턴 자체 재검토"* 와 같은 계열이되, **정당화 대신
+방향성(단조 감소)을 강제**한다. 정당화를 쓸 수 없을 만큼 큰 부채에 쓰는 형태다.
+
+**구현 메모** (connect `scripts/modfolio/orphan-exports.ts`, self-test 6케이스 + end-to-end):
+
+- **인덱스 방식 필수** — 코퍼스 1회 순회로 `식별자 → 파일 집합` 맵을 만든 뒤 set 조회.
+  쌍대 비교는 수 분, 인덱스는 **0.6초**.
+- `.svelte-kit/` 등 **생성물 제외** — 라우트 타입이 모든 핸들러 이름을 나열해 진짜 orphan 을 가린다.
+- Bun `Glob` 은 `dot: true` 필수(허브가 G31 ④ 에서 같은 것에 데었다).
+
+⚠ 이 감사를 돌릴 때 **자기 스펙을 소비자로 세지 않는다** — `createApiKey` 에는 유닛 스펙이
+있었고, 스펙을 소비자로 쳤다면 "완결됐는데 문이 없는" 기능 전체가 안 보였다
+(`.claude/rules/agent-evidence.md` §두 번째 부류).
 
 ## 사용 순서
 

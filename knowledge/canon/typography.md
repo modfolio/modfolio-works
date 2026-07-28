@@ -1,7 +1,8 @@
 ---
+sor: modfolio-design/canon/typography.md  # SoR 이관 2026-07-23; 이 파일은 mirror — 편집은 upstream(modfolio-design)
 title: Typography — Structural Convention
-version: 3.0.0
-last_updated: 2026-04-15
+version: 3.1.0
+last_updated: 2026-07-27
 source: [docs/design/typography-master-combinations.md]
 sync_to_siblings: true
 applicability: always
@@ -26,6 +27,35 @@ CSS 변수 이름만 공유. 값·서체·스케일은 모두 앱 자유:
 }
 ```
 
+### 크기 스케일 명명 (2026-07-27 추가)
+
+서체 **패밀리** 이름만 있고 **크기** 이름이 없었다. 그래서 앱들이 크기를 리터럴로 적었고,
+아래 Detection Signals 의 "font-size 리터럴 반복" 이 검출기도 없이 방치됐다. 참조 구현
+(`design.modfolio.io`)을 실측했더니 세 CSS 파일에 **15개 값이 46회** 흩어져 있었고,
+그중 0.78 / 0.8 / 0.82rem 처럼 **0.3px 차이의 우연한 변주**가 다수였다.
+
+`design-tokens.md` 의 명명 규칙(`--{속성}-{역할}-{변형}`)을 따라 **역할 기반**으로 이름만
+공유한다. 숫자 계단(`--fs-1`)은 같은 canon 이 "맥락 없는 숫자" 로 금지한 형태다.
+
+```css
+:root {
+  --font-size-micro:    /* 배지·첨자 */;
+  --font-size-caption:  /* 캡션·메타 */;
+  --font-size-ui:       /* UI 기본 (버튼·라벨·표) */;
+  --font-size-body:     /* 본문 */;
+  --font-size-lead:     /* 도입 문단 */;
+  --font-size-subtitle: /* 소제목 */;
+  --font-size-h1: /* … */; --font-size-display: /* … */;   /* 유동은 clamp() 권장 */
+}
+```
+
+**값·단계 수는 앱 자율.** 전부 쓸 의무도 없다 — 쓰는 역할만 정의한다. 제목처럼 맥락마다
+곡선이 다른 자리는 `clamp()` 를 직접 쓰는 것이 정당하다(아래 Signals 도 `clamp()` 는
+리터럴로 세지 않는다).
+
+**게이트**: 이름은 `@modfolio/design-lint` 의 `sanctioned-token` 이 스켈레톤 소속으로
+강제하고, 리터럴 반복은 `typography-signals` 가 검출한다(canon 이 규정한 WARN).
+
 ## Detection Signals (권장이지 강제 아님)
 
 구조적으로 의심스러울 수 있는 신호들 — WARN으로만 표시, 해결은 앱 자율:
@@ -45,13 +75,18 @@ CSS 변수 이름만 공유. 값·서체·스케일은 모두 앱 자유:
 
 ### Adobe Fonts Kit (선택적 공유 자원)
 
-Kit ID: `fmh4fod` — 사용을 원하는 앱은 이 Kit에서 서체를 선택할 수 있다.
+Kit ID: `auk2qdl` — 사용을 원하는 앱은 이 Kit에서 서체를 선택할 수 있다(39 패밀리).
 
 ```html
-<link rel="stylesheet" href="https://use.typekit.net/fmh4fod.css" />
+<link rel="stylesheet" href="https://use.typekit.net/auk2qdl.css" />
 ```
 
 사용 의무 없음. Google Fonts, self-hosted, 시스템 폰트도 허용.
+
+> **정정 (2026-07-27)**: 이 자리는 `fmh4fod` 를 적고 있었지만, 이 repo 의 다른 모든 산출물 —
+> 라이브 포털(`apps/portal/index.html`) 과 브랜드 서체 SoR 5문서(`brand/README.md`,
+> `brand/typography/*.md`) — 는 전부 `auk2qdl` 을 쓴다. 실사용 쪽으로 맞췄다.
+> ※ Adobe Fonts 킷은 **자기 호스팅이 라이선스로 금지**된다 — 이 킷의 서체는 CDN 링크로만 쓴다.
 
 ### Pretendard (한국어 권장)
 
@@ -60,6 +95,27 @@ Kit ID: `fmh4fod` — 사용을 원하는 앱은 이 Kit에서 서체를 선택�
 ```html
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
 ```
+
+**자기 호스팅 권장 (OFL — 라이선스가 허용한다).** 참조 구현인 `design.modfolio.io` 는 2026-07-27
+자기 호스팅으로 옮겼다. 실측 근거:
+
+| 방식 | 방문자 다운로드 | 비고 |
+|---|---|---|
+| static 4 weight (400·500·600·700) | **3.12MB** | 브라우저가 쓰는 weight 수만큼 파일을 받는다 |
+| variable 단일 | **2.06MB** | weight 45~930 전부 커버 |
+| **variable dynamic-subset** | **~0.60MB** | `unicode-range` 로 92분할 — 렌더되는 문자가 속한 것만 받는다 |
+| `Pretendard Std` | 291KB | ⚠ **Latin 전용** — 한글이 없다. 한국어 앱은 채택 불가 |
+
+⚠ **서브셋을 "필요한 것만" 고르지 말 것.** 참조 구현이 계산해보니 포털 텍스트가 요구하는 24개
+서브셋은 한글 음절 11,172자 중 **14.3%** 만 덮는다 — 문구가 조금만 바뀌어도 조용히 폴백된다.
+92개를 다 두어도 방문자 다운로드는 그대로다(브라우저가 필요한 것만 받는다).
+
+⚠ **dynamic-subset 에는 `preload` 를 쓰지 말 것.** `preload` 는 `unicode-range` 를 모르므로
+쓰지도 않을 서브셋을 강제로 받게 한다. CSS 를 `<head>` 초반에 두어 발견을 앞당기는 것으로 족하다.
+
+경로: `public/fonts/pretendard/*.woff2` + 생성된 `@font-face` CSS 를 `<link rel="stylesheet">`.
+조달·생성은 스크립트로 재현 가능하게 둔다(참조 구현: `scripts/fetch-fonts.ts`) — 폰트 바이너리는
+커밋되지만 출처가 파일에 안 남으므로.
 
 ### CLS 방지: Metric Overrides (권장 패턴)
 
@@ -73,6 +129,22 @@ Kit ID: `fmh4fod` — 사용을 원하는 앱은 이 Kit에서 서체를 선택�
   size-adjust: 105%;
 }
 ```
+
+**값은 추측하지 말고 폰트 파일에서 뽑는다.** 위 숫자는 형태 예시이지 쓰라는 값이 아니다 —
+틀린 보정은 없느니만 못하다. 세로 메트릭은 실제 폰트에서 결정적으로 계산된다:
+
+```
+ascent-override  = ascent / unitsPerEm × 100
+descent-override = |descent| / unitsPerEm × 100
+line-gap-override = lineGap / unitsPerEm × 100
+```
+
+(참조 구현 실측: Pretendard Variable upem 2048 · ascent 1950 → **95.21%** ·
+descent −494 → **24.12%** · lineGap 0 → **0%**.)
+
+`size-adjust`(가로 폭 보정)는 **로컬 폴백 서체를 실제로 측정할 수 있을 때만** 넣는다. 폴백은
+OS 마다 다르므로 측정 없이 쓰면 추측이다. 참조 구현은 세로 메트릭만 맞추고 `size-adjust` 는
+생략했다.
 
 ### 유동 타이포그래피 참고 스케일
 

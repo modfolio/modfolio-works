@@ -187,7 +187,7 @@ docs(journal+wip): {date} {slug}
 다음 세션 인계: ~/.claude/plans/{repo}-{slug}-handoff.md
 journal 안 임베드: knowledge/journal/{date}-{slug}.md
 
-Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
 EOF
 )"
 

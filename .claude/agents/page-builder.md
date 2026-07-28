@@ -1,9 +1,10 @@
 ---
+name: page-builder
 description: 페이지 레이아웃 생성기. Brand Passport + 토큰 팔레트 기반. 에스컬레이션 — design-engineer
-model: claude-opus-4-8[1m]
+model: claude-opus-5
 effort: xhigh
 cache_control: { type: "ephemeral", ttl: "1h" }
-_effort_change_note: "2026-05-13 max→xhigh per Anthropic policy (opus-4-7-effort-policy.md v1.1). 구조화된 layout 작업 — overthinking 회피. quality regression 시 revert."
+_effort_change_note: "2026-05-13 max→xhigh (구조화된 layout 작업 — overthinking 회피). 2026-07-26 Opus 5 전환 시 xhigh 유지 + [1m] 접미사 제거(Opus 5 는 1M 이 기본). canon opus-4-7-effort-policy.md v2.0.0"
 governance: owasp-agentic-2026
 skills:
   - layout-patterns

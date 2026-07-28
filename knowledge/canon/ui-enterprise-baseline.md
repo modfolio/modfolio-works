@@ -1,4 +1,5 @@
 ---
+sor: modfolio-design/canon/ui-enterprise-baseline.md  # SoR 이관 2026-07-23; 이 파일은 mirror — 편집은 upstream(modfolio-design)
 title: UI Enterprise Baseline — State Surfaces + WCAG 2.2 AA
 version: 1.0.0
 last_updated: 2026-06-24

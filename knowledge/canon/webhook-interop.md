@@ -1,7 +1,7 @@
 ---
 title: Webhook 서명 상호운용 — 5 문법 공존 실태와 수렴 경로
-version: 1.0.0
-last_updated: 2026-07-21
+version: 1.2.0
+last_updated: 2026-07-27
 source: [Orbit #1 실측 2026-07-21 (scripts/orbit/tracks/webhook-interop.ts), contracts 1.10.0 verifyModfolioEventCompat, knowledge/canon/event-consumption.md]
 sync_to_siblings: true
 applicability: always
@@ -31,20 +31,69 @@ consumers: [api, contracts, security-scan, code-reviewer, orbit]
 |---|---|---|---|---|---|
 | **canonical** (Standard Webhooks) | `webhook-signature` | `v1,<base64>` | `{id}.{ts}.{body}` | ✅ `webhook-timestamp` | **0 repo** ❗ |
 | `t-v1-hex` (de-facto) | `X-Webhook-Signature` | `t=<ts>,v1=<hex>` | `<t>.<body>` | ✅ `t` | athsra·gistcore·connect·pay·press·visualize·worthee |
-| `sha256-hex` | `x-webhook-signature` / `x-modfolio-signature` | `sha256=<hex>` | raw body | ❌ 없음 | **producer** atelier-and-folio · **consumer** modfolio-admin |
+| `sha256-hex` | `x-webhook-signature` / `x-modfolio-signature` | `sha256=<hex>` | 구현별 상이 (아래 †) | 구현별 상이 † | **producer** atelier-and-folio · **consumer** modfolio-admin |
 | `bare-hex` | `x-modfolio-signature` | `<hex>` | 구현별 상이 | ❌ | gistcore·connect (일부 경로) |
 | `bearer-secret` | `Authorization` | `Bearer <shared secret>` | **서명 없음** | ❌ | pay→(gistcore/pdgd) |
 
-### 확정된 충돌 (연결 시 100% 401)
+> † **2026-07-27 정정 (atelier-and-folio 실측 보고).** `sha256-hex` 행은 원래 "서명 대상 =
+> raw body, 리플레이 가드 = ❌ 없음" 으로 적혀 있었으나 **producer 실구현과 달랐다.**
+> `apps/app/server/api/mentor/events/outbound/gist-candidate.post.ts` 는
+> `hmacSha256Hex(secret, \`${timestamp}.${signedBody}\`)` 로 **`{ts}.{body}` 를 서명**하고
+> `x-modfolio-timestamp` 헤더를 함께 보낸다 — 즉 `t-v1-hex` 와 **서명 대상이 같고 리플레이
+> 가드도 있다**. 다른 것은 값 인코딩과 헤더 분리 방식뿐(한 헤더에 `t=,v1=` 를 합치는 대신
+> 두 헤더로 나눔). 이 문법을 쓰는 다른 구현은 재실측하지 않았으므로 "구현별 상이" 로 둔다.
+>
+> 정정이 필요했던 이유: 아래 §안전 속성이 "`sha256-hex` 는 리플레이 가드가 없으니 가장 먼저
+> 빼야 한다" 는 **우선순위 판단을 이 칸 위에 세우고 있었다.** 최소한 ANF 에 대해서는 그
+> 근거가 성립하지 않는다. 덧붙여 ANF 의 발신부는 `GIST_INGEST_URL` 미설정으로 **stub
+> 경로(202)** 이고 수신부는 **501** 이라, 아래 확정 충돌 중 ANF 관련 건은 **현재 실트래픽이 없다**.
+>
+> 이 절의 §스캐너 사각지대와 같은 교훈이다 — **정적 문법 매칭은 보안 속성을 결정하지 못한다.**
+
+### ⚠ 이 절의 원래 헤드라인은 **오독이었다** (2026-07-27 정정)
+
+v1.0 은 이렇게 적었다:
+
+> ```
+> producer t-v1-hex  →  consumer sha256-hex   (… → modfolio-admin)
+> ```
+
+**그 배선은 존재하지 않는다.** `modfolio-admin` 의 `/api/operations/callback` 은 universe 이벤트
+소비자가 아니라 **외부 배포 시스템의 콜백 수신부**다 — 라우트 docblock 이 명시한다:
+*"deployment results. Authenticated via HMAC-SHA256. … 1. Per-hook `callback_secret`
+(from `ma_deploy_hooks`)"*. 즉 시크릿이 **훅마다 다르고**, 발신자는 그 훅을 등록한 외부
+시스템이지 fleet producer 가 아니다. `contracts/events/wiring.ts` 에 `modfolio-admin` 이
+**0회** 등장하는 것이 그 방증이다(v1.0 은 이 부재를 "미배선"으로 읽었지만, 실제로는
+"universe 이벤트 배선이 아님"이다).
+
+**정적 스캐너가 문법만 보고 방향과 발신자를 보지 않아서** 정상 배선을 충돌로 셈했다.
+같은 문법이 같은 헤더에 실렸다는 사실만으로 두 repo 가 서로 연결된다고 가정할 수 없다.
+
+### 실제로 지금 깨지는 배선 (2026-07-26~27 실측)
 
 ```
-producer t-v1-hex  →  consumer sha256-hex   (athsra·gistcore·connect·pay·press·visualize·worthee → modfolio-admin)
-producer sha256-hex →  consumer t-v1-hex    (atelier-and-folio → athsra·pay)
+modfolio-pay 중앙 sink (canonical, Authorization 없음, 단건 봉투)
+   →  gistcore · modfolio-press  (Bearer 필수 + {events:[…]} 배치 봉투 기대)
 ```
 
-`modfolio-admin` 의 수신부는 `signature.startsWith("sha256=")` 가 아니면 즉시 401 이다. `modfolio-pay` 의 발신부는 `t=<ts>,v1=<hex>` 를 보낸다. **헤더 이름이 같아서** 배선은 성공한 것처럼 보이고, 실패는 시크릿 불일치처럼 읽힌다 — 계약(스키마) 검사로는 절대 안 잡히는 종류다.
+**독립적 실패 두 개**다: ① `Authorization` 부재 → 401 ② 인증을 통과시켜도 `events` 배열이
+없어 0건 처리(gistcore 는 200 을 돌려주므로 **실패로도 안 보인다**). pay 자신의 테스트가
+발신 계약을 못박고 있다 — `event-sink.test.ts:146` *"바디는 엔벨로프 그 자체 — camelCase
+래퍼도 Bearer 도 없다"*, `:154` `expect(headers.Authorization).toBeUndefined()`.
+
+지금 드러나지 않는 유일한 이유는 `MODFOLIO_EVENT_WEBHOOK_URL` 이 prod 에 없어 보이는 것뿐이다.
+**sink 를 켜기 전에 소비자 이동이 먼저다.**
+
+### 스캐너의 알려진 사각지대 (측정값을 읽을 때 감안할 것)
+
+- **SDK 위임 소비자를 못 본다.** 규칙이 문법 리터럴(`sha256=`, `t=`)이 소스 라인에 보일 때만
+  매치하므로, `connect-sdk` 의 `verifyWebhookSignature` 에 검증을 위임한 repo 는 히트 0 이다.
+  fleet 최대 소비자 `modfolio`(3 라우트)가 스캔 결과에 **한 번도 등장하지 않는다.**
+- 그래서 "canonical 채택 0" 류의 수치는 **하한**이지 실측 총계가 아니다.
 
 > `bearer-secret` 은 **메시지 무결성이 아예 없다.** 공유 시크릿이 새면 임의 이벤트를 위조할 수 있고, 본문 바인딩도 리플레이 가드도 없다. 신규 배선에 채택 금지.
+>
+> **다만 contracts 1.16.0 부터 `verifyModfolioEventCompat` 이 이것도 받는다**(`accept: ['bearer-secret']`, opt-in). 모델링하지 않는다고 사라지지 않았기 때문이다 — bearer 소비자는 헬퍼를 **아예 탈 수 없었고**, 그래서 "compat 헬퍼로 이동하세요" 라는 이 canon 의 권고가 그들에게는 무용지물이었다. 이제는 전환기 동안 canonical 과 bearer 를 함께 받다가 `accept` 에서 빼는 것으로 끝낼 수 있다. 자격증명 비교는 길이까지 감추는 상수시간(HMAC 블라인딩)이고, **제시됐는데 틀린 Bearer 는 서명 문법으로 폴백하지 않는다**(여러 문을 두드리게 두지 않는다).
 
 ## 왜 canonical 채택률이 0 이었나 (구조적 교착)
 
@@ -78,7 +127,12 @@ if (r.grammar !== 'standard-webhooks') {
 - **`accept` 기본값은 빈 배열** — 호환은 항상 opt-in. 실수로 신뢰 경계가 넓어지지 않는다.
 - **canonical 헤더가 있는데 서명이 틀리면 레거시로 폴백하지 않는다.** 유효한 canonical 헤더 + 위조 서명 + 유효한 레거시 서명을 함께 보내 약한 경로를 노리는 공격이 막힌다(회귀 테스트로 잠금).
 - 허용 문법이 늘어도 **HMAC-SHA256 + 동일 시크릿**은 불변. `t-v1-hex` 는 리플레이 가드를 유지한다.
-- `sha256-hex` 는 리플레이 가드가 **없다** — 문법 자체의 결함이므로 가장 먼저 빼야 할 대상이다.
+- `sha256-hex` 는 **문법이 리플레이 가드를 규정하지 않는다** — 값 형식(`sha256=<hex>`)만
+  정할 뿐 서명 대상과 타임스탬프 동봉이 구현에 맡겨져 있다. 그래서 같은 이름을 쓰는 두
+  구현이 보안 속성에서 갈린다(실측: ANF 는 `{ts}.{body}` 서명 + timestamp 헤더로 가드가
+  **있다** — §실측 표 † 참조). **"이 문법을 쓰면 가드가 없다" 가 아니라 "가드 유무를 문법이
+  보장하지 못한다" 가 정확한 진술**이고, 후자가 오히려 빼야 할 이유로 더 강하다 —
+  소비자가 producer 구현을 읽지 않고는 안전한지 알 수 없기 때문이다.
 
 ## 신규 배선 규칙
 

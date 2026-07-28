@@ -1,6 +1,6 @@
 ---
 title: Concurrency Safety — race·partial write·멱등의 어휘와 게이트
-version: 1.0.0
+version: 1.2.0
 last_updated: 2026-07-04
 source: [2026-07-04 오너 요청 "이런 거 하네스에 주의하라고 세팅 뭘 할 수 있나" (vibecoded 2대 버그 영상 분석), 같은 날 실측 사건 2건 — feedback 인박스 lost update(scripts/feedback-send.ts 날짜 파일명 덮어쓰기) + connect findings 세션 교차 재작성, modfolio-infra 20260703 저널 "동시성 사고", knowledge/canon/billing-architecture.md §4 결정적 멱등키 선례]
 sync_to_siblings: true
@@ -53,9 +53,33 @@ consumers: [api, schema, multi-review, security-scan]
 | git remote | git 자체 (non-fast-forward 거부 = 낙관적 잠금) | push 실패 시 pull→merge, force 금지 (기존 불변) |
 | athsra worker | D1 strong consistency + CAS | — (설계됨) |
 | ecosystem `feedback/` 인박스 | **없음 — 유일한 raw 공유-쓰기 표면** | **append-only**: 기존 파일 덮어쓰기 금지. 같은 날 재전송은 새 파일명(harness 3.17.1+ feedback-send 가 자동 처리). 수동으로 인박스 파일을 고쳐 쓸 땐 새 파일 추가 |
+| RAG 색인 (`.rag-manifest.json` + qdrant) | **`.rag-ingest.lock`** — `writeFileSync {flag:'wx'}` create-or-fail (harness 3.28.2+) | 동시 `--apply` 금지. 죽은 소유자 락은 pid 로 자동 회수 |
+
+**표면 4번은 3.28.2 이전에 잠금이 없었고 실제로 사고가 났다 (2026-07-26)**: 같은 세션의 `--apply` 두 개가 **3시간 가까이 동시에** 돌았다(compaction 전에 띄운 것을 잊고 다시 띄웠다 — 장세션의 전형적 실패 모양이다). 둘 다 매니페스트를 read-modify-write 하므로 나중 writer 가 앞선 부기를 통째로 덮고, **지워진 부기는 다음 실행에서 NEW 로 재분류돼 qdrant 에 중복 문서**가 된다 — v3.24.0 이 파일-단위 저장으로 막으려던 바로 그 손실이 다른 문으로 재현된 것이다. NAS 도 두 스트림을 받다 500 을 냈다. **여기서 배울 것은 "잊지 말자" 가 아니다** — 사람이 기억해야만 안전한 표면은 장세션에서 반드시 무너진다. 잠금이 답이고, 그 잠금은 조회-후-실행이 아니라 **원자적 예약**이어야 한다(§멱등키 2원칙).
+
+> ⚠ **살아있음 판정의 함정**: `process.kill(pid, 0)` 을 `try/catch { return false }` 로 감싸면 **EPERM(=프로세스가 존재하지만 내 것이 아님)까지 "죽음"으로 읽는다** — 실측: WSL 에서 `process.kill(1, 0)` 은 EPERM 을 던진다. 살아있는 락을 회수해 정확히 막으려던 동시 실행을 허용하게 된다. **`ESRCH` 만 죽음**이고 나머지는 살아있음으로 취급한다 — 미분류 신호가 "이중 실행 허가" 가 되어선 안 된다(`probeDeleteRoute` 의 inconclusive 분기와 같은 규칙: 애매함은 되돌릴 수 없는 쪽으로 해석하지 않는다).
 
 - **같은 repo 를 Claude Code 창 2개로 열지 않는다** — 특히 ecosystem(SESSION-LEDGER 는 단일 작성자여야). 서로 다른 repo 는 창 몇 개든 무방.
 - hub 세션은 커밋 직전 `git status` 로 인박스 신규/변경 유입을 확인한다(작업 중 sibling 세션이 인박스에 쓸 수 있음 — 정상 동작이며, 쓸어담지 말고 별도 인지 후 처리).
+
+### 두 세션이 같은 repo 에 붙었을 때 실제로 무엇이 깨지는가 (2026-07-27 실측)
+
+위 수칙이 지켜지지 않은 상태를 실제로 겪었다. 손실은 없었지만 **비용의 모양이 예상과 달랐다**:
+
+1. **게이트가 남의 미커밋 파일 때문에 빨간불이 된다.** `bun run check` 는 워킹트리 전체를 보므로,
+   다른 세션이 방금 만든 **untracked** 파일의 포맷이 어긋나 있으면 내 게이트가 실패한다.
+   그러면 **내 변경이 정상인지 확인할 방법이 사라진다** — 릴리즈 게이트가 통과할 수 없으니
+   게시도 막힌다. 실측: 상대 파일 mtime 이 내 확인 시각보다 **30초 뒤**였다(= 지금 쓰는 중).
+2. **그 파일을 포맷해 주고 싶은 유혹이 생기는데, 그게 정확히 lost update 다.** 상대가 쓰는
+   중인 파일을 내가 다시 쓰면 상대의 다음 저장이 내 것을 덮거나 그 반대다. **건드리지 않는다.**
+3. **`git add -A` 가 남의 미완성 작업을 커밋한다.** 이 상황에서는 `git add <내 파일>` 로
+   **명시 스테이징**만 한다. 세션이 습관적으로 쓰는 `-A` 가 여기서는 사고다.
+4. 버전 SoT 도 갈린다 — 상대가 `contracts` 를 bump 하고 `CLAUDE.md` 참조를 안 고치면
+   내 게이트가 그걸 잡는다(`version-prose-drift`). **이건 정상 동작이고 실제로 유용했다.**
+
+수칙: 같은 repo 에서 다른 세션 흔적을 보면 ① 내 파일만 명시 스테이징 ② 남의 미커밋 파일은
+읽기만 ③ 게이트 빨간불의 출처가 내 것인지 **파일 단위로 확인**한 뒤 보고한다. 내 것이 아니면
+"게이트 red" 가 아니라 "내 범위는 green, 공유 트리에 타 세션 WIP" 가 정확한 문장이다.
 
 ## 반-패턴
 

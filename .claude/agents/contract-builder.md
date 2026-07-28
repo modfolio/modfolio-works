@@ -1,6 +1,7 @@
 ---
+name: contract-builder
 description: Zod 이벤트 스키마 계약 생성기. 버전 관리 + union 등록 + 영향 분석
-model: claude-opus-4-8
+model: claude-opus-5
 effort: xhigh
 cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. Zod contracts 정형 — overthinking 회피. breaking 변경 감지는 schema-impact script 가 별도 보장. quality regression 시 revert."

@@ -20,6 +20,7 @@
  *       기본은 `warn` (block 아님 — 1머신 dogfood 안전). 정확도 검증 후 `block` 로 격상.
  */
 
+import { failClosed } from "./_fail-closed.ts";
 import { readHookInput } from "./_lib.ts";
 
 interface HookInput {
@@ -55,6 +56,9 @@ function resolveMode(): Mode {
 
 const mode = resolveMode();
 if (mode === "off") process.exit(0);
+// Advisory by default; fail-closed only when the operator opted into
+// blocking (see _fail-closed.ts §Mode-dependent guards).
+if (mode === "block") failClosed("pre-injection-detect");
 
 const input = (await readHookInput()) as HookInput;
 const ti = input.tool_input ?? {};

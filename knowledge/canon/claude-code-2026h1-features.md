@@ -53,11 +53,12 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 
 - 과부하(**429/529**)·unavailable·non-retryable server error 시 다음 모델로 자동 폴백 → 가용성·복원력↑. auth/billing/rate-limit/size 에러는 폴백 **안 함**(일반 retry).
 - **검증된 키명** (2026-06-14, code.claude.com/docs/en/model-config#fallback-model-chains): `.claude/settings.json` 의 **`fallbackModel`** (단수, **배열** — 최대 3, 초과 무시). element = 모델 ID/alias(`"opus"`/`"sonnet"`/`"fable"`) 또는 `"default"`. CLI `--fallback-model sonnet,haiku` 가 settings 보다 우선. 전용 env var 없음. v2.1.153+.
-- **ecosystem 적용**: `.claude/settings.json` 에 cost-safe 체인 `["claude-sonnet-4-6", "claude-haiku-4-5-20251001"]` 추가 — 폴백은 **항상 동급 이하**(비용 상승 없음). 옛 canon 스니펫의 `fallbackModels`(복수)는 오기 — 정정함.
+- **ecosystem 적용**: `.claude/settings.json` 에 cost-safe 체인 추가 — 폴백은 **항상 동급 이하**(비용 상승 없음). 옛 canon 스니펫의 `fallbackModels`(복수)는 오기 — 정정함.
+- ⚠ **컨텍스트 창 제약 (2026-07-26 추가)**: Claude Code 는 compaction 시 **primary 보다 작은 컨텍스트 창을 가진 모델로는 폴백하지 않는다**(요약 단계에서 대화가 잘리므로). primary=Opus 5(1M)일 때 Sonnet 5(1M)는 유효하지만 Haiku 4.5(200K)는 compaction 폴백에서 제외된다 — 일반 폴백으로는 여전히 유효.
 
 ```jsonc
 // .claude/settings.json — ecosystem 적용값 (cost-safe: 폴백이 더 싼 모델만)
-{ "fallbackModel": ["claude-sonnet-4-6", "claude-haiku-4-5-20251001"] }
+{ "fallbackModel": ["claude-sonnet-5", "claude-haiku-4-5-20251001"] }
 ```
 
 - **sibling 은 opt-in** (블랭킷 push 안 함): sonnet/haiku-primary sibling 이 opus 로 폴백하면 비용 상승 → 각 repo 가 자기 primary 보다 동급 이하 체인을 선택 (Hub-not-enforcer + cost-safety). 권고 체인 = primary 보다 싼 모델들.

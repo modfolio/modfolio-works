@@ -3,7 +3,8 @@
  *
  * PostToolUse hook for Bash + Read.
  *
- * Tool output 에서 secret prefix (sk-ant-, atk_, ghp_, hf_, re_, etc.) 검출 시
+ * Tool output 에서 secret prefix (sk-ant-, atk_, ghp_, github_pat_, hf_, re_,
+ * sk_live_, rk_live_, sk-proj-, cf_ — SoT 는 `secret-patterns.ts`) 검출 시
  * stderr 경고 + (옵션) `hookSpecificOutput.updatedToolOutput` 으로 redaction.
  *
  * OWASP Agentic 2026 매핑:
@@ -22,6 +23,7 @@
  *       지원. 사용 환경에서 schema 미지원 시 자동 fallback (warn).
  */
 
+import { failClosed } from "./_fail-closed.ts";
 import { readHookInput } from "./_lib.ts";
 import { SECRET_PATTERNS } from "./secret-patterns.ts";
 
@@ -46,6 +48,9 @@ function resolveMode(): Mode {
 
 const mode = resolveMode();
 if (mode === "off") process.exit(0);
+// Advisory by default; fail-closed only when the operator opted into
+// blocking (see _fail-closed.ts §Mode-dependent guards).
+if (mode === "block") failClosed("post-secret-redact");
 
 const input = (await readHookInput()) as HookInput;
 const tr = input.tool_response ?? {};
