@@ -1,0 +1,56 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "modfolio-works",
+	"compatibility_date": "2026-07-31",
+	"compatibility_flags": ["nodejs_compat"],
+	// This landing is `output: "static"` with no Cloudflare adapter, so Astro
+	// writes straight to ./dist — NOT ./dist/client, which is where the adapter
+	// puts things. Pointing at the wrong one deploys an empty asset directory
+	// and serves 404s for every path.
+	"assets": {
+		"directory": "./dist",
+		// Required for Workers Static Assets to serve 404.html on an unmatched
+		// route. The default ("none") answers unknown paths with an EMPTY body —
+		// a blank white screen indistinguishable from an outage. Not
+		// "single-page-application": this is a multi-page static site, and
+		// rewriting every miss to index.html would answer 200 for pages that do
+		// not exist and let search engines index them.
+		"not_found_handling": "404-page"
+	},
+	"placement": {
+		"mode": "smart"
+	},
+	// Custom Domain pinned in config rather than left to the dashboard: a later
+	// `wrangler deploy` that does not see the route declared here will warn that
+	// it is overriding the remote configuration, and the fleet has had a route
+	// binding silently stripped that way before (see modfolio-connect's landing).
+	"routes": [
+		{
+			"pattern": "works.modfolio.io",
+			"custom_domain": true
+		}
+	],
+	// Declaring `routes` makes wrangler disable workers.dev and preview URLs by
+	// default and warn about it. works.modfolio.io is the sole public entrypoint,
+	// so the redundant *.workers.dev origin stays off — an unlisted second origin
+	// for the same content is an SEO duplicate and an unmonitored surface.
+	"workers_dev": false,
+	"preview_urls": false,
+	// Matches apps/app and the rest of the fleet (canon observability.md). 10%
+	// on a static marketing page: enough to keep a performance-regression
+	// baseline, not so much that a low-signal page dominates egress.
+	"observability": {
+		"traces": {
+			"enabled": true,
+			"head_sampling_rate": 0.1,
+			"destinations": ["modfolio-signoz"],
+			"persist": false
+		},
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 0.1,
+			"destinations": ["modfolio-signoz-logs"],
+			"persist": false
+		}
+	}
+}

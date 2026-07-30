@@ -1,0 +1,121 @@
+---
+/**
+ * Not found.
+ *
+ * Cloudflare Workers Static Assets answers an unmatched path with an EMPTY 404
+ * body unless the Worker sets `assets.not_found_handling: "404-page"` AND this
+ * file exists to be served. Either half missing is a blank white screen, which
+ * is the same thing a user sees when a site is down — so a public launch needs
+ * both.
+ *
+ * Deliberately built from the same tokens and the same Base layout as every
+ * other page: a 404 is still the product, and one styled differently reads as
+ * a piece of infrastructure leaking through.
+ */
+import Base from "../layouts/Base.astro";
+import Footer from "../components/landing/Footer.astro";
+
+import "../styles/reset.css";
+import "../styles/tokens.css";
+import "../styles/global.css";
+---
+
+<Base
+	title="찾을 수 없는 페이지 — Modfolio Works"
+	description="요청한 페이지를 찾을 수 없습니다."
+>
+	<main id="main">
+		<section class="nf">
+			<div class="nf__inner">
+				<p class="nf__label">404</p>
+				<h1 class="nf__title">페이지를 찾을 수 없습니다</h1>
+				<p class="nf__sub">
+					주소가 바뀌었거나 삭제된 페이지일 수 있습니다. 아래에서 다시
+					시작해주세요.
+				</p>
+				<div class="nf__actions">
+					<a class="nf__cta" href="/">홈으로</a>
+					<a class="nf__link" href="/apps">앱 둘러보기</a>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Base>
+
+<style>
+	.nf {
+		padding: var(--space-24) var(--mu-padding-x) var(--space-16);
+		background: linear-gradient(
+			180deg,
+			var(--color-surface-0) 0%,
+			var(--color-surface-1) 100%
+		);
+	}
+
+	.nf__inner {
+		max-width: var(--mu-max-width);
+		margin: 0 auto;
+	}
+
+	.nf__label {
+		font-family: var(--font-ui);
+		font-size: var(--font-size-caption);
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--color-text-3);
+		margin-bottom: var(--space-4);
+	}
+
+	.nf__title {
+		font-family: var(--font-display);
+		font-size: var(--font-size-h1);
+		color: var(--color-text-1);
+		margin-bottom: var(--space-4);
+	}
+
+	.nf__sub {
+		font-size: var(--font-size-body);
+		color: var(--color-text-2);
+		max-width: 50ch;
+	}
+
+	.nf__actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-4);
+		margin-top: var(--space-8);
+	}
+
+	.nf__cta {
+		display: inline-flex;
+		align-items: center;
+		/* 44px minimum touch target. */
+		min-height: 44px;
+		padding: 0 var(--space-6);
+		border-radius: 999px;
+		background: var(--color-interactive-primary);
+		color: var(--color-surface-0);
+		text-decoration: none;
+		font-size: var(--font-size-body);
+	}
+
+	.nf__cta:hover {
+		background: var(--color-interactive-hover);
+	}
+
+	.nf__link {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		color: var(--color-text-2);
+		text-decoration: underline;
+		text-underline-offset: 0.25em;
+	}
+
+	.nf__link:hover {
+		color: var(--color-text-1);
+	}
+</style>
