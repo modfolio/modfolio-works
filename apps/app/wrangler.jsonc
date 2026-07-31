@@ -9,6 +9,16 @@
 	"kv_namespaces": [
 		{ "binding": "SESSION", "id": "371512e24c874c72b1c089678d89d720" }
 	],
+	// campus.modfolio.io is where the works APP runs. The landing at
+	// works.modfolio.io is a static Astro marketing site with no auth, so
+	// the SDK's /auth/login and /auth/callback live here — which is also why
+	// Connect's client seed now registers a callback on this host rather than
+	// only on the landing it could never be served from.
+	"routes": [{ "pattern": "campus.modfolio.io", "custom_domain": true }],
+	// campus is the sole public entrypoint for the app; a *.workers.dev twin
+	// would be an unmonitored second origin for the same authenticated surface.
+	"workers_dev": false,
+	"preview_urls": false,
 	"observability": {
 		"traces": {
 			"enabled": true,

@@ -4,6 +4,7 @@
 	"scripts": {
 		"dev": "athsra run modfolio-works -- astro dev --port 4322",
 		"build": "astro build",
+		"deploy": "astro build && wrangler deploy",
 		"preview": "athsra run modfolio-works -- astro preview",
 		"typecheck": "astro check"
 	},
