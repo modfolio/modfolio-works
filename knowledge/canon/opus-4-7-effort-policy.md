@@ -56,6 +56,33 @@ consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-a
 **우선순위 (Claude Code 공식 문서)**: `CLAUDE_CODE_EFFORT_LEVEL` env > subagent/skill frontmatter > 세션 설정값 > 모델 기본값. env 계층 안에서는 OS env > settings.json `env` > settings.local.json `env`. **핵심: env 계층 전체가 frontmatter 보다 위** — 그래서 전역 env 값은 각 subagent 의 보정된 frontmatter effort 를 **전부 덮어써** 전 subagent 를 그 값으로 강제한다.
 
 > **실사건 (2026-07-12 ~ 07-26, 2주간)**: 2026-07-09 에 `.claude/settings.json` 의 env-max 를 제거했지만 **`.mise.toml:11` 을 놓쳤다**. mise 는 OS env 로 주입하므로 우선순위가 더 높다 — 24개 agent 의 `max=3·xhigh=13·high=5·medium=3` 보정이 **전부 `max` 로 덮여** 있었고, `templates/.mise.toml` 이 같은 값을 28개 sibling 에 배포했으며, `harness-pull` 은 pull 마다 멤버 `settings.json` 에 env-max 를 **능동 주입**했고, `diagnostic` 은 env-max 가 *없으면* 경고하며 추가를 autofix 로 제안했다. 부수 피해: `ultracode` 는 env 가 xhigh 아닌 값이면 비활성이라 계속 죽어 있었다. → v2.0.0 에서 4개 지점 전부 역전 + harness-pull 이 멤버의 잔재를 **제거**하도록 변경(자가치유).
+>
+> ⚠ **2026-08-04 정정 — 그 「자가치유」는 `.claude/settings.json` 에만 해당한다.** 이 절이
+> 서술하는 사건의 **주범은 `.mise.toml:11`** 인데, `resolveEffortSettingsMigration` 은
+> `settings.json` 의 `env` 만 다루고 `.mise.toml` 은 **observe-only** 다
+> (`toolkit-config-sync.ts` — 멤버 자율 + v2.4 write-heavy 가 cross-member 오염을 낸 이력.
+> **그 경계는 옳고 유지한다**). 실측 2026-08-04(modfolio-notify 제보, 허브 독립 확인):
+>
+> ```
+> modfolio-connect/.mise.toml:17   CLAUDE_CODE_EFFORT_LEVEL = "max"   ← 살아 있음
+> modfolio-sign/.mise.toml:17      CLAUDE_CODE_EFFORT_LEVEL = "max"   ← 살아 있음
+> modfolio-ecosystem/.mise.toml:10 # NOTE: … 의도적으로 설정하지 않는다  ← 주석뿐(정답)
+> ```
+>
+> connect·sign 의 그 줄 주석이 *"# Claude Code effort baseline — consistent across 22 repos"*
+> — **허브가 쓴 문구다.** 템플릿은 2026-07-26 에 정리했지만 **이미 심긴 사본은 안 지워졌다.**
+>
+> **이 문장이 실제로 한 일**: 「그 사건은 닫혔다」로 읽혀서 **아무도 다시 확인하지 않았다.**
+> 「선언은 실물과 대조되기 전까지 주장」이 canon 자신에게 걸린 자리다.
+>
+> **진짜 결함은 자가치유의 부재가 아니라 침묵이었다.** 관측은 v2.5 부터 계산돼
+> `pull-manifest.json` 에 들어가고 있었는데 **리포트에 한 줄도 안 나왔다** — 관측기가
+> 아무도 안 읽는 파일에 쓰고 있었고, 상태값도 `diff` 하나라 「멤버 취향」과 「허브가 심어
+> 놓고 안 걷어간 값」이 구분되지 않았다.
+>
+> → 3.50.0: `harness-pull` 이 그 잔재를 **이름과 결과를 대서 리포트에 출력**한다
+> (`detectHarmfulMiseEnv`). **쓰지는 않는다** — observe-only 는 «쓰지 않는다» 는 뜻이지
+> «말하지 않는다» 가 아니다. 지우는 것은 그 repo 몫이다.
 
 **권고**:
 - env 변수를 **미설정**으로 둔다 → 각 subagent 는 자기 frontmatter effort 로 돈다.

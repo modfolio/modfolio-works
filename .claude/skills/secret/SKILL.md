@@ -130,7 +130,7 @@ repo migration 절차 (1 repo):
 3. 안전한 곳 보관 (가족 아는 위치, 화재 안전 박스 등)
 4. checksum 자동 검증 — 옮겨 적을 때 오타 발생 시 `athsra login` 이 reject
 
-자유 phrase (예 `#00_Nikyhmod`) 도 그대로 작동 — BIP-39 강제 X. BIP-39 의 가치는 paper backup 안정성 + 미래 hardware wallet 통합.
+자유 phrase (예 `<your-passphrase-here>`) 도 그대로 작동 — BIP-39 강제 X. BIP-39 의 가치는 paper backup 안정성 + 미래 hardware wallet 통합.
 
 ## master pw 변경
 

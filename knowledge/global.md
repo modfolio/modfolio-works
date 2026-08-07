@@ -2,7 +2,14 @@
 
 > 이 파일은 모든 modfolio 프로젝트에 동기화된다. 수정은 modfolio-ecosystem에서만.
 > 상세 정보는 각 skill을 호출할 것.
+>
+> ⚠ **아래 `SYNC_ESSENTIALS` 구간만 각 멤버 CLAUDE.md 로 들어간다** (`resolve.ts` 의
+> `extractGlobalEssentials`). 구간 밖은 이 파일에만 남는다 — 멤버가 **매 세션 읽어야 하는
+> 것**만 안에 둔다. 상한 60행, 초과·마커 부재는 **게이트 실패**(조용히 자르지 않는다).
+> 예전에는 «앞 30행» 이라는 **위치**가 기준이어서, 위쪽에 문단 하나가 들어가는 것만으로
+> 불변 원칙이 창 밖으로 밀려났다(2026-08-05 실측 — 게시 전 차단).
 
+<!-- SYNC_ESSENTIALS_START -->
 ## 생태계 개요
 
 **Modfolio 생태계**는 15개 이상의 앱으로 구성된 SaaS 생태계. 각 앱은 독립 브랜드로 운영되며, 공통 인프라(SSO, 이벤트, 결제)를 공유.
@@ -19,15 +26,25 @@
 4. **디자인 다양성** — 구조(토큰 명명, cascade layer, 접근성)만 공유한다. 색상값, 그림자, 모션, 타이포그래피, 레이아웃의 실제 값은 각 앱이 Brand Passport에 따라 자유롭게 결정한다.
 5. **Hub-not-enforcer (강제 0, 절대 불변)** — modfolio-ecosystem 은 가이드/관제탑이지 강제자가 아니다. **사용자 건별 허가 전까지 다른 repo 를 직접 수정·commit·push 하지 않는다.** sibling 에 의견(피드백)은 주되 채택·실행 판단은 그 repo 자율. 어떤 환경·머신·도구에서든 불변. (`evergreen-principle.md`)
 
+## 오너의 판단 성향 — `knowledge/voice/`
+
+발화에서 축적된 말뭉치. 규약은 canon `owner-voice.md`. 충돌 시 **canon(실측) > voice(발화)** —
+오너가 «그렇게 해» 라고 해도 실측이 반대면 그 사실을 말하고 진행한다.
+⚠ 아래 하나는 **한쪽만 기억하면 매번 틀리므로** 인라인으로 둔다:
+
+| 상황 | 행동 |
+|---|---|
+| **오너가 자리에 있다** | **적극적으로 묻는다.** 웹서치도 적극적으로 |
+| **무인(밤샘·원격 모바일)** | **묻지 않는다.** 정공법으로 판단하고 근거를 기록에 남긴다 |
+
+모드를 모르면 **먼저 확인한다.** 새 발화가 판단·선호·금지이면 `knowledge/voice/` 에 등재하되
+**원문(quote) 없으면 등재하지 않는다** — quote 를 못 적는 항목은 관측이 아니라 추론이다.
+
 ## 도메인 아키텍처 (2-프로젝트 모델)
 
-각 브랜드는 두 개의 독립 프로젝트로 분리:
-- `domain.com` = 앱 (SvelteKit / SolidStart 등)
-- `www.domain.com` = 랜딩 (Astro)
-
-**entryMode**: `app-first` (앱 홈 직접) 또는 `landing-first` (302 redirect). **현 default = `landing-first`** (ADR-011, 2026-05-24 — 비즈니스 규모 대응).
-**app subdomain (`app.<domain>`)**: 사용 허용 (sibling 자율 시점, ADR-011 §D2).
-**인프라 앱**: 서브도메인 모델 (`*.modfolio.io`).
+`domain.com` = 앱 · `www.domain.com` = 랜딩(Astro) · 인프라 앱 = 서브도메인(`*.modfolio.io`).
+**entryMode** 현 default = **`landing-first`** (ADR-011, 2026-05-24). `app.<domain>` 사용 허용(sibling 자율 시점, §D2).
+<!-- SYNC_ESSENTIALS_END -->
 
 ## 기술 스택 요약
 

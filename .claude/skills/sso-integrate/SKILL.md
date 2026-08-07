@@ -6,9 +6,25 @@ user-invocable: true
 
 # /sso-integrate — Connect SDK SSO 연동
 
-> **현행 latest = `@modfolio/connect-sdk` 9.4.0** (2026-07-27 실측 — connect `sdk/package.json`
-> · `ecosystem.json` · pkg.modfolio.io 익명 packument 3자 일치. 9.3.0 → 9.4.0 은 **마이너**라
-> `bun update` 로 넘어간다).
+> **현행 latest = `@modfolio/connect-sdk` 10.5.0** (2026-08-07 실측 — npm
+> `dist-tags.latest` = `10.5.0`, `ecosystem.json.connectSdkLatest` 와 일치).
+> 🚨 **Nuxt 앱은 반드시 받을 것** — 10.2.0~10.4.0 이 CF Workers 에서 POST 본문을 못 읽어
+> 백채널 로그아웃·FedCM 수신부가 «본문 없음» 으로 동작했고, 증상이 `400 missing_logout_token`
+> 이라 **정상 거절과 문자 그대로 구분되지 않았다**.
+>
+> **10.x 안의 이동은 additive minor** — 이미 `^10` 인 앱은 `bun update` 로 온다.
+> (10.1.0 신설분: `parseLoginBrandTokens()` · `isLoginBrandTokens()` ·
+> `LOGIN_BRAND_WELL_KNOWN_PATH`.)
+> 10.0.0 이 브랜드 스키마를 **게시된 적 없는 패키지**(`@modfolio/connect-contracts`,
+> `private:true`)에서 import 하라고 안내해 실행 불가능했던 것을 고친 릴리스다.
+>
+> ⚠ **다만 `^9.x` 이하에 핀된 앱이라면 10.x 로 넘어가는 것 자체가 breaking major 다** —
+> `bun update` 로는 안 오고 `bun add @modfolio/connect-sdk@^10` 을 **명시**해야 한다.
+> 10.0.0 의 가시 변화 2건을 먼저 읽을 것: ① `/auth/login` 이 302 대신 **200 HTML**
+> (첫 홉 로딩 화면 — 302 를 단언하는 통합 테스트·프록시 규칙이 있으면 깨진다.
+> opt-out `interstitial: false`) ② **로그아웃이 기본 전역**(`end_session_endpoint` 까지
+> 이어가 IdP 세션 종료 · 9.x 는 앱 쿠키만 지워 계정이 살아 있었다).
+> 상세는 `ecosystem.json._connectSdkNote`. 직전 9.5.0 = Cross-App Access(ID-JAG), additive.
 > 이 숫자의 SoT 는 `ecosystem.json` 의 `connectSdkLatest` 이고, 이 문서의 값이 그와
 > 어긋나면 `bun run test:harness` 가 실패한다(`version-prose-drift.test.ts`).
 > 권위 실측은 `curl https://registry.npmjs.org/@modfolio%2fconnect-sdk` → `.dist-tags.latest`.
@@ -63,6 +79,89 @@ export const GET = auth.loginHandler;      // / callbackHandler / logoutHandler
 
 `clientId` 는 **Connect 가 정본**이다. 값이 확실치 않으면 추측하지 말고 Connect 의
 client 레지스트리를 확인할 것 — 잘못된 clientId 는 Connect 에서 먼저 고치고 앱이 뒤따른다.
+
+## ⚠ 사용자 id 의 **형식을 가정하지 마라** — 특히 파티션 키로 쓸 때
+
+`ConnectUser.id`(= JWT `sub`)는 **UUID 가 아니다.** Connect 프로덕션 실측(2026-08-04):
+36자 UUID 와 **32자 Better Auth id 가 섞여 있고, 오너 계정이 32자 쪽**이다.
+
+그래서 `contracts` 의 `user_id` 는 **의도적으로 `z.string()`** 이다(`.uuid()` 아님 —
+`contracts/events/base.ts`). 이건 느슨한 게 아니라 **실물에 맞춘 것**이고, 반대로 조이면
+정상 이벤트가 검증에서 탈락한다.
+
+### 왜 이게 조용한 결함이 되나
+
+⚠ **틀려도 로그인은 성공한다.** `clientId` 가 틀리면 즉시 드러나지만, 사용자 id 계열이
+다르면 **로그인은 되고 그 사용자의 데이터만 비어 보인다.** 아무도 신고하지 않은 채로
+오래 산다.
+
+실제로 2026-08-04 에 한 앱이 자기 파티션 키를 UUID(`OWNER_USER_ID=7d9f6df6-…`)로 옮겨
+놓고 붙이기 직전이었다. Connect DB 조회 결과 **그 id 는 0 rows** 였다 — 붙였으면 정확히
+위 증상이 났다. **묻지 않고 문서를 읽었으면 «UUID» 라는 서술이 오답을 확인해 줬을 것이다.**
+
+### 요구
+
+- `id` 를 **불투명 문자열**로 다뤄라. 길이·형식·정규식으로 검증하지 마라
+- DB 컬럼을 `uuid` 타입으로 잡지 마라 → `text`
+- 기존 사용자 테이블과 **join/파티션 키로 엮기 전에**, 그 값이 같은 계열인지
+  **Connect 에 물어서 확인**하라(형식이 같아 보이는 것은 근거가 아니다)
+
+## ⚠ 백채널 로그아웃 — **핸들러를 정확히 mount 하고도 프레임워크가 먼저 막을 수 있다**
+
+`backchannelLogoutHandler` 를 붙였는데 로그아웃이 전파되지 않으면, **핸들러가 아니라 그 앞
+층을 먼저 의심한다.** Connect 는 OIDC Back-Channel Logout 1.0 대로 보낸다:
+
+```
+POST <backchannel_logout_uri>
+Content-Type: application/x-www-form-urlencoded     ← form 계열
+body: logout_token=<JWT>
+                                                    ← Origin 헤더 없음 (서버-서버)
+```
+
+이 조합이 **프레임워크 내장 CSRF 보호와 정면으로 부딪힌다.** form content-type + Origin 부재는
+많은 프레임워크가 «cross-site form POST» 로 분류하는 바로 그 모양이고, 그러면 요청은
+**핸들러에 닿기도 전에** 거부된다 — SDK 의 `verifyLogoutToken` 도 실행되지 않는다.
+
+### 판별 (처방보다 먼저 — 5줄이면 갈린다)
+
+배포한 엔드포인트에 **두 형태**를 보내 보고 응답이 갈리는지 본다:
+
+```sh
+URL=https://<your-app>/auth/backchannel-logout
+
+# A — Connect 가 실제로 보내는 형태
+curl -s -o /dev/null -w "A %{http_code}\n" -X POST "$URL" \
+  -H "Content-Type: application/x-www-form-urlencoded" --data "logout_token=garbage"
+
+# D — Content-Type 없음 (CSRF 검사가 발동하지 않는 형태)
+curl -s -o /dev/null -w "D %{http_code}\n" -X POST "$URL"
+```
+
+| A | D | 읽는 법 |
+|---|---|---|
+| 4xx(거부) | **2xx/400** | **A 만 막힌다 = 프레임워크 CSRF 층.** 핸들러는 정상이고 도달을 못 할 뿐 |
+| 400 | 400 | 핸들러가 답하고 있다 — 배선은 정상(둘 다 무효 토큰이라 400 이 정답) |
+| 404 | 404 | 라우트가 claim 되지 않았다(경로 문제이지 CSRF 아님) |
+
+> ⚠ **D 만으로 «살아 있다» 를 판정하지 말 것.** D 는 CSRF 층을 통과시켜 본 적이 없어서
+> **막혀 있어도 400 을 돌려준다.** 실측 사례: 한 앱이 D 로 400 을 확인하고 등록까지
+> 마쳤는데, A 로 재니 **403 이었다**(2026-08-04, 허브 3-way 대조). 「프로브가 실물을
+> 재현하는지부터 의심한다」 — `.claude/rules/agent-evidence.md`
+>
+> ⚠ **Origin 을 붙이는 것만으로는 안 열릴 수 있다** — 받는 쪽이 그 값을 신뢰 목록에
+> 넣지 않으면 두 번째 조건에서 다시 걸린다(같은 날 실측: Origin 실어도 403).
+
+### 등록 순서
+
+Connect 계약이 *"엔드포인트를 띄운 뒤에만 등록하라"* 인데, 여기서 **«띄웠다» 의 증거는 A 다.**
+D 로 확인하고 등록하면 fleet 전파가 100% 실패하면서 **조용히** 실패한다(발신 측은 대개
+거절을 `warn` 한 줄로만 남기고 재시도하지 않는다).
+
+### 수정 방향은 **각 앱이 정한다**
+
+이 스킬은 처방하지 않는다. CSRF 경계는 앱 소유이고 프레임워크마다 노브가 다르며,
+발신 측 변경이 필요한지는 Connect 소유다. 위 판별로 **어느 층에서 막히는지**까지만
+확정하고, 그 뒤는 해당 repo 와 Connect 사이의 결정이다.
 
 ## 버전 이력
 
@@ -137,7 +236,7 @@ bun update @modfolio/connect-sdk
    (`^9.x` → 9.4.0). `^8.x` 는 8 계열 최신에서 멈춘다 — 이게 major 의 정상 동작이다.
 
 2. **exact pin 은 `bun update` 가 안 움직인다** — 선언이 `"8.7.0"`(캐럿 없음)이면
-   `bun update` 는 **무동작**이다. `bun add @modfolio/connect-sdk@9.4.0` 으로 명시 지정.
+   `bun update` 는 **무동작**이다. `bun add @modfolio/connect-sdk@10.5.0` 으로 명시 지정.
    (핀이 그 repo 의 의도된 하우스 스타일이면 **핀을 유지**한 채 값만 올릴 것.)
 
 3. **install root 가 워크스페이스와 다를 수 있다** — 루트 `package.json` 에 `workspaces`

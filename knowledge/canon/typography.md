@@ -75,18 +75,45 @@ CSS 변수 이름만 공유. 값·서체·스케일은 모두 앱 자유:
 
 ### Adobe Fonts Kit (선택적 공유 자원)
 
-Kit ID: `auk2qdl` — 사용을 원하는 앱은 이 Kit에서 서체를 선택할 수 있다(39 패밀리).
+Kit ID: **`fmh4fod`** — 사용을 원하는 앱은 이 Kit에서 서체를 선택할 수 있다.
 
 ```html
-<link rel="stylesheet" href="https://use.typekit.net/auk2qdl.css" />
+<link rel="stylesheet" href="https://use.typekit.net/fmh4fod.css" />
 ```
 
 사용 의무 없음. Google Fonts, self-hosted, 시스템 폰트도 허용.
 
-> **정정 (2026-07-27)**: 이 자리는 `fmh4fod` 를 적고 있었지만, 이 repo 의 다른 모든 산출물 —
-> 라이브 포털(`apps/portal/index.html`) 과 브랜드 서체 SoR 5문서(`brand/README.md`,
-> `brand/typography/*.md`) — 는 전부 `auk2qdl` 을 쓴다. 실사용 쪽으로 맞췄다.
+**실측 패밀리 (2026-08-05, `curl https://use.typekit.net/fmh4fod.css` → 200 · 17,096 B)** — **6종**:
+
+```
+din-2014 · garamond-premier-pro · neue-haas-grotesk-display
+pretendard · sandoll-jebi2 · source-code-pro
+```
+
+> ### ⚠ 재정정 (2026-08-05) — **2026-07-27 «정정» 이 거꾸로였다**
+>
+> 그때 이 자리를 `fmh4fod` → `auk2qdl` 로 바꿨고 근거는 *"이 repo 의 다른 모든 산출물이
+> 전부 `auk2qdl` 을 쓴다 — 실사용 쪽으로 맞췄다"* 였다. **두 ID 중 어느 쪽이 실제로
+> 응답하는지는 재지 않았다.**
+>
+> ```
+> curl https://use.typekit.net/auk2qdl.css   →  412  (19 B, "precondition failed")
+> curl https://use.typekit.net/fmh4fod.css   →  200  (17,096 B)
+> ```
+>
+> `auk2qdl` 은 **죽은 ID** 였다. 그래서 그 정정 이후 이 canon 은 31 repo 에게 **로드되지
+> 않는 스타일시트**를 가르쳤고, 그것을 따른 앱은 선언한 서체가 **한 번도 렌더되지 않은 채**
+> 폴백으로만 살았다. 고장처럼 보이지 않아서(폴백이 멀쩡히 그려진다) 아무도 몰랐다.
+>
+> **이건 이 저장소가 반복해 배운 형태다** — *"사본끼리의 일치는 정합이 아니다."*
+> 산출물 다수결로 canon 을 맞추지 말고 **실물에 물어야** 했다. 확인 비용은 `curl` 한 줄이었다.
+>
+> ⚠ 「39 패밀리」도 근거가 없었다. 실측은 **6종**이다.
+>
 > ※ Adobe Fonts 킷은 **자기 호스팅이 라이선스로 금지**된다 — 이 킷의 서체는 CDN 링크로만 쓴다.
+> ※ ⚠ **CJK 는 이 킷으로 못 쓴다** — `gotchas.md` §"Adobe Fonts — CJK 는 CSS 임베드로 못
+> 쓴다"(connect 2026-07-26 실측). `sandoll-jebi2` 가 킷에 있어도 **한글 페인트는 보장되지
+> 않는다.** 한글은 self-host(`@fontsource-variable/noto-serif-kr`)가 권고다.
 
 ### Pretendard (한국어 권장)
 

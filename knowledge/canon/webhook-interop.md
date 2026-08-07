@@ -29,7 +29,7 @@ consumers: [api, contracts, security-scan, code-reviewer, orbit]
 
 | 문법 | 헤더 | 값 | 서명 대상 | 리플레이 가드 | 실사용 |
 |---|---|---|---|---|---|
-| **canonical** (Standard Webhooks) | `webhook-signature` | `v1,<base64>` | `{id}.{ts}.{body}` | ✅ `webhook-timestamp` | **0 repo** ❗ |
+| **canonical** (Standard Webhooks) | `webhook-signature` | `v1,<base64>` | `{id}.{ts}.{body}` | ✅ `webhook-timestamp` | ~~0 repo~~ → **2 repo** (2026-08-04: modfolio-notify · modfolio-sign — 아래 §채택 0 이 깨졌다) |
 | `t-v1-hex` (de-facto) | `X-Webhook-Signature` | `t=<ts>,v1=<hex>` | `<t>.<body>` | ✅ `t` | athsra·gistcore·connect·pay·press·visualize·worthee |
 | `sha256-hex` | `x-webhook-signature` / `x-modfolio-signature` | `sha256=<hex>` | 구현별 상이 (아래 †) | 구현별 상이 † | **producer** atelier-and-folio · **consumer** modfolio-admin |
 | `bare-hex` | `x-modfolio-signature` | `<hex>` | 구현별 상이 | ❌ | gistcore·connect (일부 경로) |
@@ -94,6 +94,34 @@ modfolio-pay 중앙 sink (canonical, Authorization 없음, 단건 봉투)
 > `bearer-secret` 은 **메시지 무결성이 아예 없다.** 공유 시크릿이 새면 임의 이벤트를 위조할 수 있고, 본문 바인딩도 리플레이 가드도 없다. 신규 배선에 채택 금지.
 >
 > **다만 contracts 1.16.0 부터 `verifyModfolioEventCompat` 이 이것도 받는다**(`accept: ['bearer-secret']`, opt-in). 모델링하지 않는다고 사라지지 않았기 때문이다 — bearer 소비자는 헬퍼를 **아예 탈 수 없었고**, 그래서 "compat 헬퍼로 이동하세요" 라는 이 canon 의 권고가 그들에게는 무용지물이었다. 이제는 전환기 동안 canonical 과 bearer 를 함께 받다가 `accept` 에서 빼는 것으로 끝낼 수 있다. 자격증명 비교는 길이까지 감추는 상수시간(HMAC 블라인딩)이고, **제시됐는데 틀린 Bearer 는 서명 문법으로 폴백하지 않는다**(여러 문을 두드리게 두지 않는다).
+
+## 채택 0 이 깨졌다 — **2 repo** (2026-08-04) · 그리고 그 방식이 아래 교착 진단을 지지한다
+
+| repo | 근거 | 실트래픽 |
+|---|---|---|
+| **modfolio-notify** | `packages/notify-sdk/src/webhook.ts` — Web Crypto 만(`node:` import 0건을 게이트로 강제) | ⚠ **아직 없음** (자기보고 2026-08-04) |
+| **modfolio-sign** | `packages/sign-sdk/src/types.ts:437` — `webhook-id`/`-timestamp`/`-signature`, `v1,<base64>`, `{id}.{timestamp}.{body}`, tolerance 300 (허브가 읽기 전용 대조) | ❔ **미확인** — sign 이 답할 사실 |
+
+⚠ **«채택 2» 와 «돌고 있는 canonical 배선 2» 는 다른 문장이다.** notify 가 이 구분을
+자기 보고에 스스로 달았고(*"canon 이 ANF 건에서 «현재 실트래픽이 없다» 를 명시한 것과
+같은 이유"*), 그 규율을 그대로 따른다.
+
+### ★ 이 두 건이 아래 §교착 진단의 **대우(對偶)** 다
+
+notify 의 분석이 정확하다:
+
+> **notify 는 소비자가 아직 하나도 없다. 전환 비용이 0 이라 표준을 쓰는 데 아무 저항이 없었다.**
+
+sign 도 같다 — 2026-08-03 에 배포된 신규 앱이고, 웹훅 소비자가 아직 붙기 전이다.
+즉 **첫 두 채택자가 «신규이고 소비자가 없는» 이라는 같은 조건을 공유한다.** 이건 우연이
+아니라 아래 교착의 정확한 이면이다: 기존 repo 가 안 옮긴 이유는 문법 취향이 아니라
+**살아 있는 소비자**다.
+
+**따라서 수렴 정책이 바뀐다:**
+
+- ❌ "각자 canonical 로 옮기세요" — 살아 있는 소비자가 있는 한 아무도 못 움직인다(아래 §교착)
+- ✅ **신규 배선은 canonical 로 시작한다** — 전환 비용이 0 인 유일한 순간이 그때다
+- ✅ 기존 배선은 `verifyModfolioEventCompat` 로 소비자부터 이동, **그 배선은 소비자가 죽을 때 같이 죽는다**
 
 ## 왜 canonical 채택률이 0 이었나 (구조적 교착)
 

@@ -34,6 +34,7 @@ import {
 import { dirname, join } from "node:path";
 import { failClosed } from "./_fail-closed.ts";
 import { bashCommand, gitRoot, readHookInput } from "./_lib.ts";
+import { SECRET_PATTERNS } from "./secret-patterns.ts";
 
 type Tier = "critical" | "high" | "medium";
 type Mode = "off" | "warn" | "block";
@@ -154,9 +155,25 @@ const CRITICAL: Rule[] = [
 
 const HIGH: Rule[] = [
 	{
+		// ⚠ 이 규칙의 `why` 는 **틀린 사실이었다** (modfolio-connect 제보 2026-07-31).
+		//
+		// `why` 는 장식이 아니다 — 에이전트가 읽고 **오너에게 옮기는 사실**이 된다. 실제로
+		// connect 가 `cf-paid-resource` 라벨을 읽고 오너에게 *"비용 때문에 막혔습니다"* 라고
+		// 보고했다. 측정한 적 없는 문장이었다.
+		//
+		// Cloudflare 공식 가격 문서로 7종 전부 확인(2026-07-31):
+		//   D1·R2·KV·Queues·Vectorize — 전부 **사용량**(행/오퍼레이션/저장량/차원) 과금
+		//   Hyperdrive — "included in both the Free and Paid Workers plans"
+		//   Pages project — 생성 무료
+		// **생성만으로 과금되는 것은 하나도 없다.** connect 실측: 새로 만든 D1 은 쿼리 0 · 12KB.
+		//
+		// 그런데 **차단은 유지한다.** 이 배열은 "돈이 즉시 나가는 것" 만이 아니라 "지출 경로를
+		// 여는 것" 도 잡는 자리이고, 그 정책 판단은 오너 몫이지 이 수정의 범위가 아니다.
+		// 여기서 고치는 것은 **가드가 하는 거짓 진술 한 줄**이다 — 훅 자신이 옆줄
+		// (`gh-codespace`: "bills hourly")에서는 사용량과 생성을 이미 옳게 구분하고 있었다.
 		re: /\bwrangler\s+(r2\s+bucket|d1|kv:?namespace|queues|hyperdrive|vectorize|pages\s+project)\s+create\b/i,
-		vector: "cf-paid-resource",
-		why: "creates a billable Cloudflare resource",
+		vector: "cf-metered-resource",
+		why: "creates a Cloudflare resource that meters on usage (creation itself is not billed)",
 	},
 	{
 		re: /\b(terraform|tofu)\s+apply\b/i,
@@ -369,6 +386,61 @@ function loadProjectAllow(root: string): RegExp[] {
 // `# stripe charges create` can't whitelist). Unbalanced quotes fall back to one
 // trailing segment — leading still classified. Shell escapes/`$()` are not modeled;
 // on that ambiguity the guard inspects rather than skips (safe direction).
+/**
+ * Heredoc bodies fed to an INERT command are DATA — replace them before segmenting.
+ *
+ * ⚠ WHY (2026-08-06, dogfooded twice over): this guard blocked the very commit that
+ * documented a trifecta false-positive **in this file**, because the message explained
+ * what the guard blocks and was passed as `git commit -F - <<'MSG' … MSG`.
+ *
+ * The lesson was already here twice — line ~71 says a `git commit -m '<spend text>'`
+ * message is DATA (quote-aware `segments()` keeps it in one inert git segment), and
+ * the `sk_live_your_key_here` note above says *"prose about a key is not a key"*
+ * (2026-07-22, same dogfooding). Both cover the **quoted `-m`** form. A heredoc is not
+ * quoted: its body spans raw newlines, so `segments()` splits it into segments whose
+ * leading is prose, not `git` — and every long commit message in this repo uses that form.
+ *
+ * `writ-policy.ts` hit the identical wall on 2026-07-21 and fixed it with
+ * `stripDataSegments`. **That fix never reached this file.**
+ *
+ * ## Why this does NOT open a money hole
+ *
+ * A heredoc body is stdin to the command that owns it. For `git` that is inert — git
+ * does not execute stdin. But `bash <<EOF … EOF` **does** execute the body, so stripping
+ * every heredoc would be a real hole. So the body is dropped **only when the command
+ * opening it leads with an inert verb**; anything else keeps its body and is inspected.
+ * Unterminated heredocs are left intact too (inspect rather than skip — safe direction).
+ */
+function stripInertHeredocBodies(cmd: string): string {
+	const OPENER = /<<-?\s*(['"]?)([A-Za-z_][A-Za-z0-9_]*)\1/;
+	const lines = cmd.split("\n");
+	const out: string[] = [];
+	for (let i = 0; i < lines.length; i++) {
+		const line = lines[i] ?? "";
+		out.push(line);
+		const m = OPENER.exec(line);
+		if (!m) continue;
+		// ⚠ **여는 줄 전체**를 본다 — `<<` 앞만 보면 안 된다.
+		//    첫 구현은 `line.slice(0, m.index)` 의 마지막 명령만 봤고, `cat <<EOF | bash` 에서
+		//    `cat`(inert)을 읽어 본문을 걷어냈다. 본문은 `bash` 로 흘러 **실행된다** — 결제
+		//    가드에 뚫린 구멍이다. 이 파일의 대조쌍이 그 자리에서 잡았다.
+		//    규칙: 그 줄의 **모든** 명령이 inert 일 때만 데이터로 본다.
+		const opener = (line.slice(0, m.index) + line.slice(m.index + m[0].length))
+			.split(/&&|\|\||[;|]/)
+			.map((p) => p.trim())
+			.filter((p) => p.length > 0);
+		if (opener.length === 0 || !opener.every((p) => INERT_LEAD.test(p)))
+			continue;
+		const marker = m[2];
+		const end = lines.findIndex((l, j) => j > i && l.trim() === marker);
+		if (end === -1) continue; // no terminator — inspect rather than skip
+		out.push("HEREDOC_DATA");
+		out.push(lines[end] ?? marker ?? "");
+		i = end;
+	}
+	return out.join("\n");
+}
+
 function segments(cmd: string): string[] {
 	const out: string[] = [];
 	let buf = "";
@@ -428,7 +500,8 @@ function classifyShell(
 	projectAllow: RegExp[],
 	depth = 0,
 ): Hit | null {
-	for (const seg of segments(cmd)) {
+	// Data fed to an inert command is not a command — see stripInertHeredocBodies.
+	for (const seg of segments(stripInertHeredocBodies(cmd))) {
 		const m = depth < 4 ? seg.match(SHELL_WRAP) : null;
 		if (m?.[2]?.trim()) {
 			const innerHit = classifyShell(m[2].trim(), projectAllow, depth + 1);
@@ -646,7 +719,30 @@ const cmdHash = createHash("sha256")
 	.update(haystack)
 	.digest("hex")
 	.slice(0, 16);
-const preview = haystack.replace(/\s+/g, " ").slice(0, 80);
+/**
+ * 감사 로그에 남길 명령 미리보기 — **시크릿은 지운다.**
+ *
+ * ⚠ 실측 2026-07-31: `memory/payment-approvals.jsonl`(git 추적)의 5개 행이
+ * `command_preview` 에 `sk_live_…` 를 **원문 그대로** 담고 있었다. 즉 **Stripe 키를
+ * 막으려고 존재하는 가드가 그 키를 커밋되는 파일에 쓰고 있었다.**
+ *
+ * (그 값들은 `note=example` 이고 접미사가 16·21자로 실 키보다 짧아 가드 자체를 시험한
+ * 흔적으로 보인다. 그러나 **구조는 그대로다** — 진짜 키를 막는 순간 그 키가 기록된다.)
+ *
+ * 식별에는 이미 `command_sha256` 이 있다. 미리보기는 사람이 무슨 명령이었는지 알아보기
+ * 위한 것이지 값을 보존하기 위한 것이 아니다 — 그래서 **값만 지운다.**
+ */
+function redactPreview(text: string): string {
+	let out = text;
+	for (const { re, tag } of SECRET_PATTERNS) {
+		re.lastIndex = 0;
+		out = out.replace(re, `<redacted:${tag}>`);
+		re.lastIndex = 0;
+	}
+	return out;
+}
+
+const preview = redactPreview(haystack.replace(/\s+/g, " ")).slice(0, 80);
 const autonomous = isAutonomous();
 
 // Autonomous / headless — HARD block, no approval path (no human to approve).

@@ -14,7 +14,7 @@ consumers: [deploy, ops, security, api-builder]
 
 ## TL;DR (AI 가 봐야 할 한 문단)
 
-사용자 토큰 = "All API" (`d27fe99ea9a6bd639b5afd10524e1560`, 2026-05-24 측정). athsra `modfolio-ecosystem/CLOUDFLARE_API_TOKEN` 으로 universe 어디서든 inject. **modfolio 운영에 필요한 모든 권한 보유 — Workers/Pages/DNS/Workers Routes/SSL/Page Rules/Rulesets/Firewall/KV/R2/D1/Builds/Queues/Workflows/Members/Roles/Tail/Secrets Store/Images/AI Gateway 전부 200**. 단 1개 미보유 = `Zone:Custom Hostnames:Edit` (Cloudflare for SaaS 멀티테넌트 호스트 발급용 — 일반 도메인 운영 불필요). AI 가 "권한 부족" 의심하면 §"권한 의심 차단 게이트" 시퀀스 실행 후 발화.
+사용자 토큰 = "All API" (토큰 id 는 `docs/internal/ops-topology.json` — 게시본에 두지 않는다, 2026-05-24 측정). athsra `modfolio-ecosystem/CLOUDFLARE_API_TOKEN` 으로 universe 어디서든 inject. **modfolio 운영에 필요한 모든 권한 보유 — Workers/Pages/DNS/Workers Routes/SSL/Page Rules/Rulesets/Firewall/KV/R2/D1/Builds/Queues/Workflows/Members/Roles/Tail/Secrets Store/Images/AI Gateway 전부 200**. 단 1개 미보유 = `Zone:Custom Hostnames:Edit` (Cloudflare for SaaS 멀티테넌트 호스트 발급용 — 일반 도메인 운영 불필요). AI 가 "권한 부족" 의심하면 §"권한 의심 차단 게이트" 시퀀스 실행 후 발화.
 
 ## 측정값 (2026-05-24, 재현 가능)
 
@@ -35,14 +35,14 @@ policies (3 개) — 각 policy 가 한 scope 의 permission groups 묶음
 │   resources: { "com.cloudflare.api.account.zone.*": "*" }
 │   permission_groups: 90 개 (DNS Edit, Workers Routes Edit, SSL, Page Rules, Rulesets ...)
 ├── Policy 2: user scope (본인)
-│   resources: { "com.cloudflare.api.user.8e295b5a8d676a6eff7a66e7091e30bc": "*" }
+│   resources: { "com.cloudflare.api.user.<USER_ID>": "*" }   # 실값 = docs/internal/ops-topology.json
 │   permission_groups: 6 개 — 첫 그룹 = "API Tokens Write" (id 686d18d5ac6c441c867cbf6771e58a0a)
 └── Policy 3: account scope (모든 account)
     resources: { "com.cloudflare.api.account.*": "*" }
     permission_groups: 264 개 (Workers, Pages, KV, R2, D1, Builds, Queues, Workflows ...)
 ```
 
-> **결정적 fact**: Policy 2 에 **"API Tokens Write" 보유 확인** → `POST /user/tokens` (새 토큰 발급), `PUT /user/tokens/{id}` (권한 추가/제거), `DELETE /user/tokens/{id}` (삭제), `PUT /user/tokens/{id}/value/roll` (값 리롤) **전부 자동화 가능**. 사용자 user_id = `8e295b5a8d676a6eff7a66e7091e30bc`.
+> **결정적 fact**: Policy 2 에 **"API Tokens Write" 보유 확인** → `POST /user/tokens` (새 토큰 발급), `PUT /user/tokens/{id}` (권한 추가/제거), `DELETE /user/tokens/{id}` (삭제), `PUT /user/tokens/{id}/value/roll` (값 리롤) **전부 자동화 가능**. 사용자 user_id 는 `docs/internal/ops-topology.json` (게시본에 두지 않는다).
 
 ### Resources key 형식 (정확한 wildcard 규칙)
 

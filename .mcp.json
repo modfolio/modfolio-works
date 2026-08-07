@@ -25,6 +25,21 @@
 				"CF_ACCESS_CLIENT_SECRET": "${CF_ACCESS_CLIENT_SECRET}"
 			}
 		},
+		"ecosystem-state": {
+			"type": "stdio",
+			"command": "bun",
+			"args": [
+				"run",
+				"node_modules/@modfolio/harness/scripts/mcp/ecosystem-state-server.ts"
+			]
+		},
+		"loom": {
+			"type": "http",
+			"url": "https://loom.modfolio.io/mcp",
+			"headers": {
+				"Authorization": "Bearer ${LOOM_TOKEN}"
+			}
+		},
 		"astro": {
 			"type": "http",
 			"url": "https://mcp.docs.astro.build/mcp"

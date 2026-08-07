@@ -218,6 +218,34 @@ athsra run <repo> -- curl -s -X POST \
   }' | jq '.result.trigger_uuid'
 ```
 
+> **워크스페이스 monorepo 는 `root: "/"` + `deploy_command` 에서 `cd` 하는 형태도 쓴다**
+> — modfolio-pay · modfolio-notify 실측(워커 3종 동일 형태, **최근 5회 빌드 실패 0건**,
+> 배포 Version 매번 갱신). 캐싱 트레이드오프는 아래 §함정표 「monorepo bun.lock 캐싱 안 됨」.
+>
+> ```
+> root_directory   "/"
+> build_command    "bun install && bun run build"
+> deploy_command   "cd apps/<app> && bunx wrangler deploy"
+> ```
+>
+> ⚠ **둘 중 어느 쪽도 «다른 쪽이 실패한다» 의 근거가 아니다.** notify 가 이 JSON 을 보내면서
+> 자기 노트를 **철회**했다 — *"나는 `root_directory: apps/<app>` 를 **시도한 적이 없다.**
+> 「캐싱이 안 되고 느려짐」이 「아예 실패」보다 정확한 기술이다. `bun install` 은 lockfile 이
+> 없어도 성공한다 — `--frozen-lockfile` 을 쓸 때만 실패한다."* 위 예시는 그 플래그를 쓰므로
+> 판단이 갈리는 자리이고, **어느 쪽도 실측된 실패가 없다.** 그래서 예시는 그대로 두고
+> 대안 형태를 옆에 적는다.
+>
+> notify 가 첫 시도에 3종 전부 success 한 이유는 *"트리거 설정을 추측하지 않고
+> `modfolio-pay-app` 의 «작동 중인» 트리거를 읽어서 같은 모양으로 만든 것"* 이다.
+> 워커마다 다른 명령을 두지 않은 것도 의도다 — *"한 곳만 고쳐지는 날이 온다."*
+>
+> ⚠ `external_script_id` 는 워커 **이름이 아니라 `script_tag`** 다. 이름을 넣으면
+> 조회·생성이 조용히 빈 결과를 낸다(허브 2026-08-05 실측 — 트리거 목록이 `[]` 로 나와
+> 「트리거 없음」으로 오독할 뻔했다).
+>
+> `path_includes: ["*"]`(전 푸시 빌드)는 notify 의 의식적 선택이다 — *"경로 필터가 틀리면
+> **아무것도 배포되지 않고 그 사실이 조용하다.** 조용한 미배포보다 낭비를 택했다."*
+
 ### 6단계: 최근 build 결과 + 로그 (트러블슈팅 핵심)
 ```bash
 athsra run <repo> -- sh -c '

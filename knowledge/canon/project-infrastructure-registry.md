@@ -1,6 +1,6 @@
 ---
 title: Project Infrastructure Registry — athsra · email · domain · Neon DB 단일 SoT
-version: 1.0.0
+version: 1.1.0
 last_updated: 2026-06-26
 source: [2026-06-26 Neon API 전수 인벤토리(org-lucky-rain-45176041, 23 projects — modfolio-on 신설 포함) + athsra envelope host-mapping 검증(19 active app 전부 자기 전용 DB 매핑, 충돌 0) + DB-per-service 정리(little-unit modeng/y2a/neondb drop, opic-mode deprecated) + email-domain-aliases v1.1.0 + domain-architecture v1.0]
 sync_to_siblings: true
@@ -94,6 +94,30 @@ supersedes: []
 2. athsra `init <repo>` + `set <repo> DATABASE_URL=...` (write 는 master-pw 필요).
 3. 도메인 = `domain-architecture.md` 패턴. 이메일 alias = `email-domain-aliases.md`.
 4. **본 표에 row 추가** (4축 전부) + ecosystem.json `infrastructure[].db` 구조화 필드.
+
+## 제5축 — 구성요소 버전 노후화 (2026-07-31 채택, modfolio-infra 제안)
+
+기존 4축(athsra · email · domain · Neon)은 **무엇이 어디 있는가**를 말한다. 그런데 fleet 이
+실제로 다친 자리는 그게 아니라 **"살아 있지만 늙어가는 것"** 이었다.
+
+modfolio-infra 관측(2026-07-29): *"다운은 5분마다 감지하면서 **보안 패치를 못 받고 있다** 는
+훨씬 위험한 상태는 무기한 침묵했다."* 가동 감시는 이진(up/down)이라 알림이 쉽고, 노후화는
+연속적이라 아무도 임계를 정하지 않는다. 그래서 **감지기가 없는 게 아니라 질문이 없었다.**
+
+### 등재 규칙
+
+인프라 구성요소(러너·DB 엔진·컨테이너 이미지·CLI·레지스트리 소프트웨어)를 이 표에 올릴 때는
+**라이브 버전과 upstream 최신을 함께** 기록한다. 판정:
+
+- `lag ≥ 2 major` → 알림. 그 미만은 정보.
+- **upstream 조회 실패는 판정하지 않는다.** 조회 실패를 "최신" 으로 읽으면 그게 또 침묵이다 —
+  판정 불능은 별도 상태다(`agent-evidence.md`). infra 의 `pkg-monitor` 가 이 규칙으로 구현돼 있다.
+
+### 왜 4축에 덧붙이지 않고 별도 축인가
+
+앞 4축은 **좌표**(어디에 무엇이 있나)이고 이건 **시간**(그것이 얼마나 뒤처졌나)이다. 좌표는
+바뀔 때만 갱신하면 되지만 노후화는 아무도 안 건드려도 매일 나빠진다. 같은 표의 열로 넣으면
+"최근에 확인했나" 라는 질문이 사라진다.
 
 ## 관련 canon
 

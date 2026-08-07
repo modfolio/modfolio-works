@@ -11,6 +11,7 @@
 			"Bash(bun run dev:*)",
 			"Bash(bun run build)",
 			"Bash(bun run build:*)",
+			"Bash(bun run deploy)",
 			"Bash(bun run modfolio)",
 			"Bash(bun run modfolio:*)",
 			"Bash(bun run test:*)",

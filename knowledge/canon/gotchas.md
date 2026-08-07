@@ -1,7 +1,7 @@
 ---
 title: Gotchas & Lessons Learned
-version: 1.6.0
-last_updated: 2026-07-28
+version: 1.8.0
+last_updated: 2026-07-30
 source: [knowledge/claude/gotchas.md]
 sync_to_siblings: true
 applicability: always
@@ -400,3 +400,87 @@ Astro node adapter, vite SSR. CF Workers 배포는 번들이 단일 파일이라
   - **세션 내 workaround**: `env PATH="$HOME/.bun/bin:$PATH" bun run <script>`.
   - **영구 수정 — ✅ 적용 완료 (2026-07-27 19:21, 오너 실행)**: `sudo ln -sf ~/.bun/bin/bun /usr/local/bin/bun`. `/usr/local/bin` 은 스냅샷 PATH **2번째**라 `/mnt/c` shim(37번째)을 항상 이긴다. 스냅샷 재생성과 무관하게 영구. 실측: `/usr/local/bin/bun --version` → **1.3.14**(네이티브), 구 shim 1.3.11 은 그대로 있으나 더 이상 선택되지 않는다. **이 워크스테이션에서는 해소됐고, 다른 머신을 셋업할 때 같은 한 줄이 필요하다.**
   - **코드 측 근본 수정(완료)**: 우리 스크립트의 자식 spawn 은 더 이상 PATH 를 신뢰하지 않는다 — `scripts/lib/bun-exec.ts` / `scripts/hooks/_lib.ts` 의 `bunExec()`(= `process.execPath`, "나를 실행 중인 bun 과 같은 bun")을 쓴다. `bunx foo` = `bun x foo`. 회귀 테스트 `scripts/__tests__/bun-exec.test.ts`.
+
+## CF 403 을 상태코드로 분류하지 않는다 — 본문에 `error code: 1010` 이면 Browser Integrity Check
+
+**실측 2026-07-29 (modfolio-connect 발견 · 허브 재검증). 그리고 이건 두 번째 발현이다.**
+
+CF 403 을 WAF/봇 규칙으로 단정하지 않는다. **지문은 처음부터 응답 본문에 있다** — `curl -s` 로
+본문을 읽어 `error code: 1010` 이 나오면 zone 설정 **Browser Integrity Check** 다
+(`GET /zones/$ZONE/settings/browser_check` → `on`).
+
+BIC 는 "비표준 UA"(`Python-urllib/3.12`, UA 없음 등)를 차단하는데, **WAF 룰이 아니라 zone
+토글**이라 관리형 룰셋 skip 으로는 고쳐지지 않는다. 실제로 `modfolio.io` zone 은
+`bot_management.fight_mode:false` + 전 봇 보호 disabled + managed/custom firewall
+**엔트리포인트 자체가 없고** Free 플랜이라, 봇-규칙 처방은 *효과가 없었던* 게 아니라
+**적용될 표면이 처음부터 없었다.**
+
+`1010 ⇒ BIC` 는 강한 지시자이되 배타는 아니다 — CF 문서 정의가 *"website owner blocked your
+request based on your client's web browser"* 로 더 넓다. 정확한 형태는 **"1010 이면 BIC 를
+먼저 본다"**.
+
+### 처방 (CF 문서화된 정규 경로)
+
+zone BIC 는 `on` 으로 두고 **Configuration Rule** 로 경로만 면제한다:
+
+```
+ruleset: http_config_settings
+expr:    starts_with(http.request.uri.path, "/.well-known/")
+action:  set_config  {"bic": false}
+```
+
+### 검증은 반드시 양방향
+
+- 대상 경로 200 **그리고**
+- 비대상 경로 403 + `1010` 유지
+
+전역 off 로 "고쳐지는" 것과 구분되지 않으면 그 초록불은 무의미하다. 실측:
+`/.well-known/openid-configuration` 200 · `/.well-known/foo` 404(엣지 통과 후 앱 응답) ·
+`/health`·`/`·`/favicon.ico` 403+1010.
+
+기계 UA 가 반드시 닿아야 하는 공개 표면을 zone 별로 정해 둔다 — `/.well-known/*`(OIDC
+Discovery 1.0 이 공개 조회를 요구), health, 패키지 레지스트리.
+
+### ⚠ 이 절이 늦은 이유 — 승격 누락이 하류 결함을 만들었다
+
+허브 저널 `knowledge/journal/20260701-cf-edge-completeness.md:76` 이 **같은 zone 의
+`browser_check = on` 을 이미 측정**해 놓고 *"Correct action = document, not configure"* 로
+끝났다. canon 으로 올리지 않아서, **3주 뒤 허브가 같은 zone 의 같은 증상에 봇-규칙 처방을
+냈다**(그리고 그 처방은 적용될 표면이 없었다).
+
+즉 이건 "알게 된 것"이 아니라 **"알고 있었는데 안 옮긴 것"** 이고, 그 대가가 틀린 진단
+1건이다. 저널에만 있는 측정은 fleet 에 도달하지 않는다.
+
+## TypeScript 7 은 GA 지만 `*-check` 계열이 못 따라왔다 — `bun update --latest` 가 typecheck 를 전멸시킨다 (2026-07-30 실측)
+
+`typescript@7.0.2` 가 2026-07-08 GA 다. 그런데 Go 네이티브 포트로 오면서 **JS 컴파일러 API 가
+루트 export 에서 사라졌다**:
+
+```
+exports["."] = "./lib/version.cjs"     ← 버전 문자열 하나뿐 (나머지는 ./unstable/*)
+```
+
+`import ts from "typescript"` 로 LanguageService·createProgram 을 쓰던 도구가 전부 죽는다 —
+그리고 그게 이 universe 의 `typecheck` **그 자체**다: `@astrojs/check`(0.9.10, 07-27 published,
+peer `^5||^6`) · `svelte-check`(4.7.4, 동일) · `@sveltejs/kit`(2.70.2) · `openapi-typescript`(7.13.0) ·
+`knip`(peer 미선언, 컴파일러 API 직접 사용).
+
+**처방**: `typescript@6.x` 유지. 루트만 7 로 올리는 것도 하지 않는다(한 워크스페이스 메이저 2개).
+언제 되는지는 달력이 아니라 **`bun run ts7:ready`** 로 묻는다 — 레지스트리 실시간 조회이고,
+`0` 판정성공 · `1` 위반(차단 잔존인데 이미 TS7 선언) · `2` **판정 불능**으로 상태를 분리한다.
+TS 팀 예고는 7.1 ≈ 2026-10.
+
+### ⚠ `Bun.semver.satisfies` 는 해독 불가 range 에 `true` 를 준다
+
+```ts
+Bun.semver.satisfies('7.0.2', 'not-a-range')  // → true   (실측 2026-07-30)
+```
+
+peer range 를 그대로 `satisfies` 에 넘기면 **해독 실패가 조용히 "허용"** 이 된다 — 판정 불능이
+통과로 환원되는 정확한 형태다. 호출 **전에** range 문법을 직접 검증하고, 못 읽으면
+`undecidable` 로 분류하라. 그리고 **peer 를 애초에 선언하지 않는 도구**(knip)를 verdict 에
+넣지 마라 — 넣는 순간 그 게이트는 영원히 빨강이고, "영영 green 이 안 되는 게이트" 는
+아무도 안 보게 된다. 보고하되 게이트하지 않는 부류로 분리한다.
+
+원 발견 = modfolio-pay 인바운드 2026-07-26(프로브 저작 `1019ab0`), 허브 채택 = 3.45.0.
+전체 = `knowledge/canon/tech-trends-2026-07.md`.

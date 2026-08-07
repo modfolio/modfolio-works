@@ -86,7 +86,23 @@ supersedes: [ecosystem.json domainModel 의 "app.{domain} 폐기 대상" 문구(
 | modfolio-ls | ls 🟡 Pages | life 🟡 Pages | landing+app Pages→Workers |
 | modfolio-axiom | axiom 🟢 | nexus 🟡 Pages | app Pages→Workers (doc `arc.` drift 정정 필요) |
 | modfolio-studio | studio 🟢 | lab ⬜ | app 미배포 |
-| athsra | www→athsra-landing 🟢 / **apex→athsra-dashboard**(독립도메인이지만 platform) | — | 네이밍 `-landing`·`-dashboard` 비표준(후순위) |
+| athsra | **apex `athsra.com` + `www` → `athsra-landing`** 🟢 | **`app.athsra.com` → `athsra-dashboard`** 🟢 | 네이밍 `-landing`·`-dashboard` 비표준(후순위). ⚠ 이 행은 **2026-08-04 정정**됐다 — 아래 참조 |
+
+> **⚠ athsra 행 정정 (2026-08-04) — 허브 미러가 틀렸고 멤버 실측이 옳았다.**
+> 구 기록은 *"apex→athsra-dashboard"* 라 **apex 가 앱**인 것처럼 읽혔다. athsra 가
+> `athsra-finding-2026-08-03-silent-handoff-and-domain-fact.md` 로 정정을 보냈고, 허브가
+> 그 repo 를 읽기 전용으로 대조해 확인했다:
+>
+> ```
+> apps/landing/wrangler.jsonc:11   { "pattern": "athsra.com",     "custom_domain": true }
+> apps/landing/wrangler.jsonc:12   { "pattern": "www.athsra.com", "custom_domain": true }
+> apps/dashboard/wrangler.jsonc:15 { "pattern": "app.athsra.com", "custom_domain": true }
+> ```
+>
+> 즉 **apex = 랜딩 · `app.` = 앱** 으로, ADR-011 의 landing-first 기본형이다
+> (modfolio parent 의 app-first flip 과 **반대**다 — 그 예외를 athsra 에 투영한 것이
+> 이 오기의 원인으로 보인다). 이 행은 `fact-ownership.md`(ADR-014) 가 말하는
+> **미러 불일치 = 허브 버그**의 실사례이고, 정정 경로도 규정대로 흘렀다(멤버 통보 → 허브 대조 → 미러 수정).
 
 ## 마이그레이션 트랙 (per-app)
 

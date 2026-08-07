@@ -16,11 +16,17 @@
 		"check:fix": "biome check --write .",
 		"typecheck": "cd apps/landing && bun run typecheck && cd ../../apps/app && bun run typecheck",
 		"harness-pull": "modfolio-harness-pull",
-		"modfolio": "modfolio-check"
+		"modfolio": "modfolio-check",
+		"json-diff": "bun node_modules/@modfolio/harness/scripts/json-diff.ts",
+		"check:audit": "bun node_modules/@modfolio/harness/scripts/check-audit.ts",
+		"ts7:ready": "bun node_modules/@modfolio/harness/scripts/ci/ts7-readiness.ts",
+		"verify:frozen-lockfile": "bun node_modules/@modfolio/harness/scripts/ci/frozen-lockfile.ts",
+		"verify:no-nul": "bun node_modules/@modfolio/harness/scripts/ci/no-nul-bytes.ts",
+		"heavy": "bash node_modules/@modfolio/harness/scripts/ops/heavy.sh"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",
-		"@modfolio/harness": "^3.44.2",
+		"@modfolio/harness": "^3.56.0",
 		"typescript": "^6.0.3",
 		"wrangler": "~4.115.0"
 	},
@@ -29,6 +35,6 @@
 	},
 	"dependencies": {
 		"@modfolio/connect-sdk": "^9.5.0",
-		"@modfolio/contracts": "^1.22.1"
+		"@modfolio/contracts": "^1.23.0"
 	}
 }

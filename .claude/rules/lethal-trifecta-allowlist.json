@@ -22,6 +22,20 @@
 			"approved_by": "Niky",
 			"approved_at": "2026-06-18",
 			"revisit_after": "2026-12-18"
+		},
+		{
+			"file": "scripts/lib/grader.ts",
+			"reason": "채점 페이로드는 `makeGrader` 경계의 SecretScreened 가 전송 전에 scanSecrets 로 훑고 히트 시 GraderSecretBlocked 로 던진다 — kimi·cf·codex·claude 네 백엔드 전부. private 레그가 outward 에 도달할 수 없다. scripts/__tests__/grader-secret-screen.test.ts 가 양방향으로 잠근다(시크릿→throw · 정상→통과). 탐지기가 잡는 것은 callee 인증용 자격증명(process.env.CLOUDFLARE_API_TOKEN)이며 Authorization 헤더로만 쓰인다.",
+			"approved_by": "winterermod",
+			"approved_at": "2026-08-06",
+			"revisit_after": "2027-02-06"
+		},
+		{
+			"file": "scripts/lib/kimi.ts",
+			"reason": "KimiClient.complete 가 보낼 페이로드를 scanSecrets 로 훑고 히트 시 KimiSecretBlocked 로 던진다(그 파일 §가드 1: \"국외 API 로 나가는 경로라 이건 선택이 아니다\"). 예산 상한·빈 본문 거부도 fail-closed. 탐지기가 잡는 private 레그는 MOONSHOT_API_KEY 로, callee 인증용이며 프롬프트 본문에 들어가지 않는다. 실측: 커밋된 평가셋 2785 프롬프트에 시크릿 히트 0.",
+			"approved_by": "winterermod",
+			"approved_at": "2026-08-06",
+			"revisit_after": "2027-02-06"
 		}
 	]
 }

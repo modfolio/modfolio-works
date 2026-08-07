@@ -18,7 +18,7 @@ applicability: always
 
 modfolio universe 의 secret 관리 표준 (v3.0.0 부터, **Phase 2.1 + 1.x.2 production active 2026-05-05** — npmjs.org publish + D1 token table production deploy 완료). canon `secrets-dotenvx` v2.3.0 (OneDrive backup mirror 모델) 폐기 — 본 canon 으로 이전. 사용자 자체 자산 (modfolio/athsra repo) + **외부 alpha 진입** (`bun add -g @athsra/cli` — 현행 **`@athsra/cli@1.2.5`**, npmjs.org public) + **strong consistency** (revoke 즉시 반영).
 
-**Production status (2026-05-05)**: worker `https://athsra-worker.winterermod.workers.dev` version `04727c33-347d-47c6-9059-d4d2764dea5f` phase_label=1.x.2 live. D1 `athsra-tokens` (uuid 892fb424-5a18-4eb0-bf26-d29e84c13180, region APAC) active. 4 sibling repo (modfolio-ecosystem 129 + modfolio-pay 11 + modfolio-connect 5 + gistcore 6 = **151 keys**) athsra E2EE 운영 중.
+**Production status (2026-05-05)**: worker `https://athsra-worker.winterermod.workers.dev` phase_label=1.x.2 live. D1 `athsra-tokens` (region APAC) active. ⚠ worker version·D1 uuid 는 `docs/internal/ops-topology.json` — 게시본에 두지 않는다. 그리고 version 값은 늙으므로 현행은 CF API 로 확인한다. 4 sibling repo (modfolio-ecosystem 129 + modfolio-pay 11 + modfolio-connect 5 + gistcore 6 = **151 keys**) athsra E2EE 운영 중.
 
 **AI-native + 환경 분리 (2026-06-14)**: MCP 4-tier (read/write/**value**/admin) — AI 코딩 에이전트가 채팅에서 in-chat login(`athsra_login_start`) → secret CRUD → 값 조회/주입까지. **value tier (1.2.0)** (`ATHSRA_MCP_READ_VALUES=1`): `athsra_get_secret_value`(기본 마스킹, full 평문은 env opt-in + `confirm=<project>` 이중 게이트) + `athsra_run`(값 미노출 주입 + 출력 scrub). athsra MCP 는 outward 도구 0개 → 단독 lethal-trifecta 미형성 (`.claude/rules/lethal-trifecta.md`). **환경(config) 분리 (1.3.0)**: `secrets/<org>/<project>/<config>/`, config 생략=default, dev/staging/prod 가 CLI·MCP·대시보드 전반 지원 (무중단 fallback). athsra README 의 "Environments (config)" + "MCP server" 섹션이 single source.
 
@@ -265,7 +265,7 @@ athsra rotate-master  # 기존 자유 phrase → BIP-39 phrase 로 교체
 - **128-bit entropy** — random 보장 (사용자 임의 phrase 보다 안정적)
 - **hardware wallet 호환** (Phase 3+) — Ledger / Trezor 표준
 
-자유 phrase (예 `#00_Nikyhmod`) 도 그대로 작동 — BIP-39 강제 X.
+자유 phrase (예 `<your-passphrase-here>`) 도 그대로 작동 — BIP-39 강제 X.
 
 ## Audit log 조회 (Phase 1.3)
 

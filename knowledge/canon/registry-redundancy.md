@@ -1,9 +1,9 @@
 ---
 title: Registry Redundancy — NAS↔GitHub 이중화 소비 독트린 (git + npm)
-version: 1.6.0
-last_updated: 2026-07-28
+version: 1.7.0
+last_updated: 2026-08-04
 source: [실측 2026-07-04 (pkg.modfolio.io 공개도달 200·git.modfolio.io CF-Access 401·Forgejo upstream-proxy 부재 404·Forgejo git=Tailscale SSH·modfolio-ecosystem dual-push 레퍼런스 세팅), connect 97920b2 (connect-sdk 8.7.0 → pkg.modfolio.io mirror 게시), modfolio-registry-proxy 6521ede (Stage 3 R2 durable registry mode, 104 tests), nas-infra.md dual-push, platform-plane.md npm 소비 polarity, journal 20260701-nas-primary-chain.md]
-changelog: ["1.6.0 (2026-07-28): 제4조 보강 — ① 프로브는 소비 런타임마다(bun+node)·서브패스마다(게시본 exports 에서 읽음), 런타임 부재=판정 불능=실패(infra forge-sdk 0.3.0 실증: bun-only 카나리가 Node ESM 파손 3/4 서브패스에 초록 · 허브 canary 도 같은 두 구멍) ② 네트워크-필요 게이트 실행 시점 규약 신설(발행 직후 + 인계 시점 — 허브·infra·design 3-repo 가 같은 문제를 같은 방식[수동]으로 풀고 있던 수렴).", "1.5.0 (2026-07-27): 제4조 신설 — 게시했다는 것과 멤버가 받는다는 것은 다른 주장이다. 릴리즈 검증은 게시본 익명 설치(`bun run canary:published`)로 한다. files 는 allowlist 라 로컬과 게시본이 자동으로 같지 않다: 빠져서 깨진 사례(secret-patterns.ts 미동봉 → 두 마이너 동안 전 멤버 ASI03 redaction 사망)·실려서 깨진 사례(런타임 락이 3.28.2 게시본에 탑승)·경로가 틀린 사례(2026-07-27 npm 설치 멤버의 pull manifest 가 node_modules 안에 기록 — 다음 install 에 소멸, 아무것도 실패하지 않음). 셋 다 quality:all·release:gate 에 안 보인다(둘 다 작업 트리를 본다).", "1.4.0 (2026-07-26): 게시 canonical 역전 — pkg.modfolio.io 가 fatal, GitHub Packages 는 backfill(비치명적). 종전 폴라리티는 GitHub 최신이면 publish 가 성공을 보고하는데 fleet 이 실제 resolve 하는 registry 는 릴리즈를 못 받은 상태를 허용했다(제1조와 정면 모순). publishConfig.registry 는 의도적으로 flip 하지 않는다 — bun publish 가 인증을 scope registry 로 해석하므로(제2조) flip 은 게시를 깬다. 토큰 부재 = exit 4(우회 플래그 없음). 부트스트랩 정합: adopt-harness.sh·harness-adoption-guide·npmrc 템플릿이 pkg+anon-read(토큰 불요)로, 신규 repo 를 GITHUB_TOKEN 의존으로 만들던 모순 제거 + lockfile 반쪽 이관 경고 추가.", "1.3.0 (2026-07-26): tier: law 승격 — §법칙 3조 신설(소비 좌표 단일 · 퍼블리셔 예외 · lockfile 은 .npmrc 의 그림자가 아니다). 실측 21/30 repo 의 bun.lock 이 아직 npm.pkg.github.com 해상 = 반쪽 이관 잔존(connect 2026-07-18 CI 1.5일 정지의 동일 상태). Verdaccio 평가 종결(도입 X — 우위는 upstream 캐시 하나뿐이고 NAS 상주는 CF Builds 에서 도달 불가, 우리 pkg Worker 에 흡수). JSR 종결(private 패키지 미지원).", "1.2.1 (2026-07-12): edge Worker 코드 위치 현행화 — modfolio-registry-proxy repo 를 modfolio-infra registry/proxy 로 subtree 통합(오너 승인, 구 repo archive), ecosystem.json 은 infra.apps 중첩.", "1.2.0 (2026-07-05): §장기진화 Stage 3(R2 durable registry) 코드 완료 반영 — modfolio-registry-proxy 에 REGISTRY_MODE 토글 + R2 SoT publish/read/dist-tags(integrity·no-clobber·낙관적 동시성) 구현(6521ede). Stage 2(origin 클라우드 이전)=skip 결정(Stage 3 가 origin 대체). service-token lock=불요 평가. R2 bucket 생성 payment-gated 명시.", "1.1.0 (2026-07-05): connect-sdk pkg.modfolio.io 게시 완료(97920b2) → 이관 선행조건 ① 클리어·@modfolio 커버리지 전부 200. §결정(단일 registry)과 옛 §2 소비 폴라리티·anti-pattern 을 정합 — 구 'GH Packages 기본 유지·NAS-flip 금지' supersede, GH Packages=비상 수동 스위치로 강등. 앱 adopt 레시피(dev+CI 토큰, 원자적) 추가. 프록시 디커미션 반영.", "1.0.0 (2026-07-04): 초판 — git dual-push + npm dual-publish 이중화 소비 독트린 통합. git/npm 비대칭·npm 폴백 제약·Forgejo 프록시 부재·CI 경계 명문화. modfolio-ecosystem 을 dual-push 레퍼런스로 세팅."]
+changelog: ["1.7.0 (2026-08-04): 제5조 신설 — 「멤버가 고칠 수 없는 advisory」에 빚의 경로. check:audit 이 억제 스위치를 안 둔 설계는 옳았으나, 원리적으로 못 고치는 advisory 앞에서 멤버의 선택지가 「게이트를 안 건다」/「영구 빨강」 둘뿐이었다 — 후자는 infra 의 «거짓 음성은 게이트를 무시하도록 훈련시킨다» 의 쌍대다. 실측: @sveltejs/kit@2.70.2 이 cookie ^0.6.0(취약)을 선언하고 bun 은 nested override 미지원이라 SvelteKit 멤버 전부가 같은 벽(sign 9건 독립 확인). 좌표=소비자 repo 의 audit-waivers.json(하네스 아님 — 못 고치는 사정은 그 repo 것). 양방향 잠금: 안 덮인 advisory·아무것도 안 덮는 waiver·기한 경과·high 이상·파일 손상(exit 2) 전부 실패. vulnerable 에만 적용(inconclusive·unexplained-skip 은 대상 아님). 저작 modfolio-pay, 허브가 fleet 용으로 좌표만 바꿔 채택. 대조쌍은 실제 취약 트리 6방향 — 특히 «게이트가 열리는가» 를 잰다.", "1.6.0 (2026-07-28): 제4조 보강 — ① 프로브는 소비 런타임마다(bun+node)·서브패스마다(게시본 exports 에서 읽음), 런타임 부재=판정 불능=실패(infra forge-sdk 0.3.0 실증: bun-only 카나리가 Node ESM 파손 3/4 서브패스에 초록 · 허브 canary 도 같은 두 구멍) ② 네트워크-필요 게이트 실행 시점 규약 신설(발행 직후 + 인계 시점 — 허브·infra·design 3-repo 가 같은 문제를 같은 방식[수동]으로 풀고 있던 수렴).", "1.5.0 (2026-07-27): 제4조 신설 — 게시했다는 것과 멤버가 받는다는 것은 다른 주장이다. 릴리즈 검증은 게시본 익명 설치(`bun run canary:published`)로 한다. files 는 allowlist 라 로컬과 게시본이 자동으로 같지 않다: 빠져서 깨진 사례(secret-patterns.ts 미동봉 → 두 마이너 동안 전 멤버 ASI03 redaction 사망)·실려서 깨진 사례(런타임 락이 3.28.2 게시본에 탑승)·경로가 틀린 사례(2026-07-27 npm 설치 멤버의 pull manifest 가 node_modules 안에 기록 — 다음 install 에 소멸, 아무것도 실패하지 않음). 셋 다 quality:all·release:gate 에 안 보인다(둘 다 작업 트리를 본다).", "1.4.0 (2026-07-26): 게시 canonical 역전 — pkg.modfolio.io 가 fatal, GitHub Packages 는 backfill(비치명적). 종전 폴라리티는 GitHub 최신이면 publish 가 성공을 보고하는데 fleet 이 실제 resolve 하는 registry 는 릴리즈를 못 받은 상태를 허용했다(제1조와 정면 모순). publishConfig.registry 는 의도적으로 flip 하지 않는다 — bun publish 가 인증을 scope registry 로 해석하므로(제2조) flip 은 게시를 깬다. 토큰 부재 = exit 4(우회 플래그 없음). 부트스트랩 정합: adopt-harness.sh·harness-adoption-guide·npmrc 템플릿이 pkg+anon-read(토큰 불요)로, 신규 repo 를 GITHUB_TOKEN 의존으로 만들던 모순 제거 + lockfile 반쪽 이관 경고 추가.", "1.3.0 (2026-07-26): tier: law 승격 — §법칙 3조 신설(소비 좌표 단일 · 퍼블리셔 예외 · lockfile 은 .npmrc 의 그림자가 아니다). 실측 21/30 repo 의 bun.lock 이 아직 npm.pkg.github.com 해상 = 반쪽 이관 잔존(connect 2026-07-18 CI 1.5일 정지의 동일 상태). Verdaccio 평가 종결(도입 X — 우위는 upstream 캐시 하나뿐이고 NAS 상주는 CF Builds 에서 도달 불가, 우리 pkg Worker 에 흡수). JSR 종결(private 패키지 미지원).", "1.2.1 (2026-07-12): edge Worker 코드 위치 현행화 — modfolio-registry-proxy repo 를 modfolio-infra registry/proxy 로 subtree 통합(오너 승인, 구 repo archive), ecosystem.json 은 infra.apps 중첩.", "1.2.0 (2026-07-05): §장기진화 Stage 3(R2 durable registry) 코드 완료 반영 — modfolio-registry-proxy 에 REGISTRY_MODE 토글 + R2 SoT publish/read/dist-tags(integrity·no-clobber·낙관적 동시성) 구현(6521ede). Stage 2(origin 클라우드 이전)=skip 결정(Stage 3 가 origin 대체). service-token lock=불요 평가. R2 bucket 생성 payment-gated 명시.", "1.1.0 (2026-07-05): connect-sdk pkg.modfolio.io 게시 완료(97920b2) → 이관 선행조건 ① 클리어·@modfolio 커버리지 전부 200. §결정(단일 registry)과 옛 §2 소비 폴라리티·anti-pattern 을 정합 — 구 'GH Packages 기본 유지·NAS-flip 금지' supersede, GH Packages=비상 수동 스위치로 강등. 앱 adopt 레시피(dev+CI 토큰, 원자적) 추가. 프록시 디커미션 반영.", "1.0.0 (2026-07-04): 초판 — git dual-push + npm dual-publish 이중화 소비 독트린 통합. git/npm 비대칭·npm 폴백 제약·Forgejo 프록시 부재·CI 경계 명문화. modfolio-ecosystem 을 dual-push 레퍼런스로 세팅."]
 sync_to_siblings: true
 tier: law
 applicability: always
@@ -58,6 +58,90 @@ related_rules: [contracts]
   규약: **① 발행한 세션은 발행 직후 1회 실행 ② 세션 인계문의 "첫 명령" 목록에 포함**. 발행과
   실행 사이 간격이 그대로 소비자 노출 창이다 — design 의 첫 실행이 qwik 소비자 빌드 실패를
   잡았다(발행 후에야).
+
+**제5조 — 「멤버가 고칠 수 없는 advisory」에는 **빚**의 경로를 준다 (1.7.0, 2026-08-04, modfolio-pay 저작).**
+
+> ⚠ **왜 «못 고친다» 가 실재하는가 — bun 은 범위 지정 override 를 «조용히» 무시한다**
+> (modfolio-notify 2026-08-05 제보, 허브 독립 재현 · bun 1.3.13):
+> ```
+> overrides:   { "cookie": { "cookie": "0.7.2" } }   (npm 중첩 문법)  → 0.6.0  ✗ 무시
+> resolutions: { "cookie/cookie": "0.7.2" }          (yarn 경로 문법) → 0.6.0  ✗ 무시
+> overrides:   { "cookie": "0.7.2" }                 (평평)           → 0.7.2  ✓
+> ```
+> **셋 다 에러를 내지 않는다.** 적었는데 안 먹은 것을 알 방법이 **lockfile/실설치 실측뿐**이다.
+>
+> 이 canon 과 `check:audit` 이 주는 처방 *"transitive 면 `overrides` 로 패치본 고정"* 은
+> **평평하게 덮어도 되는 경우에만 성립**한다. 특정 의존만 좁혀야 하는 경우(다른 소비자가
+> 그 버전을 감당 못 하는 경우)에는 bun 에서 **표현할 수단이 없다** — notify 실측: `cookie` 를
+> 평평하게 덮으면 astro 7.1.6 의 `cookie@2.0.1` 이 **두 major 강등**된다(astro 는 취약 범위
+> 밖이라 고칠 것이 없는데 깨질 것만 생긴다).
+>
+> → **처방을 따르고도 안 고쳐진 채 넘어가지 않으려면**: `overrides` 를 적은 뒤 **실제 설치
+> 트리에서 그 버전을 확인**한다(`node -e "require('<pkg>/package.json').version"`). 확인이
+> 불가능하거나 평평한 덮기가 다른 의존을 강등시키면 **그것이 제5조의 waiver 대상**이다.
+>
+> ⚠ **같은 처방에 도달한 두 번째 메커니즘** (visualize 2026-08-05): `overrides` 를 추가한 뒤
+> `bun install` 이 **락파일만 고치고 `node_modules` 를 다시 걸지 않는** 경우가 있다
+> (그쪽 실측: isolated linker + 전이 의존. 허브는 hoisted + 직접 의존에서 **재현되지 않았고**,
+> 절차가 달랐으므로 반증으로 쓰지 않는다 — 범위를 좁히는 데만 쓴다).
+> 그러면 **`bun audit` 은 락파일을 읽어 초록이 되고, 같은 트리의 빌드·테스트는 취약본을
+> 실행한다.** 즉 «override 를 넣었고 게이트가 통과했다» 가 그 override 를 **한 번도 실행해
+> 보지 않고** 안전하다고 선언한 문장이 될 수 있다.
+> ⚠ 범위: **검증의 위험이지 프로덕션의 위험이 아니다**(CI 는 빈 트리에서 설치한다).
+> 위 «디스크에서 확인» 한 줄이 두 메커니즘을 **모두** 막는다.
+
+
+
+`check:audit` 은 억제 스위치를 **의도적으로 두지 않았고 그 설계는 옳다.** 그런데 멤버가
+**자기 저장소 안에서 원리적으로 못 고치는** advisory 를 만나면 선택지가 둘뿐이었다:
+
+1. 게이트를 안 건다 → 다음에 **진짜** 취약점이 와도 아무도 모른다
+2. 게이트를 걸고 영구히 빨갛게 둔다 → **사람이 게이트를 무시하도록 훈련된다**
+
+> infra 가 등재한 *"거짓 음성은 노이즈보다 나쁘다 — 게이트를 무시하도록 사람을 훈련시키기
+> 때문이다"* 의 **쌍대**다. **영구 빨강도 같은 일을 한다.**
+
+⚠ **가정이 아니다.** `@sveltejs/kit@2.70.2`(최신)가 `cookie: ^0.6.0`(취약 범위)을 선언하고,
+같은 트리의 `astro`·`youch` 가 배타적 범위를 요구한다. bun 은 **nested override 를 지원하지
+않아**(oven-sh/bun#6608) 이름당 값이 하나뿐 — 어떤 값을 골라도 나머지가 깨진다. 허브 독립
+확인: `modfolio-sign` 도 동일 advisory(9건). **SvelteKit 멤버는 전부** 이 벽을 만난다.
+
+**좌표 — 소비자 repo 의 `audit-waivers.json`** (하네스가 아니다). 못 고치는 사정은 **그 repo 의
+의존 트리 사정**이라, 하네스에 박으면 남의 사정을 우리가 대신 선언하는 것이고 그 repo 가
+고친 뒤에도 빚이 안 사라진다. 파일 없으면 waiver 0건 = **종전 동작**(회귀 없음).
+
+```jsonc
+[{
+  "pkg": "cookie",                 // bun audit --json 의 최상위 키
+  "advisoryId": 1103907,           // 숫자 id (URL 보다 안정적)
+  "url": "https://github.com/advisories/GHSA-pxg6-pf52-xh8x",
+  "why":      "왜 **이 저장소에서** 못 고치는가 — 구조적 이유여야 한다",
+  "upstream": "언제 끝나는가 — 상류 좌표",
+  "revisitAfter": "2026-11-04"     // YYYY-MM-DD. 지나면 실패한다
+}]
+```
+
+**면제가 아니라 빚이다** — 양방향으로 잠근다:
+
+| 조건 | 결과 |
+|---|---|
+| waiver 밖 advisory | 실패 |
+| **아무것도 안 덮는 waiver** | 실패 — 빚은 줄어야 한다 |
+| 취약 0인데 waiver 잔존 | 실패 |
+| `revisitAfter` 경과 | 실패 — 날짜는 **하한**이지 면제가 아니다 |
+| `high`/`critical` | **waiver 문법 자체를 거부** (멤버가 ceiling 을 올릴 수 없다) |
+| 파일 손상 | **exit 2** — 「읽지 못했다」를 「없다」로 접으면 조용한 면제가 된다 |
+
+⚠ **waiver 는 `vulnerable` 에만 적용된다.** `inconclusive`(검사 미성립)와
+`unexplained-skip`(감사 구멍)은 목록에 적어 넘길 성질이 아니다 — 이 구분이 이 층을
+「억제 스위치」와 가른다.
+
+⚠ **통과시킬 때 크게 출력한다** — 패키지·심각도·«왜 못 고치나»·상류 좌표·재검토 날짜 전부.
+조용히 넘기면 그게 곧 면제다.
+
+> **검증 규약**: 이 층의 대조쌍은 **실제 취약 트리**로 세운다(허브는 `/tmp` 에
+> `cookie@0.6.0` 설치, 6방향). 특히 **«실제 취약 + 유효 waiver → exit 0»**(게이트가
+> **열리는가**)을 반드시 잰다 — 열리지 않는 게이트는 ①과 같은 결과를 낳는다.
 
 ### 평가 종결 (2026-07-26)
 
@@ -124,6 +208,25 @@ dual-registry split + starvation 의 영구 해법 = **`@modfolio` 전부를 오
 
 - **왜 pkg.modfolio.io**: (1) 본인 인프라·주권·외부비용 0 (2) **Forgejo 는 GitHub Packages 와 달리 scope=org 규칙 없음** → `@modfolio/*` 공개(connect-sdk)+비공개(harness/contracts)가 한 registry 에 자연 공존, 새 org·rename 불필요 (3) 한 registry = 드리프트 구조적 불가. 실측: harness 3.17.6·contracts 1.7.0 이미 게시됨.
 - **소비**: 앱 `.npmrc` = `@modfolio:registry=https://pkg.modfolio.io/api/packages/modfolio/npm/` + `FORGEJO_NPM_TOKEN`(read). `templates/npmrc.nas.example` 가 이 형태.
+> ⚠ **라이브 토폴로지 실측 (2026-08-05)** — 아래 서술이 «pkg.modfolio.io = Forgejo» 로 읽히는데,
+> **Stage 3 가 이미 라이브**라 그렇지 않다. `modfolio-registry-proxy` 바인딩 실측:
+> ```
+> REGISTRY_MODE   = registry        ← R2 가 레지스트리 본체(SoT)
+> REGISTRY_BUCKET = modfolio-registry (R2)
+> MIRROR_TO_ORIGIN = true           ← Forgejo(pkg-origin.modfolio.io)는 미러
+> PACKUMENT_TTL 300 · PACKUMENT_SWR 86400 · PACKUMENT_SIE 604800
+> ```
+> **운영상 중요한 귀결 4가지** (2026-08-05 손상본 제거 중 전부 실측):
+> - `npm unpublish` 는 **exit 0 + 성공 메시지를 내고 아무것도 안 한다**(2.5분 폴링 확인)
+> - Forgejo API `DELETE`(204)도 **공개 서빙에 반영되지 않는다** — origin 은 미러다
+> - CF `purge_cache`(success)도 안 먹는다 — **워커 자체 Cache API** 라 edge purge 밖
+> - **실제로 반영되는 유일한 경로는 R2 직접 조작**(`wrangler r2 object put/delete`)
+>
+> 그리고 **`stale-while-revalidate=86400`** 이라 소비자가 최대 **24시간** stale packument 를
+> 받을 수 있다. 게시 후 보이기까지 실측 **약 80초**. ⚠ 이 값을 모르는 채로 «게시 직후 즉시
+> 검증» 을 넣으면 **정상 게시를 실패로 오판정**한다(허브 2026-08-05 실사건 — 그 오판정을
+> 수동 재게시로 «수습» 하다가 3.53.0 아티팩트가 손상됐다).
+
 - **URL≠호스트 (핵심)**: `pkg.modfolio.io` 는 **안정적 URL**(CF 관리). 뒤 호스트(현 NAS Forgejo)는 나중에 **클라우드 서버로 이전 가능** → DNS/터널만 재지정, **앱 무변경**. NAS 가용성 우려는 "호스트 교체"로 해결(프록시-DR 층 불필요). 오너 결정: 지금은 NAS, 나중에 필요 시 클라우드.
 - **프록시(`modfolio-registry-proxy`)**: 멀티-registry 라우터 목적은 소멸(디커미션) → **같은 날 §장기진화 Stage 1 캐시/DR 로 재활성**(2026-07-05). 라우터가 아닌 **엣지 캐시+DR 프론트**로 재작성해 `pkg-cache.modfolio.io` 라이브(topology B). "호스트 교체"(중기 Stage 2)와 "엣지 캐시/DR"(Stage 1)은 **상보적** — 캐시/DR 이 NAS-SPOF 를 즉시 완화하고, 호스트 클라우드 이전은 origin 상시성을 준다.
 - **fleet 이관 (순서 엄수, gradual·Hub-not-enforcer)** — 오너 2026-07-05 "할 수 있는 건 전부 다 pkg 이관, 최우선":
@@ -182,7 +285,7 @@ dual-registry split + starvation 의 영구 해법 = **`@modfolio` 전부를 오
 - **read**: **R2-first**(Worker 소유 packument·익명·durable, `dist.tarball` 이 canonical pkg.modfolio.io → **git-ROOT_URL tarball 이슈 근본 제거**) → R2 miss 시 NAS fallback + R2 backfill(마이그레이션 브리지·안전망). dist-tags 는 R2 packument 조작.
 - **durable DR**: R2 = 글로벌·durable(11 9's) → NAS 전손·cold 콜로에도 서빙. Stage 1 의 per-colo evictable 캐시를 대체.
 - **무중단 cutover 순서**: proxy mode 배포(R2 binding·registry 코드 dormant) → R2 bucket 생성 → `bun run backfill`(read-through 워밍) → `REGISTRY_MODE=registry` flip. 롤백 = `proxy` 복귀(즉시).
-- ⚠ **R2 bucket 생성 = payment-gated**(`pre-payment-guard` cf-paid-resource — free-tier 이내지만 보수적 차단). 오너 out-of-band 승인 또는 직접 생성 필요(에이전트 self-approve 불가·`PAYMENT_GUARD_MODE=off` 우회 금지). cross-repo 쓰기 허가와 **별개** 게이트(payment-safety).
+- ⚠ **R2 bucket 생성 = payment-gated**(`pre-payment-guard` **cf-metered-resource** — 2026-07-31 개명. 구 `cf-paid-resource` 는 *"생성만으로 과금"* 이라는 **틀린 사실**을 라벨에 담고 있었고, 에이전트가 그걸 오너에게 그대로 옮겼다[connect 제보]. CF 공식 가격 문서 실측: R2·D1·KV·Queues·Vectorize 전부 사용량 과금 · Hyperdrive 는 무료 플랜 포함 · 생성 과금 0종. **차단 정책은 불변** — 지출 *경로*를 여는 행위라 보수적 게이트 유지). 오너 out-of-band 승인 또는 직접 생성 필요(에이전트 self-approve 불가·`PAYMENT_GUARD_MODE=off` 우회 금지). cross-repo 쓰기 허가와 **별개** 게이트(payment-safety).
 
 ### Stage 2 origin 클라우드 이전 = **skip** (Stage 3 로 흡수)
 

@@ -114,6 +114,18 @@ athsra run <repo> -- bunx --bun wrangler domains remove <hostname>
 
 KV namespace: `/accounts/{aid}/storage/kv/namespaces` (list/create), `/{ns_id}/values/{key}` (put/get/delete), `/{ns_id}/keys` (list keys)
 
+> ⚠ **이 경로가 폐지 대상이 아니다 — 그 반대다.** 2026-07-15 CF 공지로 폐지되는 것은
+> **레거시** `/accounts/{aid}/workers/namespaces/*` 이고(2026-10-15 작동 중단), 위
+> `storage/kv/namespaces/*` 가 **그 대체 경로**다. 둘은 파라미터·응답이 동일해 호환된다.
+>
+> 이 각주를 두는 이유: 2026-08-04 에 한 sibling 이 **정확히 거꾸로 읽고** *"canon 이 폐지
+> 라우트를 사문 없이 가르친다"* 고 제보했다. 허브 실측 — 이 저장소에 `workers/namespaces`
+> 는 **0건**이고 우리는 처음부터 대체 경로만 쓴다. 뒤집어 읽으면 **맞는 경로에서 떠나는**
+> 마이그레이션을 하게 되므로, 방향을 여기 못 박는다.
+>
+> 영향 범위도 좁다 — 폐지는 **REST 관리 API** 만이고, Worker 안의 바인딩
+> (`env.MY_KV.get/put`)은 무관하다. 출처: [CF Changelog 2026-07-15](https://developers.cloudflare.com/changelog/post/2026-07-15-kv-legacy-namespace-routes-deprecation/)
+
 R2 bucket: `/accounts/{aid}/r2/buckets` (list/create/delete), object S3-compat endpoint은 별도 `<aid>.r2.cloudflarestorage.com/<bucket>/<key>`
 
 D1: `/accounts/{aid}/d1/database` (list/create/delete), `/{db_id}/query` (POST body: `{"sql":"SELECT ..."}`), `/{db_id}/export` (백업)

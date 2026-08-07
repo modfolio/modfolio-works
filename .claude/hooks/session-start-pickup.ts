@@ -71,12 +71,43 @@ function compareSemver(a: string, b: string): number {
 	return 0;
 }
 
+/**
+ * 첫 줄(`# <보낸이> → <받는이>`)이 우리를 가리키는가. 읽지 못하면 **보수적으로 포함**한다 —
+ * 안내 훅이라 놓치는 쪽이 잘못 보여주는 쪽보다 나쁘다.
+ */
+function addressedToUs(file: string, ownRepoName: string): boolean {
+	let head = "";
+	try {
+		head = readFileSync(file, "utf-8").slice(0, 400).split("\n")[0] ?? "";
+	} catch {
+		return true;
+	}
+	if (!head.startsWith("#") || !head.includes("→")) return true;
+	const target = head.split("→")[1] ?? "";
+	const short = ownRepoName.replace(/^modfolio-/, "");
+	return target.includes(ownRepoName) || target.includes(short);
+}
+
+/**
+ * ⚠ 2026-08-05 modfolio-pay 제보 — **루트를 읽는 코드가 없었다.**
+ *
+ * 이 훅은 `feedback/<repo>/inbox/` 만 봤고, 허브의 `scanRepoFeedback` 은 반대로 루트만
+ * 봤다. 즉 **두 자리를 다 보는 스캐너가 없었다** — 발신자가 수신자 도구 구현을 알아야
+ * 편지가 도착하는 상태였다. pay 실측: 인바운드 50건(루트 46 · inbox 4) 중 이 훅이 보여준
+ * 것은 **inbox 3건뿐, 루트 46건 중 0건.**
+ *
+ * 양쪽을 고쳤다 — 허브 스캐너는 `inbox/` 를 한 단계 재귀하고, 이 훅은 루트도 읽는다.
+ * 그러면 «어디에 둘 것인가» 가 더 이상 정답이 있는 질문이 아니게 된다.
+ *
+ * ⚠ 루트에는 **형제행 편지**(`# A → B`)도 섞여 있다. 그건 이 repo 의 할 일이 아니므로
+ * 소음이 된다 — 그래서 첫 줄 화자를 읽어 **자기 앞으로 온 것만** 남긴다(경로가 아니라
+ * 내용으로 판정 — 허브 분류기와 같은 원칙).
+ */
 function recentInboxMessages(repoRoot: string, ownRepoName: string): string[] {
-	// ecosystem 측 inbox path
 	const ownInbox = join(repoRoot, "feedback", ownRepoName, "inbox");
-	// ecosystem repo 자체의 경우는 inbox 안 봄 (sibling 측 path 만 의미)
+	const ownRoot = join(repoRoot, "feedback", ownRepoName);
 	const sibInbox = join(repoRoot, "feedback-incoming"); // sibling-side mirror 후보 (향후)
-	const candidates = [ownInbox, sibInbox];
+	const candidates = [ownInbox, ownRoot, sibInbox];
 	const messages: string[] = [];
 	for (const dir of candidates) {
 		if (!existsSync(dir)) continue;
@@ -86,7 +117,9 @@ function recentInboxMessages(repoRoot: string, ownRepoName: string): string[] {
 		} catch {
 			continue;
 		}
-		const md = entries.filter((f) => f.endsWith(".md"));
+		const md = entries.filter(
+			(f) => f.endsWith(".md") && addressedToUs(join(dir, f), ownRepoName),
+		);
 		md.sort();
 		// 최근 3 entries
 		for (const f of md.slice(-3)) {
@@ -193,13 +226,49 @@ function isBehindUpstream(root: string): boolean {
  *   - origin 보다 behind 면 보류 → advisory (stale-base commit divergence 차단).
  *   - 절대 throw 안 함 / push 안 함 / blocking 안 함. 모든 실패는 advisory 로 degrade.
  */
+/**
+ * 이 저장소가 **실제로 선언한** `@modfolio/*` 만 담은 `bun update` 명령.
+ *
+ * 선언이 하나도 없으면(하네스를 bunx 로만 쓰는 repo) `bun update` 만 돌려준다 —
+ * 없는 패키지 이름을 넣는 것보다 아무것도 안 넣는 쪽이 옳다.
+ * 읽기 실패는 «선언 없음» 이 아니라 «못 읽음» 이므로 하네스 하나만 보수적으로 넣는다.
+ */
+export function buildUpdateCommand(root: string): string {
+	const HARNESS = "@modfolio/harness";
+	try {
+		const pkg = JSON.parse(
+			readFileSync(join(root, "package.json"), "utf-8"),
+		) as {
+			dependencies?: Record<string, string>;
+			devDependencies?: Record<string, string>;
+		};
+		const declared = Object.keys({
+			...pkg.dependencies,
+			...pkg.devDependencies,
+		}).filter((d) => d.startsWith("@modfolio/"));
+		return declared.length > 0
+			? `bun update ${declared.sort().join(" ")}`
+			: "bun update";
+	} catch {
+		// package.json 을 못 읽었다 — «없다» 가 아니다. 하네스만 넣는다(그건 이 안내가
+		// 뜬 이유 자체라 설치돼 있음이 확실하다).
+		return `bun update ${HARNESS}`;
+	}
+}
+
 export function harnessDriftPickup(
 	root: string,
 	installed: string,
 	latest: string,
 ): string[] {
 	const lock = readHarnessLock(root);
-	const manual = `bun update @modfolio/harness @modfolio/contracts && bun run harness-pull -- --apply`;
+	// ⚠ **선언된 것만** 넣는다. `bun update <pkg>` 는 그 패키지가 package.json 에 없으면
+	// **추가한다** — 그래서 이 문구가 `@modfolio/contracts` 를 쓰지 않는 저장소에 유령
+	// 의존성을 심었다(modfolio-infra 실측 2026-08-05: `dependencies` 블록이 통째로 생겼다).
+	// 모든 멤버가 같은 문구를 보므로 **fleet 전체에 같은 부작용**이 퍼진다.
+	// 유령 의존성은 조용하다 — 게이트가 없는 저장소는 들어온 줄도 모르고, 그 패키지가
+	// major 를 올리면 아무도 안 쓰는 것 때문에 게이트가 빨개진다.
+	const manual = `${buildUpdateCommand(root)} && bun run harness-pull -- --apply`;
 	const advisory = [
 		`  📦 harness ${installed} → ${latest} (최신) — drift 는 "이 release 이후 아직 안 연 프로젝트" 의 transient`,
 		`     수동 동기화 (commit clean 상태에서 권장): ${manual}`,
