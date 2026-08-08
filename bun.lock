@@ -10,7 +10,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^2.5.2",
-        "@modfolio/harness": "^3.60.4",
+        "@modfolio/harness": "^3.61.0",
         "typescript": "^6.0.3",
         "wrangler": "~4.115.0",
       },
@@ -299,7 +299,7 @@
 
     "@modfolio/contracts": ["@modfolio/contracts@1.23.0", "https://pkg.modfolio.io/api/packages/modfolio/npm/@modfolio/contracts/-/contracts-1.23.0.tgz", { "peerDependencies": { "zod": "^3.24.0 || ^4" } }, "sha512-FwSBSLBxaL19YQvSLEFSfvTD1OWkuySlbEgC8uR82WLPScV74GS3Pvv+Cgx9/JhcShbXtXGrjFJY9i08WqjEMA=="],
 
-    "@modfolio/harness": ["@modfolio/harness@3.60.4", "https://pkg.modfolio.io/api/packages/modfolio/npm/@modfolio/harness/-/harness-3.60.4.tgz", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "@modelcontextprotocol/server": "2.0.0", "zod": "^4.4.3" }, "bin": { "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-check": "scripts/modfolio/check.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts", "modfolio-debrief": "scripts/debrief/cli.ts" } }, "sha512-tlozUdRoBvB1O8VCatvDwZG69YN61DQT9N5Alha1R0kTgNNtWVBcGTvKF8hYWeiCF2/BedFeA7VuulKki05t8g=="],
+    "@modfolio/harness": ["@modfolio/harness@3.61.0", "https://pkg.modfolio.io/api/packages/modfolio/npm/@modfolio/harness/-/harness-3.61.0.tgz", { "dependencies": { "@microsoft/microsoft-graph-client": "^3.0.7", "@microsoft/microsoft-graph-types": "^2.43.1", "@modelcontextprotocol/server": "2.0.0", "@modfolio/harness": "^3.61.0", "zod": "^4.4.3" }, "bin": { "modfolio-harness-pull": "scripts/harness-pull.ts", "modfolio-check": "scripts/modfolio/check.ts", "modfolio-migrate-finalize": "scripts/migration/finalize.ts", "modfolio-debrief": "scripts/debrief/cli.ts" } }, "sha512-7QNQq2eVaIkgg5aMs7IBSgUvQv55xoOW6ksdsKl5b8DPmDh3TGUXdubh1pD1AAw/yIbFnVVmHvhmdOt00SM6/w=="],
 
     "@napi-rs/wasm-runtime": ["@napi-rs/wasm-runtime@1.1.6", "", { "dependencies": { "@tybys/wasm-util": "^0.10.3" }, "peerDependencies": { "@emnapi/core": "^1.7.1", "@emnapi/runtime": "^1.7.1" } }, "sha512-ZLv/JdUfkvOy9eCnnBaGfiO+XimbjebAeO+MRQqD/B+FR1tnRN0tpKSJHRbE8sFfS6aqsXZ67TQjfwfsxULVbg=="],
 
