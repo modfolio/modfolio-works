@@ -83,7 +83,7 @@ supersedes: []
 
 | 패키지 | 레지스트리 | 비고 |
 |---|---|---|
-| `@modfolio/connect-sdk` | **public npm** (registry.npmjs.org, token-free) | latest 8.1.0. GitHub Packages 미러는 **legacy 7.3.0 정체** |
+| `@modfolio/connect-sdk` | **public npm** (registry.npmjs.org, token-free) | latest **10.7.0** · GitHub Packages 미러 **8.3.0 정체**(2026-08-08 실측). ⚠ 이 숫자는 스냅샷이다 — 현행 SoT 는 `ecosystem.json.connectSdkLatest`(`sdk-latest` 가 레지스트리에서 자동 갱신)이고, 여기 값이 그와 어긋나면 **이 표가 낡은 것**이다. 2026-08-08 에 `8.1.0/7.3.0` 으로 major 두 개 뒤처져 있었다 |
 | `@modfolio/contracts` · `harness` · `connect-foundation` · `connect-core` | **GitHub Packages** (private, `npm.pkg.github.com`) | `GITHUB_TOKEN` 필요 |
 
 ⚠️ **gotcha**: sibling 의 `.npmrc @modfolio:registry=https://npm.pkg.github.com`(contracts/harness 수신용)가 connect-sdk 까지 GH(7.3.0)로 끌어내려 **8.x 미수신**. npm `.npmrc` 는 per-scope 만(per-package override 불가). 근본수정 = connect 가 GH Packages 미러를 8.1.0 으로 dual-publish (connect 자율, opinion routed). 버전 실측 = `curl https://registry.npmjs.org/@modfolio/connect-sdk`.

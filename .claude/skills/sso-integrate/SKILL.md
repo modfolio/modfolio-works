@@ -6,8 +6,17 @@ user-invocable: true
 
 # /sso-integrate — Connect SDK SSO 연동
 
-> **현행 latest = `@modfolio/connect-sdk` 10.5.0** (2026-08-07 실측 — npm
-> `dist-tags.latest` = `10.5.0`, `ecosystem.json.connectSdkLatest` 와 일치).
+> **현행 latest = `ecosystem.json` 의 `connectSdkLatest`** — 여기 숫자를 적지 않는다.
+>
+> ```sh
+> bun -e 'console.log(JSON.parse(await Bun.file("ecosystem.json").text()).connectSdkLatest)'
+> ```
+>
+> ⚠ 이 자리에는 원래 버전이 **박혀 있었고** `sdk-latest --apply` 는 `ecosystem.json` 만
+> 갱신한다 — 그래서 2026-08-07 하루에 **세 번** 뒤처졌고, 그때마다 이 문서는 «현행
+> latest = N» 이라고 **단언**하고 있었다. 문서를 읽고 그대로 구현한 앱은 구버전을 핀한다.
+> 근본 수정은 갱신 대상을 늘리는 것이 아니라 **사본을 없애는 것**이다: 값이 한 곳에만
+> 있으면 drift 가 원리적으로 불가능하다. 무엇이 바뀌었는지는 `_connectSdkNote` 에 있다.
 > 🚨 **Nuxt 앱은 반드시 받을 것** — 10.2.0~10.4.0 이 CF Workers 에서 POST 본문을 못 읽어
 > 백채널 로그아웃·FedCM 수신부가 «본문 없음» 으로 동작했고, 증상이 `400 missing_logout_token`
 > 이라 **정상 거절과 문자 그대로 구분되지 않았다**.
@@ -236,7 +245,8 @@ bun update @modfolio/connect-sdk
    (`^9.x` → 9.4.0). `^8.x` 는 8 계열 최신에서 멈춘다 — 이게 major 의 정상 동작이다.
 
 2. **exact pin 은 `bun update` 가 안 움직인다** — 선언이 `"8.7.0"`(캐럿 없음)이면
-   `bun update` 는 **무동작**이다. `bun add @modfolio/connect-sdk@10.5.0` 으로 명시 지정.
+   `bun update` 는 **무동작**이다. `bun add @modfolio/connect-sdk@<latest>` 로 명시 지정
+   (`<latest>` = 위 헤더의 명령이 출력하는 값 — 여기 숫자를 박으면 또 뒤처진다).
    (핀이 그 repo 의 의도된 하우스 스타일이면 **핀을 유지**한 채 값만 올릴 것.)
 
 3. **install root 가 워크스페이스와 다를 수 있다** — 루트 `package.json` 에 `workspaces`

@@ -183,6 +183,6 @@ if (!parsed.success) return new Response(null, { status: 400 });
 - ❌ consumer 의 `@modfolio/contracts` `file:`/`link:` 로컬 의존 (CI 무음 실패 — `contracts.md`)
 
 ## 관련
-- contracts: `@modfolio/contracts` events/billing/sso (1.5.0+, 현행 published 1.7.0) · `.claude/rules/contracts.md`
+- contracts: `@modfolio/contracts` events/billing/sso (1.5.0+, 현행 published **1.24.0** — 2026-08-08 GitHub Packages 실측. 숫자는 스냅샷이고 SoT 는 레지스트리다) · `.claude/rules/contracts.md`
 - canon: `payment-safety.md`(자매 — agent 지출가드) · `rate-limiting.md`(`/api/billing`·`/api/subscriptions`) · `agentic` SSO = `agent-auth-ux.md`
 - 실시간 인프라: `agents-sdk`·`durable-objects` skill (live push)

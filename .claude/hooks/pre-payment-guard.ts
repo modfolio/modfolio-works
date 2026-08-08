@@ -307,6 +307,23 @@ const SCHEDULER_SAFE_MCP =
 // `git push` is already inert-lead; execution-time spends are guarded where they execute.
 const GITHUB_SAFE_MCP = /^mcp__github__/;
 
+// Loom MCP — the fleet's task ledger + path leases. NO payment surface: every tool is a read or a
+// write against task/lease rows (create/claim/release/update/get/list/events/heartbeat/
+// check_conflict). It provisions nothing and calls no external money API.
+//
+// Its args are the reason a guard trips: `intent` and `evidence` are prose a session writes about
+// what it did. Observed 2026-08-07 — `loom_update_task` HARD-BLOCKED because the evidence field
+// reported a finding about modfolio-pay's manifest and therefore contained the literal event names
+// `subscription.activated` / `subscription.changed`. `MCP_PAYMENT` carries `subscription`, and the
+// haystack match reads the whole payload → a task-ledger status update was classified as a spend.
+// The same session had already called this tool several times; only the one carrying that word blew
+// up, which is exactly the shape that makes this class hard to see.
+//
+// ⚠ Boundary: allowlisted by NAMESPACE because Loom's surface is ours and today has no money tool.
+// If a billing/quota tool is ever added to that server this must narrow to a verb list (the way
+// CF_READONLY_MCP does) — a namespace skip is only safe while the namespace is money-free.
+const LOOM_SAFE_MCP = /^mcp__loom__/;
+
 // Cloudflare MCP server — READ-ONLY introspection tools (get/list/query resource metadata,
 // docs search). They move NO money: they inspect existing Workers/D1/KV/R2/Hyperdrive, they do
 // not provision. Their serialized args are resource IDENTIFIERS that routinely contain a repo/
@@ -573,6 +590,7 @@ function classify(
 			SESSION_SAFE_MCP.test(toolName) ||
 			SCHEDULER_SAFE_MCP.test(toolName) ||
 			GITHUB_SAFE_MCP.test(toolName) ||
+			LOOM_SAFE_MCP.test(toolName) ||
 			CF_READONLY_MCP.test(toolName) ||
 			SVELTE_SAFE_MCP.test(toolName) ||
 			ECOSYSTEM_STATE_SAFE_MCP.test(toolName)
