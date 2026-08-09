@@ -88,8 +88,8 @@
 		/* ══════════════════════════════════════
 		   TYPOGRAPHY
 		   ══════════════════════════════════════ */
-		--font-display: "goldenbook", "goldenbook-fallback", serif;
-		--font-ui: "Pretendard Variable", "Pretendard", sans-serif;
+		--font-display: "Gambetta", "Freesent", "Pretendard", serif;
+		--font-ui: "Satoshi", "Freesent", "Pretendard", sans-serif;
 
 		/* Fluid Type Scale */
 		--font-size-display: clamp(3rem, 3vw + 2rem, 6rem);

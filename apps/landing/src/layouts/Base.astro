@@ -15,6 +15,11 @@ const canonicalUrl = new URL(Astro.url.pathname, "https://works.modfolio.io");
 
 <html lang="ko">
 <head>
+		<!-- v4 type — self-host. @font-face 는 fonts.css(생성물,
+		     modfolio-fonts/scripts/webfont.mjs). 종전 토큰은 Adobe Typekit 얼굴을
+		     이름 짓고 있었다 — kit 없이 이름만 있으면 조용히 시스템 폰트로 떨어진다. -->
+		<link rel="stylesheet" href="/fonts.css" />
+
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<title>{title}</title>
