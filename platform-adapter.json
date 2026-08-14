@@ -1,6 +1,7 @@
 {
 	"$schema": "https://pkg.modfolio.io/contracts/platform/project-platform-manifest.schema.json",
 	"repo": "modfolio-works",
+	"position": "harbor",
 	"consumes": [],
 	"coreServices": {
 		"athsra": {
