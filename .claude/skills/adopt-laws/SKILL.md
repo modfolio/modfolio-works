@@ -56,6 +56,11 @@ bun run node_modules/@modfolio/harness/scripts/harness-pull/validate-agent-front
 | **assembly-law** | 다른 repo 가 쓸 수 있는 걸 갖고 있나? → `platform-adapter.json` 의 `provides` 에 선언돼 있나. 다른 앱 코드를 **복사**해 온 게 있나(있다면 3표면 중 하나로 바꿀 경로는?) |
 | **registry-redundancy** | `.npmrc` 의 `@modfolio:registry` 가 pkg.modfolio.io 인가. **`bun.lock` 도 거기서 해상하나**(제3조 — `.npmrc` 만 바꾸고 lock 을 두면 CI 가 조용히 죽는다). 이 repo 가 `@modfolio/*` 를 **게시**한다면 제2조 예외 대상인가 — 하위 워크스페이스에 게시 패키지가 있는 경우(`sdk/` 등)도 포함 |
 | **knowledge-sovereignty** | 사용자 데이터를 다루나? → consent 스코프 **미보유 시 ingest 거부** 경로가 코드에 있나(문서 말고). 자기 도메인 지식을 `knowledge/` 에 쌓고 있나 |
+| **atlas** | `platform-adapter.json` 에 `position` 이 있나(`substrate`/`universal`/`owner`/`consumer`/`harbor` 중 하나). `provides[]` 의 각 부품에 **전문용어 없는 한 문장**(`plainly`)이 있나 — 없으면 `find_provider` 에서 의도 질의로 **찾아지지 않는다**. 허브가 임시 문장을 붙여 뒀다면 `bun run atlas:adopt-plainly` 로 보고 **자기 말로** 고쳐 쓴다 |
+
+> ⚠ 이 표는 **손으로 적은 목록**이다. 위 §2 의 `grep -l '^tier: law' knowledge/canon/*.md`
+> 가 실물이고, 둘이 갈리면 **grep 이 옳다**. 실제로 2026-08-15 에 `atlas` 가 추가됐을 때
+> grep 은 4편을 찾는데 이 표는 3개만 나열하고 있었다 — 사본끼리의 일치는 정합이 아니다.
 
 ### 4. 계획 초안을 남긴다
 

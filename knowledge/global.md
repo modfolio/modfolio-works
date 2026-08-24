@@ -48,8 +48,15 @@
 
 ## 기술 스택 요약
 
-**프레임워크**: SvelteKit 5 | SolidStart | Astro | Hono | Qwik | Nuxt 3
-**DB**: Neon Postgres | D1 | Turso | R2 | Durable Objects | Upstash Redis
+**프레임워크** (2026-08-16 실측 · repo 수): Astro 28 · Svelte 17 (SvelteKit **2.x** 14) ·
+Qwik 3 · Vue 3 (Nuxt **4** 2) · Solid 2 · React 1 — 대부분 repo 가 둘 이상을 함께 쓴다
+**DB·스토리지** (실측): KV 18 · Neon Postgres 12 · R2 12 · Durable Objects 9 · D1 8
+
+> ⚠ 이 두 줄은 **실측으로만 갱신한다.** 2026-08-16 이전 판은 `Turso` 와 `Upstash Redis` 를
+> 나열했으나 **둘 다 실물 0건**이었고(`@libsql/client`·`@upstash/*` 설치 0), `SvelteKit 5`
+> (실제 2.x — 5는 Svelte 컴파일러) · `Nuxt 3`(실제 4.x) 도 틀렸다. Turso 는 `keepnbuild` 가
+> 한때 썼다가 Neon 으로 이전했다(`canon/project-infrastructure-registry.md` SoT).
+> **낡은 스택 목록은 조용히 틀리지 않는다 — 기술 선택을 다시 논의할 때 틀린다.**
 
 앱별 상세 스택: `ecosystem.json` 또는 `/ecosystem` skill 참조.
 

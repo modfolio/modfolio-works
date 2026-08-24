@@ -72,6 +72,37 @@ function debriefedByArtifact(
 	}
 }
 
+/**
+ * 편집 도구 호출 수 — «이 세션이 실제로 무언가를 했는가» 의 결정적 대리 지표.
+ *
+ * transcript 문자열 계수라 **0 토큰·LLM 없음**(velocity 정합). 정확한 도구명만 센다 —
+ * 넓은 매칭은 위 헤더의 `modfolio-debrief` 사고와 같은 부류를 만든다.
+ */
+function editCount(transcript: string): number {
+	let n = 0;
+	for (const name of [
+		'"name":"Edit"',
+		'"name":"Write"',
+		'"name":"NotebookEdit"',
+	]) {
+		n += transcript.split(name).length - 1;
+	}
+	return n;
+}
+
+/**
+ * 실작업 문턱. **이 값이 이 훅의 전부**이므로 근거를 남긴다 — 30일 세션 382개 실측
+ * (2026-08-14, `~/.claude/projects/*​/*.jsonl`):
+ *
+ *     편집 0회        192건   ← 대화형. 여기 울리면 세리머니가 된다
+ *     편집 3회 이상   188건   ← 실작업
+ *     중앙값 0 · 상위10% 140
+ *
+ * 중앙값이 0 이라 문턱을 0 초과 어디에 두든 대화형은 걸러진다. 3 을 고른 것은 «한두 번
+ * 고쳐 본 것» 과 «작업» 사이의 보수적 경계다. 올리면 놓치고, 내리면 소음이 된다.
+ */
+const SUBSTANTIVE_EDITS = 3;
+
 function frontierIds(cwd: string, ecoRoot: string | undefined): string[] {
 	const candidates = [
 		ecoRoot ? join(ecoRoot, "ecosystem.json") : undefined,
@@ -121,10 +152,31 @@ try {
 	if (!transcriptPath || !existsSync(transcriptPath)) process.exit(0);
 	const transcript = readFileSync(transcriptPath, "utf-8");
 
+	// ── 발동 조건 (2026-08-14 교체) ────────────────────────────────────────────
+	//
+	// 종전 조건은 **frontier 모델 사용**뿐이었다(`modelTiers.frontier`). 그런데 그 목록은
+	// `["claude-fable-5", "claude-mythos-5", "gpt-5.6-sol"]` 이고 **이 universe 의 기본
+	// 모델인 `claude-opus-5` 는 거기 없다.** 그래서 Opus 세션은 이 훅에 닿지도 못했다.
+	//
+	// 그 전제를 실측이 반증한다 (2026-08-14):
+	//
+	//     최근 30일 세션 382 · debrief 카드 32  → **캡처율 8.4%**
+	//     실작업(편집 3회+) 188건 중 **162건이 frontier 아님 = 완전 무감**
+	//     카드 530장 중 opus 출처는 14장(2.6%)뿐인데, 그 14장이 남긴 bullet 은 **69개** —
+	//     증류분 138개의 **50%**. 즉 증류 지식의 절반을 만드는 세션이 안내를 못 받았다.
+	//
+	// 그리고 그 침묵이 상류를 막고 있었다: 승격은 `helpful ≥ 1` 을 요구하고 helpful 은
+	// **카드에서만** 온다. 카드가 없으니 증류 bullet 은 **한 건도 Active 에 오른 적이 없다**
+	// (Active 286 = 전부 2026-07-11 일괄 유입분). 캡처를 고치지 않으면 그 위 전부가 멈춘다.
+	//
+	// ⇒ 조건을 «비싼 모델을 썼나» 에서 «무언가를 했나» 로 바꾼다. debrief 를 해야 할 이유는
+	//   escalation 비용이 아니라 **배운 것**이고, 후자는 편집 수로 결정적으로 잴 수 있다.
+	//   frontier 경로는 남긴다 — 편집이 적어도 escalation 자체가 캡처 가치를 갖는다.
 	const ids = frontierIds(cwd, findEcosystemRoot(cwd));
-	if (ids.length === 0) process.exit(0);
-	const frontierUsed = ids.some((id) => transcript.includes(`"model":"${id}"`));
-	if (!frontierUsed) process.exit(0);
+	const frontierUsed =
+		ids.length > 0 && ids.some((id) => transcript.includes(`"model":"${id}"`));
+	const substantive = editCount(transcript) >= SUBSTANTIVE_EDITS;
+	if (!frontierUsed && !substantive) process.exit(0);
 
 	const debriefed =
 		debriefedByArtifact(cwd, sessionStartMs(transcript)) ||

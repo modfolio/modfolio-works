@@ -80,6 +80,10 @@
 				"hooks": [
 					{
 						"type": "command",
+						"command": "bun run \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-pattern-history.ts\""
+					},
+					{
+						"type": "command",
 						"command": "bun run \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop-debrief-check.ts\""
 					}
 				]

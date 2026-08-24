@@ -1,7 +1,7 @@
 ---
 title: Canon INDEX
-version: 1.8.0
-last_updated: 2026-07-12
+version: 1.9.0
+last_updated: 2026-08-15
 sync_to_siblings: true
 applicability: always
 consumers: [preflight]
@@ -29,6 +29,17 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 > 각 canon 파일 frontmatter `applicability:` 로 선언. 이 INDEX 는 요약만 제공 —
 > 실제 적용 여부는 해당 repo owner 판단 (Hub-not-enforcer).
 
+## 불변 법칙 (`tier: law`) — 예외 없음
+
+`tier` 축의 계약: **무엇(what)은 예외 없음, 언제·어떻게(when/how)는 그 repo 자율.** 멤버 자가 진단 = `/adopt-laws` + `validate-law-compliance.ts`(결정적, 멤버에서도 실행).
+
+> ⚠ **2026-08-15 정정 — 이 절이 없어서 `tier: law` 4편 중 3편이 인덱스에 한 번도 실린 적이 없었다.** 인덱스는 스스로를 *"1-line 인덱스"* 라고 소개하는데 **가장 높은 등급의 문서를 빠뜨리고 있었고**, 그 인덱스가 `sync_to_siblings: true` 로 fleet 에 배포된다. 즉 멤버가 「어디 보지?」 하고 열었을 때 법이 보이지 않았다. 등급을 만들면 그 등급을 **목록에 반영하는 것까지가 등급 도입**이다.
+
+- [assembly-law.md](assembly-law.md) v1.0 (신설 2026-07-26) — **재사용의 형태.** 재사용은 contracts·MCP·endpoint **3표면으로만** · 복사/벤더링 금지 · `provides` 선언 의무. `applicability: always`.
+- [atlas.md](atlas.md) v1.0 (신설 2026-08-15) — **재사용의 주인.** 7 법칙(얇은 바탕 · 소유는 소비에서 · 설명 가능성 · 첫 소비자와 함께 · 처음부터 외부 공개 가능 · 얇게 관통 · 이름은 판정식) + **5 위치**(`substrate`/`universal`/`owner`/`consumer`/`harbor`) + 메타인지 조항(법을 쓰는 자가 첫 피험자). `assembly-law` 의 짝. ADR-017. `applicability: always`.
+- [registry-redundancy.md](registry-redundancy.md) — **소비 좌표는 하나다.** 제1조 pkg.modfolio.io 단일·anon-read · 제2조 퍼블리셔 예외 · 제3조 lockfile 은 .npmrc 의 그림자가 아니다. `applicability: always`.
+- [knowledge-sovereignty.md](knowledge-sovereignty.md) — **consent 는 메타데이터가 아니라 게이트.** 자동 승격 없음 · 격리는 구조로 · ingest 를 MCP 에 노출 금지. `applicability: always`.
+
 ## 원칙 / 거버넌스
 
 - [evergreen-principle.md](evergreen-principle.md) — 연결 프로젝트는 항상 최신 Connect SDK. universe는 권고, 강제 X.
@@ -45,6 +56,8 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 ## 개발 환경
 
 - [nas-infra.md](nas-infra.md) — **modfolio-infra(NAS)** substrate: 이중 git/레지스트리/CI($0), Restic→R2 3-2-1 백업. ADR-010 면제. `applicability: always`. (local-dev-infra.md superseded → `archive/`)
+- [modfolio-db.md](modfolio-db.md) — **modfolio-db** — self-host 본진의 Modfolio DB 시스템 (NAS `mf-kr-1` · pg18+pgvector · Bearer 인증 neon-http 프록시 · Cells · prod 경로 A/B). ADR-022. `applicability: always`.
+- [free-tier-ledger.md](free-tier-ledger.md) — 무료 한도 원장 — 한도·계량 축·측정 좌표만(사용량 수치 금지 — `quota:scan` 이 소비 시점에 잰다). `applicability: always`.
 - [modern-orchestration-evaluation.md](modern-orchestration-evaluation.md) — Docker/PaaS/mise/Devcontainer 2026-04 평가.
 - [operations.md](operations.md) — 계정/운영 전반.
 - [secret-store.md](secret-store.md) — 시크릿 관리 표준 (athsra v3 — CF Worker + R2 + E2EE). **Phase 2.1 active (npmjs.org `@athsra/cli@0.1.0` public)**. `applicability: always`.
@@ -55,8 +68,9 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 
 ## AI · Context · Cost
 
-- [tech-trends-2026-04.md](tech-trends-2026-04.md) — 월별 trend. Adopt/Trial/Avoid 표.
-- [tech-trends-2026-06.md](tech-trends-2026-06.md) v1.0 (신설 2026-06-14) — Claude Dreaming·AI payment guardrails·self-evolving agents. v3.7.0 에서 3건 Adopt 구현. 현재 월 SSoT.
+- [**tech-trends-2026-08.md**](tech-trends-2026-08.md) v1.0.0 (2026-08-17) — **현재 월 SSoT.** 이번 달 1순위 Adopt 는 새 도구가 아니라 **인용 위생**이다: 우리 canon 이 fleet 에 배포하던 근거 하나가 **원문에 없는 문장**이었고 방향이 정반대였다(「80% 절감」 ↔ 원문 「15× more tokens」). + Muse 창립 논문 ACE 가 2026년 두 그룹에 정면 대조에서 패 · 컨텍스트 파일 무효 증거의 외부 독립 재현(p=1.00/0.66) 과 그 짝(HANDBOOK 천장 36.2%) · GraphRAG **MS 유지보수 모드**(2026-08-14) · 스택은 뒤처지지 않았고 남은 것은 의도적 선택뿐
+- [tech-trends-2026-07.md](tech-trends-2026-07.md) v1.1 — TypeScript 7 GA 인데 도구 생태계 미추종(Hold) · Cross-App Access(ID-JAG) · MCP 2026-07-28 스펙 · CF KV 레거시 폐지(2026-10-15)
+- [tech-trends-2026-04.md](tech-trends-2026-04.md) · [tech-trends-2026-05.md](tech-trends-2026-05.md) · [tech-trends-2026-06.md](tech-trends-2026-06.md) — 지난 달 스냅샷. ⚠ **시점 문서다** — 현행 권고는 위 최신 월을 본다(04 는 은퇴 선언 대상: `RETIRED_CANON`)
 - [claude-code-2-1-112-diff.md](claude-code-2-1-112-diff.md) — v2.1.105-112 changelog.
 - [claude-code-2026h1-features.md](claude-code-2026h1-features.md) — 2026 H1 신기능 Adopt/Trial/Watch (Fable 5 available, Dynamic Workflows, /goal, fallback models). baseline 무변.
 - [context-isolation.md](context-isolation.md) — worktree-per-subagent + SubagentOutputStyle.

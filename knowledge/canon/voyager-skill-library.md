@@ -10,7 +10,18 @@ consumers: [harness-pull, harness-evolve, ecosystem, modfolio]
 
 # Voyager Skill Library — 22 Sibling 자율 skill 공유
 
-> **핵심 인용** (Voyager, NeurIPS 2023): "An ever-growing skill library of executable code... composable, transferable across agents."
+> **핵심 인용** (Voyager, [arXiv 2305.16291](https://arxiv.org/abs/2305.16291)) — 초록 축자,
+> 2026-08-17 arXiv API 로 원문 대조:
+>
+> > *"…2) an **ever-growing skill library of executable code** for storing and retrieving
+> > complex behaviors…"*
+>
+> ⚠ **정정 2026-08-17.** v1.0.0 은 이것을
+> ~~*"An ever-growing skill library of executable code**... composable, transferable across
+> agents**."*~~ 로 싣고 있었다. 앞 조각은 축자가 맞지만 **`composable` · `transferable` 은
+> 초록에 없다** — `...` 로 이어 붙여 같은 문장의 생략처럼 보이게 만든 것이다.
+> 논문의 주장(스킬이 조합·전이 가능)은 본문에서 지지되지만, **그것을 초록 인용부호 안에
+> 넣으면 인용이 아니라 요약이다.** 우리 canon 이 인용부호로 말하는 것은 축자여야 한다.
 
 modfolio universe 의 22 sibling 이 각자 고유 skill 을 개발할 때, universe 가 **manifest 만 aggregate** 하여 다른 sibling 이 자율적으로 발견·채택할 수 있게 한다. 실 skill 파일은 sibling git remote 에 유지 — universe 는 metadata 만.
 

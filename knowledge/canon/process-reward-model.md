@@ -1,7 +1,7 @@
 ---
-title: Process Reward Model — Step-Wise Verification
-version: 1.0.0
-last_updated: 2026-05-13
+title: Process Reward Model — Step-Wise Verification (⚠ 2026-08 축소 — 범용 PRM 도입 안 함)
+version: 2.0.0
+last_updated: 2026-08-17
 source: [ThinkPRM (Process Reward Models, arXiv 2504.16828, 2025), Test-Time Compute Scaling (Anthropic 2024-2025), harness v3.0 P2.2 (plan crystalline-sparking-sky)]
 sync_to_siblings: true
 applicability: always
@@ -9,6 +9,40 @@ consumers: [multi-review, generate-review, harness-evolve, modfolio, claude-api]
 ---
 
 # Process Reward Model — Step-Wise Verification
+
+> ## 🔴 2026-08-17 축소 — **우리 도메인에는 이 표적이 존재하지 않는다**
+>
+> v1.0.0 (2026-05-13) 은 이 패턴을 「다음 진화 단계」로 제시했다. 2026-08 레이더가 1차 출처를
+> 전건 확인한 결과 **그 전제가 성립하지 않는다**:
+>
+> | 실측 | 값 |
+> |---|---|
+> | 수학 PRM 을 **도구사용 단계 판정**에 (ToolPRMBench, 우연=50%) | **49.2 ~ 52.8%** — **동전 던지기** |
+> | 72B 수학 PRM 을 과학으로 (GR-Ben) | F1 **78.3 → 37.4 (−40.9)** |
+> | 그냥 **프론티어 LLM 을 judge 로** | **74~75%** — 모든 범용 PRM 을 **24점** 앞선다 |
+> | **LLM-jury**(교차모델 합의 · 학습 0 · 무료) | 수학 안에선 최강 학습 검증기와 동급, **밖에선 1위** |
+> | 단계별 실패 귀속 SOTA | **~14%** (Causal Agent Replay) |
+> | PRM 취약성 | label-preserving 편집으로 점수 **32.8~47.6% 인플레**. ⚠ **mean vs min 풀링이 악용성을 44× 바꾼다** |
+>
+> 그리고 **Anthropic 자신의 에이전트 평가 지침이 「경로가 아니라 결과를 채점하라」** 다 —
+> *"grading what the agent produced, not the path it took"* — 단계별 PRM 과 **정면 충돌**한다.
+>
+> ### 그래서 현행 권고
+>
+> - **범용 PRM 도입 안 함.** 우리 표면(코드 리뷰·계약 검증·문서)은 수학이 아니고, 전이 실측이
+>   **동전 던지기**다. 이 문서가 그리던 «reward-guided generation» 은 그 위에 서 있었다
+> - **단계별 신호가 필요하면** 학습 PRM 이 아니라 **부분점수 결과 분해**(Anthropic 패턴)를 쓴다
+> - **굳이 단계 점수를 매기면 `min` 풀링.** `mean` 은 악용 표면이 44× 넓다
+> - **전용 표면에서는 실제로 작동한다** — 패치(R4P 72.2%) · 웹(WebArbiter 89.19%) ·
+>   도구(ToolPRM-GRPO 78.6%). **도메인 특화 검증기는 유효하고, 범용 이식이 무효다**
+> - ⚠ 취약성 논문 2편은 **1저자가 같아 독립 재현이 아니다.** 남의 논문이라고 우리 기준을
+>   낮추지 않는다(레이더 §정직 항목)
+>
+> ### 이 문서를 지우지 않는 이유
+>
+> `.claude/agents/process-reward-evaluator.md` 가 실재하고 4개 canon 이 이 문서를 참조한다.
+> 지우면 참조가 끊기고 **왜 안 하기로 했는지가 사라진다** — 다음 사람이 같은 조사를 처음부터
+> 다시 한다. 아래 본문은 **「도입했다면 이런 모양이었을 것」의 기록**으로 읽는다.
 
 > **핵심 차이**: Outcome Reward Model (ORM) = 최종 결과만 평가. Process Reward Model (PRM) = **매 step 마다** 평가 → tree search 가지치기 + best-of-N sampling 의 reward function.
 
@@ -152,4 +186,12 @@ aggregate = weighted sum, scaled to 0-10.
 
 ## 갱신 이력
 
+- **2026-08-17 v2.0.0** — **축소.** 2026-08 레이더 1차 출처 전건 확인 결과 이 패턴의 표적이
+  우리 도메인에 없다: 범용 PRM 의 도메인 전이가 **동전 던지기**(ToolPRMBench 49.2~52.8%,
+  우연=50%) 이고 수학→과학 이식은 F1 **−40.9**, 반면 **프론티어 LLM judge 가 74~75%** 로
+  24점 앞선다. Anthropic 자신의 평가 지침(**결과를 채점하라, 경로가 아니라**)과도 충돌.
+  → 범용 PRM 도입 안 함 · 필요하면 부분점수 결과 분해 · 굳이 단계 점수면 **min 풀링**
+  (mean 은 악용 표면 44×) · **도메인 특화 검증기는 유효**(패치 72.2% · 웹 89.19% · 도구 78.6%).
+  본문은 「도입했다면 이런 모양이었을 것」의 기록으로 남긴다 — 지우면 왜 안 하기로 했는지가
+  사라지고 다음 사람이 같은 조사를 반복한다.
 - **2026-05-13 v1.0.0** — 초판. plan crystalline-sparking-sky P2.2 cement. v2.35 evaluator (binary) 의 step-wise 확장 frame. ThinkPRM 2025 학술 정합. best-of-N + tree search gating + process debugging 3 use case.

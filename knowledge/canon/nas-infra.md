@@ -30,7 +30,16 @@ consumers: [deploy, ops, release, preflight]
 ### nas 노드 활성 서비스 (18+ 컨테이너)
 
 - **Forgejo** — git 호스팅, npm registry, Actions(self-hosted runner 1대)
-- **Postgres 16** — 중앙 dev DB
+- **Postgres 16** — ⚠ **정정 (2026-08-19 SSH 읽기 전용 실측)**: 「중앙 dev DB」가 **아니다.**
+  실물은 PostgreSQL **16.14** 이고 그 안의 DB 는 **`forgejo`(57MB) 와 `postgres`(7.5MB) 뿐** —
+  **앱 데이터가 하나도 없다.** 즉 이것은 **Forgejo 의 백업 저장소**다.
+  그리고 **pgvector 가 없다**(`pg_available_extensions` 에 `%vector%` **0건** · 설치 확장 = `plpgsql` 뿐).
+  포트 5432 는 **Tailscale 인터페이스에 미노출**(22·2222·3000 만 열림).
+  ⇒ 앱 DB 를 여기로 옮기는 것은 「이미 있는 dev DB 를 쓴다」가 아니라
+  **「프로덕션 Postgres 서비스를 새로 세운다」**이다 — 선결조건은 **ADR-021** 참조.
+  → **2026-08-23: 그 「새로 세운다」가 승인·착수됐다 — ADR-022 `modfolio-db`** (mfdb-postgres
+  pg18+pgvector·:5433·tailnet 전용 등, canon `modfolio-db.md`). Wave 1 완료 후 이 절은
+  mfdb 실물 기준으로 갱신된다. (당일 pdgd 팀이 세운 `pdgd-dev-db`(pg17·:5432)가 파일럿 실물.)
 - **Tailscale** — mesh VPN(외부 접근 + dev 머신 ↔ NAS)
 - **Cloudflare Tunnel + Zero Trust Access** — `git.modfolio.io` 외부 노출 + 인증
 - **Restic** → **R2** — 3-2-1 백업 (NAS 로컬 + R2 offsite)

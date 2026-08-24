@@ -16,7 +16,9 @@ prefix/DB 타입 조회 → schema-builder agent → typecheck
 
 1. **대상 앱과 테이블 스펙 확인**
 2. **drizzle-patterns 스킬에서 prefix 조회** (mc_, ma_, mp_ 등)
-3. **ecosystem.json에서 DB 타입 판별** (Neon/D1/Turso)
+3. **ecosystem.json에서 DB 타입 판별** (Neon / D1 / Durable Objects SQLite)
+   — 권위는 `canon/project-infrastructure-registry.md`, 그와 갈리면 **그 repo 실측이 SoT**.
+   ⚠ `Turso` 는 2026-08-16 실측 **0건**이라 목록에서 뺐다 (keepnbuild 가 Neon 으로 이전 완료)
 4. **schema-builder agent 실행**: 스키마 생성
 5. **검증**: `bun run typecheck`
 

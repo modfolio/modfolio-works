@@ -23,6 +23,21 @@ supersedes: []
 ## 마스터 레지스트리 (2026-06-26 실측 검증)
 
 > Neon endpoint 는 **pooled host** (실제 connection string 의 password 는 athsra `DATABASE_URL` — 여기 명시 X). 모든 Neon project 는 org `modfolio`(`org-lucky-rain-45176041`), region `aws-ap-southeast-1`, plan=free.
+>
+> ⚠ **드리프트 정정 (2026-08-19 Neon API 전수 재실측 · 페이지네이션 완료 확인)**: 아래 표는
+> 2026-06-26 스냅샷이고 **project 수가 23 → 25 로 늘었다.** 표에 없는 실물 2개:
+> **`modfolio-sign`**(`blue-queen-99859484`) · **`visualize`**(`dawn-darkness-20815562`).
+> 그리고 `opic-mode`(`silent-snow-52237856`)는 위 `source` 가 *"deprecated"* 라고 적었으나
+> **아직 실재한다**(storage 34MB · 사용량 0). 표 본문은 다음 전수 검증에서 갱신한다 —
+> **여기 경고를 남기는 이유는 「선언은 실물과 대조되기 전까지 주장」이기 때문이다**(ADR-014·`agent-evidence.md`).
+>
+> ⚠ **무료 한도는 project 당이다** (1차 출처 `neon.com/docs/introduction/plans` — `100 CU-hours/project` ·
+> `0.5 GB/project`, 초과 시 **그 project 만** 정지). 2026-08-19 실측에서 `visualize` 가
+> **100.8 / 100 CU-h** 로 자기 한도를 소진했고 **나머지 24개는 무관**했다(20개는 사용량 0).
+> ⇒ 「25개가 한 한도를 나눠 쓴다」로 읽지 않는다. 판정·권고는 **ADR-021**.
+> → **2026-08-23: 실행 설계 확정 — ADR-022 `modfolio-db`**(dev 를 계량기에서 분리 · NAS 본진).
+> 한도 원장 = canon `free-tier-ledger.md` · 임계 실측 = `bun run quota:scan`(70% WARN 통지).
+> 소진 기전의 일반형은 「깨어있던 시간 × 0.25 CU」 — 개발 세션 자체가 지배 소비다.
 
 | repo / app | 도메인 | 브랜드 이메일¹ | Neon project (id) | Neon endpoint (pooled) | DB | athsra project | CF worker | status |
 |---|---|---|---|---|---|---|---|---|

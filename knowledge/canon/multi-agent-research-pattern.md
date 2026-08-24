@@ -1,8 +1,8 @@
 ---
 title: Multi-Agent Research Pattern — Lead Planner → Generator → Evaluator
-version: 1.0.0
-last_updated: 2026-05-13
-source: [Anthropic Engineering "Multi-Agent Research System" 2026-04 (https://www.anthropic.com/engineering/multi-agent-research-system), Anthropic Engineering "Demystifying Evals for AI Agents" 2026-04 (https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents), harness v2.35 P1.5 (plan crystalline-sparking-sky)]
+version: 2.0.0
+last_updated: 2026-08-17
+source: [Anthropic Engineering "How we built our multi-agent research system" 2025-06-13 — 원문 대조 2026-08-17 (https://www.anthropic.com/engineering/multi-agent-research-system), Anthropic Engineering "Demystifying Evals for AI Agents" 2026-04 (https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents), harness v2.35 P1.5 (plan crystalline-sparking-sky)]
 sync_to_siblings: true
 applicability: always
 consumers: [multi-review, generate-review, harness-evolve, modfolio, plan, claude-api]
@@ -10,7 +10,48 @@ consumers: [multi-review, generate-review, harness-evolve, modfolio, plan, claud
 
 # Multi-Agent Research Pattern — 3-Tier Orchestration
 
-> **핵심 인용** (Anthropic 2026-04): "Multi-agent systems with Sonnet as a Lead Planner orchestrating Generator subagents and an Evaluator subagent achieved comparable quality to a single Opus call, but with **80% token efficiency** through clean context window separation."
+> ## 🔴 2026-08-17 정정 — 이 문서의 「핵심 인용」은 **날조였다**
+>
+> v1.0.0 (2026-05-13) 이 아래 문장을 Anthropic 인용으로 싣고 있었다:
+>
+> > ~~"Multi-agent systems with Sonnet as a Lead Planner orchestrating Generator subagents
+> > and an Evaluator subagent achieved comparable quality to a single Opus call, but with
+> > **80% token efficiency** through clean context window separation."~~
+>
+> **원문에 존재하지 않는다.** 무인 런에서 1차 출처를 직접 받아(HTML 173KB, 요약기 미개입)
+> 전건 대조했다:
+>
+> | 우리가 적은 것 | 원문 축자 |
+> |---|---|
+> | 날짜 「2026-04」 | **Published Jun 13, 2025** (10개월 오차) |
+> | 인용문 전체 | **부재** — 네 개 특징 문구 어느 것도 없음 |
+> | 「**80% token efficiency**」 | *"token usage by itself explains **80% of the variance**"* — **분산 설명력**이지 효율이 아니다 |
+> | 토큰 **절감** | *"agents typically use about **4× more tokens** than chat interactions, and multi-agent systems use about **15× more tokens** than chats"* — **정반대**(단일 에이전트 대비 ≈3.75×) |
+> | 「**Sonnet** as Lead Planner」 | *"**Claude Opus 4 as the lead agent** and Claude Sonnet 4 subagents"* — 배치가 뒤집혀 있다 |
+>
+> **왜 중대한가.** 이 문서는 `sync_to_siblings: true` 이고 10개 파일이 참조하며 3-tier
+> 에이전트 전부가 소비한다. 즉 **fleet 이 「위임하면 80% 싸다」로 3개월을 읽었는데 원문은
+> 「15배 비싸다」고 말한다.** 그리고 `.claude/rules/opus-5-behavior.md` §2 —
+> *"Opus 5 는 과하게 위임한다 — 상한을 둬라"* — 와 **정면 충돌**했고, **날조된 쪽이 이겼다.**
+>
+> ⚠ 전수 감사에서 canon 의 `핵심 인용` 블록은 정확히 4개였고 **1 정확 · 2 위생 결함 · 1 날조**,
+> arXiv 인용 11개는 **전부 실재·제목 일치**였다. 유일한 날조가 **벤더 블로그**였다 —
+> arXiv ID 는 API 로 1초에 확인되니 정직하게 유지되는데, **블로그 URL 은 영원히 200 을 주고
+> 인용문만 표류한다.** 가장 권위 있어 보이는 인용이 구조적으로 가장 약하다.
+
+> **핵심 인용** — [Anthropic, *How we built our multi-agent research system*, **2025-06-13**](https://www.anthropic.com/engineering/multi-agent-research-system)
+> (원문 대조 **2026-08-17**, HTML 173KB 직접 수신·요약기 미개입) 축자:
+>
+> - *"a multi-agent system with **Claude Opus 4 as the lead agent** and Claude Sonnet 4 subagents
+>   **outperformed single-agent Claude Opus 4 by 90.2%** on our internal research eval."*
+> - *"there is a downside: in practice, these architectures **burn through tokens fast**. …
+>   multi-agent systems use about **15× more tokens** than chats. For economic viability,
+>   multi-agent systems require tasks where **the value of the task is high enough** to pay
+>   for the increased performance."*
+>
+> **읽는 법: 이 패턴은 품질을 사는 것이지 토큰을 아끼는 것이 아니다.** 정당화 조건은
+> 「과제 가치가 증가 비용을 감당하는가」이고, 그 판단은 `opus-5-behavior.md` §2 의
+> 위임 상한과 **같은 방향**이다.
 
 modfolio universe 의 multi-review (4-agent 병렬) 와 generate-review (생성→리뷰 통합) 를 **3-tier 계층화** 한 frame. 각 tier 가 자기 도메인의 minimal context 만 유지 (clean window).
 
@@ -111,9 +152,12 @@ modfolio universe 의 multi-review (4-agent 병렬) 와 generate-review (생성�
 }
 ```
 
-## Token 효율 (Anthropic 측정 80% 절감 근거)
+## Token 비용 (⚠ 절감이 아니다 — 원문은 15× 증가라고 말한다)
 
-3-tier 구조의 절감 메커니즘:
+아래 넷은 **tier 당 컨텍스트**를 줄인다 — 그러나 **총 토큰은 늘어난다.** 에이전트 수가
+곱해지기 때문이고, 원문이 측정한 값이 그것이다(멀티에이전트 ≈15× chat, 에이전트 ≈4× chat).
+**「per-tier 절감」과 「총량 절감」을 섞어 읽지 않는다** — v1.0.0 이 정확히 그 혼동으로
+날조 인용을 정당화했다.
 
 1. **Clean context per tier** — Lead Planner 가 50 page 의 canon read 후, Generator 에는 task spec 만 (50 page 안 보냄)
 2. **Parallel Generator** — N task 를 N agent 가 병렬 처리 (sequential 대비 단축)
@@ -153,13 +197,13 @@ modfolio universe 측정 path:
 | 2. 에러·경고 0 | structured artifact 의 Zod schema 검증 — 누락 시 fail-fast |
 | 3. 장기 시야 + 확장성 | 1 agent → N agent fork → M tier 확장 path 명확 |
 | 4. 신기술 포텐셜 | PRM (v3.0 P2.2) / Managed Agents (P3) 도입 시 그대로 frame 재사용 |
-| 5. 리소스 투자 | Anthropic 측정 80% 절감 ROI 분명 |
+| 5. 리소스 투자 | ⚠ **절감이 아니라 지출이다** — 원문 15× more tokens. 정당화 조건은 「과제 가치 > 증가 비용」 |
 
 ## 출처
 
 ### Primary
 
-- [Anthropic Engineering — Multi-Agent Research System (2026-04)](https://www.anthropic.com/engineering/multi-agent-research-system) — 3-tier architecture, 80% token efficiency, structured artifact handoff
+- [Anthropic Engineering — How we built our multi-agent research system (**2025-06-13**)](https://www.anthropic.com/engineering/multi-agent-research-system) — orchestrator-worker(lead agent + subagents), **15× more tokens**, "80% of the variance"(효율 아님). 2026-08-17 원문 대조 완료
 - [Anthropic Engineering — Demystifying Evals for AI Agents (2026-04)](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) — Evaluator grader 계층화 (code / model / human)
 - [Anthropic Engineering — Effective Context Engineering (2026-04)](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) — clean context per agent, multi-agent specialization
 

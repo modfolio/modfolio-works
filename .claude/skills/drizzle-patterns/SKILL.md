@@ -27,10 +27,25 @@ user-invocable: true
 | `na_` | naviaca | Neon |
 | `wt_` | worthee | Neon |
 | `pp_` | modfolio-press | Neon |
-| `kb_` | keepnbuild | Turso |
-| `as_` | amberstella | D1 |
-| `ms_` | munseo | D1 |
+| `kb_` | keepnbuild | Neon |
+| `as_` | amberstella | Neon |
+| `ms_` | munseo | (미배선 — 아래 주) |
 | `uc_` | umbracast | D1 |
+
+> ⚠ **이 표는 2026-08-16 에 3행이 틀린 채였다** — `keepnbuild: Turso`(실제 Neon 으로 이전 완료,
+> `@libsql/client` 설치 0건) · `amberstella: D1`(레지스트리 SoT = `neondb (+ R2/DO)`) ·
+> `munseo: D1`(실측 `wrangler.jsonc` 의 `d1_databases` **빈 배열**, CF 계정 D1 8개 중 munseo
+> 없음, 실제 바인딩은 SESSION KV 뿐).
+>
+> **이 표가 틀리면 `schema-builder` 가 잘못된 dialect(`sqlite-core` vs `pg-core`)를 생성한다** —
+> 조용히 틀리는 자리다. 값의 **권위는 `canon/project-infrastructure-registry.md`** 이고,
+> 그와도 어긋나면 **그 repo 실측이 SoT**(`fact-ownership.md`).
+>
+> ⚠ **다시 셀 때**: 저장소 전체에서 `d1_databases`·`drizzle-orm/d1` 을 grep 하면 **32/32** 가
+> 나온다 — 히트의 대부분이 **허브가 배포한 canon**이다. 반드시 `-g 'wrangler.*'` 로 좁힌다.
+>
+> **munseo 는 허브 기록과 실측이 갈린다**(레지스트리 「D1 + R2 primary(live)」 vs 실측 KV 전용).
+> 허브가 임의로 정하지 않는다 — munseo 에 통보하고 그 repo 판단을 따른다.
 
 ## Helper 함수
 

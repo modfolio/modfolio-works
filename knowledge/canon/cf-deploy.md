@@ -146,6 +146,36 @@ modfolio-design 은 **CF 빌드 6연속 실패를 200 만 보고 놓쳤다**.
 
 200 은 이 중 어느 것도 대신하지 못한다. **200 은 "죽지 않았다" 의 증거이고, 위 넷이 "바뀌었다" 의 증거다.**
 
+### ⚠ 그런데 위 증거들도 **너무 일찍 물으면 거짓말한다** (허브 실측 2026-08-17, 한 세션에 2회)
+
+빌드가 `stopped` 되기 전에 배포 목록을 조회하면 **직전 배포가 나온다.** 그러면 정확히
+*"빌드는 success 인데 배포가 안 됐다"* 로 읽히고 — 그건 이 문서가 다른 절에서 경고하는
+**「성공 문구가 있는데 일이 안 일어났다」와 지문이 같다.** 실측 2건:
+
+```
+modfolio-app   push → deployments 조회 → 최신이 이틀 전    ← 빌드가 아직 돌던 중
+               (100초 뒤) build e1d1a017 success · version 5f12f4db → 9d56716a
+modfolio-loom  build b1204068 success 인데 최근 배포가 2주 전
+               빌드 로그: "Current Version ID: 7ce469cf"   ← 실제로는 배포됐다
+```
+
+- **순서를 지킨다**: 빌드가 `status: "stopped"` 가 된 **뒤에** 배포를 조회한다.
+- **`deployments` 보다 `versions` 가 빠르다**:
+  `GET /accounts/{acc}/workers/scripts/{w}/versions?per_page=2` → `items[0].id` 가 새 값인지.
+- **가장 확실한 것은 빌드 로그**: `GET /builds/builds/{uuid}/logs` 의
+  **`Current Version ID:`** 한 줄이 wrangler 자신이 찍은 값이다.
+  ⚠ 로그 응답의 `lines` 는 **dict 가 아니라 list** — 메시지는 `line[1]`.
+
+> 「너무 일찍 재서 나온 옛 값」과 「배포가 정말 안 된 것」은 **화면상 구분되지 않는다.**
+> 시간을 근거로 결론 내지 말고 **상태 머신(`stopped`)을 근거로** 삼는다.
+
+### `source: "wrangler"` 는 «수동» 이 아니다 (같은 세션 실측)
+
+배포 목록의 `source` 가 `wrangler` 라고 해서 사람이 손으로 돌린 것이 아니다 —
+**Workers Builds 트리거의 `deploy_command` 자체가 `bunx wrangler deploy`** 라서 붙는 라벨이다.
+허브가 이것을 「push 로 배포가 안 되고 있다」로 오독했다. 자동/수동을 가르려면 `source` 가
+아니라 **`/builds/workers/{tag}/builds` 에 그 시각의 빌드가 있는지**를 본다.
+
 > 같은 축의 다른 사각지대: `build` 성공도 **workerd 런타임 성공이 아니다**(아래 SSR 항목).
 > 세 신호(200 · build 성공 · 로컬 dev)가 각각 다른 것을 놓치므로, 무엇을 확인하려는지 먼저 정하고
 > 그것을 실제로 보는 신호를 고른다.

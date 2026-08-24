@@ -359,6 +359,20 @@ const SVELTE_SAFE_MCP = /^mcp__svelte__/;
 // safe as a namespace because the server exposes no write tool at all, UNLIKE CF/neon.
 const ECOSYSTEM_STATE_SAFE_MCP = /^mcp__ecosystem-state__/;
 
+// knowledge-rag MCP — semantic retrieval over the universe `knowledge/` corpus. Same class as
+// ecosystem-state, and the write-free guarantee here is STRUCTURAL rather than incidental:
+// `knowledge-sovereignty.md` §5 is `tier: law` and forbids putting ingest on an MCP surface at
+// all ("쓰기 도구를 아예 만들지 않는다"), so the namespace cannot grow a spend tool without
+// breaking a law first. The single exposed tool is `knowledge_query`, read-only by contract.
+//
+// Its arg is a NATURAL-LANGUAGE QUESTION, and the questions a money audit must ask are exactly
+// the ones containing 결제 / payment / refund. Observed 2026-08-17 (autonomous run): proving
+// that sibling `knowledge/` is indexed at all, `knowledge_query("결제 웹훅 서명 검증 실패 처리",
+// scope=["modfolio-pay"])` was HARD-BLOCKED demanding two out-of-band human approvals — for a
+// vector search. Blocking a question about money protects no money; it blocks the investigation
+// that finds broken money paths (the ecosystem-state note above says the same thing).
+const KNOWLEDGE_RAG_SAFE_MCP = /^mcp__knowledge-rag__/;
+
 function resolveMode(): Mode {
 	const raw = (process.env.PAYMENT_GUARD_MODE ?? "block").toLowerCase();
 	return raw === "off" || raw === "warn" || raw === "block" ? raw : "block";
@@ -593,7 +607,8 @@ function classify(
 			LOOM_SAFE_MCP.test(toolName) ||
 			CF_READONLY_MCP.test(toolName) ||
 			SVELTE_SAFE_MCP.test(toolName) ||
-			ECOSYSTEM_STATE_SAFE_MCP.test(toolName)
+			ECOSYSTEM_STATE_SAFE_MCP.test(toolName) ||
+			KNOWLEDGE_RAG_SAFE_MCP.test(toolName)
 		) {
 			// Claude Code environment / remote-scheduling / GitHub content / Svelte code-analysis /
 			// ecosystem-state contract-derivation tool — not a payment

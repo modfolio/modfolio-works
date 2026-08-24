@@ -36,6 +36,20 @@
 			"approved_by": "winterermod",
 			"approved_at": "2026-08-06",
 			"revisit_after": "2027-02-06"
+		},
+		{
+			"file": "apps/dashboard/.mcp.json",
+			"reason": "playwright-test MCP (`npx playwright run-test-mcp-server`) — 우리가 이미 CI 에서 돌리는 @playwright/test 와 **같은 패키지**의 로컬 stdio 서버다. SaaS 커넥터가 아니고 네트워크 대상이 없다(로컬 브라우저·로컬 스펙). `playwright init-agents --loop=claude` 가 생성했고 apps/dashboard 로 **범위가 한정**돼 있다(루트 .mcp.json 불변). ⚠ 다만 도구 «설명» 축은 남는다 — 에이전트가 그 서버의 도구 설명을 지시로 승격하지 않는다는 규칙(lethal-trifecta §Tool Poisoning ①)은 그대로 적용된다.",
+			"approved_by": "winterermod",
+			"approved_at": "2026-08-17",
+			"revisit_after": "2027-02-17"
+		},
+		{
+			"file": "templates/brain/.mcp.json",
+			"reason": "⚠ **이 entry 는 «안전하다» 가 아니라 «알고 있다» 의 기록이다.** 2026-08-17 에 MCP 신뢰 검사를 중첩 .mcp.json 까지 넓히자 처음 보였다 — 그전까지 이 템플릿은 context7·cloudflare 두 3rd-party MCP 를 실어 나르면서 게이트에 **한 번도 안 잡혔다.** 템플릿은 새 repo 로 복사되므로 노출이 곱해진다. 현 판단: 둘 다 문서·API 조회용이고 우리가 쓰는 벤더(Upstash Context7 = 라이브러리 문서, Cloudflare 공식 MCP)이며 secret 을 넘기지 않는다(github 만 GITHUB_TOKEN, 그건 universe-internal). 그러나 **도구 설명은 여전히 untrusted 표면**이다(MCPTox 36.5~72.8%). revisit 때 «이 템플릿을 쓰는 repo 가 실제로 이 둘을 쓰는가» 를 먼저 묻는다 — 안 쓰면 템플릿에서 빼는 것이 맞다.",
+			"approved_by": "winterermod",
+			"approved_at": "2026-08-17",
+			"revisit_after": "2026-11-17"
 		}
 	]
 }

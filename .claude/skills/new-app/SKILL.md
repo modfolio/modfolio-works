@@ -9,6 +9,38 @@ user-invocable: true
 
 새 앱을 생태계에 추가하는 가이드. README.md의 AI Scaffolding Guide 기반.
 
+## ★ 0단계 — **짓기 전에 이미 있는지 묻는다** (2026-08-24 신설)
+
+이 스킬은 2026-08-24 까지 `find_provider` 를 **0회** 언급했고 capability 를 **0회** 언급했다.
+그러면서 §5 에서 새 앱에게 Sentry·PostHog·Resend·Neon 을 **직접 가입하라**고 시켰다 —
+`modfolio-notify` 가 이메일을 소유하고 있고 `ADR-022`(mfdb)가 dev DB 를 Neon 에서 떼려고
+존재하는데도. **스캐폴딩 스킬이 재발명을 가르치고 있었다.**
+
+`assembly-law`(재사용의 형태)와 `atlas`(재사용의 주인)가 law tier 인데, 새 앱이 처음 만나는
+문서가 그 둘을 한 번도 부르지 않으면 법은 산문으로만 존재한다.
+
+```
+# 이 앱이 필요로 할 것을 하나씩 물어본다. 만들기 전에.
+mcp__ecosystem-state__find_provider  { need: "결제" }
+mcp__ecosystem-state__find_provider  { need: "이메일 알림" }
+mcp__ecosystem-state__list_capabilities            # 전수 지도
+```
+
+CLI 로도 같은 색인을 볼 수 있다: `bun run atlas:gate` · `bun run capability:ledger`.
+
+### ⚠ 0건을 「없다」로 읽지 않는다 — 두 가지 이유
+
+1. **색인이 얇다.** 응답이 `index: {parts, described, suggested}` 를 함께 준다.
+   `described`(소유자가 직접 쓴 설명) 비율이 낮으면 **의도 질의로 안 찾아진다.**
+   2026-08-24 실측: 부품 73개 중 **`plainly` 있는 것 48개** — 25개는 허브 제안 문장으로만 답한다.
+2. **MCP 색인은 서버 기동 시점 스냅샷이다.** 같은 세션에서 `registry:generate` 를 돌려도
+   돌고 있는 MCP 프로세스는 **옛 수를 계속 낸다**(2026-08-24 실측: 파일 73 · MCP 37).
+   수가 이상하면 MCP 를 재시작하고 다시 묻는다.
+
+찾은 게 있으면 **그 repo 에 요청**한다(`feedback/<repo>/`) — 복사하지 않는다(assembly-law §1).
+없으면 그때 만든다. 그리고 **만든 것을 `platform-adapter.json` 의 `provides` 에 선언**한다 —
+선언하지 않으면 다음 앱이 또 만든다.
+
 ## 스캐폴딩 프롬프트
 
 ```
@@ -107,12 +139,27 @@ ADR-009 (자회사 합류 advisory) 참조. 아래는 참고 순서일 뿐 — �
 - `ecosystem.json.secretsMigration.completed` 에 등재 (`<repo>: { migratedAt, notes, target: "athsra" }`)
 - ❌ dotenvx / Doppler 신규 도입 금지 (2026-05-02 athsra v3 cement)
 
-### 5. 외부 서비스 등록
+### 5. 외부 서비스 — **먼저 소유자를 묻고, 없을 때만 가입한다**
 
-- Sentry: 새 프로젝트 -> DSN 을 athsra 에 (`athsra set <repo> SENTRY_DSN=...`)
-- PostHog: 새 프로젝트 -> API 키를 athsra 에
-- Resend: `mod@{domain}` 가입 -> API 키를 athsra 에
-- Neon: DB 생성 -> 연결 문자열을 athsra 에 (`athsra set <repo> DATABASE_URL=...`)
+⚠ 이 절은 2026-08-24 이전에 네 서비스를 **무조건 직접 가입**하라고 시켰다. 그건 틀렸다 —
+그중 둘은 이미 universe 안에 주인이 있다.
+
+| 필요 | 먼저 볼 곳 | 실측 (2026-08-24) |
+|---|---|---|
+| **이메일·알림** | `modfolio-notify` | **주인 있음.** `@modfolio/notify-sdk` + `https://notify.modfolio.io/api/v1`. Resend 를 직접 가입하면 발송 채널이 둘이 되고 optout·전달 상태가 갈린다 |
+| **dev 데이터베이스** | `mfdb` (ADR-022) | **주인 있음.** 경로 B = `https://mfdb-api.modfolio.io`, 드라이버(`@neondatabase/serverless`)를 안 바꾼다. ⚠ **새 Neon 프로젝트를 만드는 것이 바로 그 계량기를 다시 켜는 일이다** — 2026-08-23 에 data-transfer 쿼터가 야간 백업을 막았다 |
+| **관측·트레이싱** | `modfolio-infra` | 판단 부품은 있다(`@modfolio/trace-sampling`). **수집 백엔드(Sentry 류)는 아직 없다** — 필요하면 가입하되 infra 에 먼저 묻는다 |
+| **제품 분석·실험** | `modfolio-admin` | 실험 배정 부품 있음(`@modfolio/experiment-assign`). **분석 백엔드(PostHog)는 없다** — 위와 같다 |
+
+절차:
+
+1. `find_provider` 로 묻는다 → 있으면 **그 좌표를 소비**한다(가입하지 않는다)
+2. 없으면 가입하고, **키는 athsra 로**: `athsra set <repo> <KEY>=...`
+3. 가입했으면 **`capability-ledger.md` 에 그 역량이 있는지** 본다 —
+   없으면 허브에 제보(`feedback/modfolio-ecosystem/`). 두 번째 앱이 또 가입하지 않도록.
+
+⚠ prod DB 는 별개 판단이다. `mfdb` 경로 B 는 **아직 «prod-ready» 가 아니다**(ADR-022 §6 미완).
+   dev 를 계량기에서 떼는 것이 지금의 목적이다.
 
 ### 6. knowledge 파일 생성
 

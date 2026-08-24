@@ -19,5 +19,6 @@ paths:
 - JSONB 컬럼 → `$type<>()` 타입 지정 필수
 
 ## DB 타입별 주의사항
-- `ecosystem.json`에서 DB 타입 판별 (Neon / D1 / Turso)
+- `ecosystem.json`에서 DB 타입 판별 (Neon / D1 / Durable Objects SQLite)
+  — 권위는 `canon/project-infrastructure-registry.md`. ⚠ `Turso` 는 실측 0건 (2026-08-16)
 - DB별 지원되지 않는 기능 사전 확인

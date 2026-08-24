@@ -134,8 +134,19 @@ const cwd = gitRoot();
 const files = changedFiles(cwd);
 if (files.length === 0) process.exit(0);
 
+/**
+ * 읽기 **전에** 확장자로 거른다.
+ *
+ * 각 RULE 이 자기 `test` 안에서 확장자를 보지만 그건 **파일을 읽은 뒤**다. 2026-08-17 에
+ * `changedFiles` 가 untracked 를 포함하도록 바뀌면서 대상이 늘었으므로, 어떤 룰도 볼 수
+ * 없는 파일(이미지·lockfile·문서)을 통째로 메모리에 올리지 않는다. RULES 의 확장자
+ * 합집합이라 **검출력은 그대로**다 — 아래 대조쌍이 그것을 확인한다.
+ */
+const SCANNABLE = /\.(css|svelte|tsx|jsx|astro|vue|ts)$/i;
+
 const violationsPerFile = new Map<string, Set<string>>();
 for (const file of files) {
+	if (!SCANNABLE.test(file)) continue;
 	const abs = join(cwd, file);
 	if (!existsSync(abs)) continue;
 	try {

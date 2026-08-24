@@ -23,7 +23,7 @@ Explore 서브에이전트(haiku)를 "very thorough" 레벨로 실행하여 4가
 ### 1. Stack Analysis
 - `package.json` 의존성 + 버전
 - 프레임워크 식별 (SvelteKit/Astro/Hono/Nuxt/SolidStart)
-- DB 타입 (Neon/D1/Turso)
+- DB 타입 (Neon / D1 / Durable Objects SQLite — `Turso` 는 2026-08-16 실측 0건)
 - 빌드/린트 도구
 
 ### 2. Architecture Analysis

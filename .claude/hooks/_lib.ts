@@ -200,6 +200,35 @@ export function isDetectorSource(file: string): boolean {
  * `hook.duration_ms` with attribute `hook.name=<id>`. Aggregation as gauge
  * (collector converts to histogram on ingest if configured).
  */
+/**
+ * ⚠ **이 함수의 전송은 현재 완료되지 않는다 — 숫자가 없는 것을 «훅이 빠르다» 로 읽지 말 것.**
+ *
+ * 실측 2026-08-17 (oxlint `--type-aware` 의 `no-floating-promises` 가 단서를 줬다):
+ *
+ * 1. 호출부(`stop-playbook-attribute` · `user-prompt-playbook-inject`)가 **await 하지
+ *    않고**, 곧바로 `.finally(() => process.exit(0))` 이 돈다 → **in-flight POST 가 잘린다.**
+ * 2. `OTEL_EXPORTER_OTLP_ENDPOINT` 는 **설정돼 있다**(`.mise.toml:21` ·
+ *    `.claude/settings.json:83` = `http://otel.mod-ai.localhost`) → 조기 반환 경로가 아니다.
+ *    매번 fetch 를 **시작하고** 매번 잘린다.
+ * 3. 그런데 **수집기가 돌지 않는다** — 실측: 컨테이너 5개 중 otel/grafana/tempo/clickhouse
+ *    **0**. `curl` HTTP **000**. fetch 는 31~153ms 에 connection refused 로 실패한다.
+ *
+ * 즉 이 축은 **「측정값 0」이 아니라 「미수집」**이다. 침묵을 커버리지로 세지 않는다
+ * (`agent-evidence.md` §「도구가 원리적으로 볼 수 없는 것은 통과가 아니라 미검사다」).
+ *
+ * **await 를 넣지 않은 이유**: 호출부 중 하나가 `UserPromptSubmit` 훅이고, 하네스 계약이
+ * *"per-turn 토큰·지연 0"* 이다(CLAUDE.md). 실측 31~153ms 를 **매 프롬프트마다** 더하는 것은
+ * 그 계약 위반이다. 「고치려고 넣은 것이 더 비싸면 그건 수정이 아니다」.
+ *
+ * **올바른 수정 경로**(아직 안 함): 지연을 로컬 파일에 **동기로** 적고(≈0) 별도 shipper 가
+ * 세션 밖에서 밀어낸다. 그러면 per-turn 비용 0 과 실제 수집이 양립한다.
+ *
+ * ⚠ **이 문단을 쓰면서 한 번 틀렸다.** 처음엔 *"타임아웃이 없다"* 고 적고 250ms 를
+ * 추가했는데, **아래에 이미 `AbortSignal.timeout(500)` 이 있었다**(같은 객체, 더 아래줄).
+ * 타입 진단(«later overwritten by an object member with the same name»)이 잡았다.
+ * 즉 **이 함수는 상한을 갖고 있고, 결함은 「전송이 잘린다」 하나다.** 없는 결함을
+ * 문서에 적으면 다음 사람이 그것을 고치려고 시간을 쓴다 — 코드를 끝까지 읽고 쓴다.
+ */
 export async function recordHookDuration(
 	hookName: string,
 	durationMs: number,
@@ -259,6 +288,17 @@ export async function recordHookDuration(
 /**
  * Git diff names, excluding pattern-history so the Stop pattern hook does
  * not detect itself and loop forever.
+ *
+ * ⚠ **untracked(신규) 파일을 포함한다** (2026-08-17). 종전에는 `git diff` 두 개만 봤고,
+ * 그래서 **이번 세션에 새로 만든 파일은 원리적으로 검사되지 않았다.** 이 워크스테이션의
+ * 실제 작업 형태(에이전트가 컴포넌트·CSS 를 새로 만든다)에서 그게 사각의 대부분이다 —
+ * 「`git ls-files` 는 새 파일을 게이트에서 숨긴다」(atelier)의 같은 얼굴.
+ *
+ * 실측으로 확인한 경위: 위반을 심은 `.css` 를 만들고 훅을 돌렸더니 **탐지 0건**이었다.
+ * 탐지기가 틀린 게 아니라 **결함을 검사 표면 밖에 심은 것**이었고(③-b), `git add` 로
+ * 표면 안에 넣자 즉시 잡혔다. 그 «표면 밖» 이 곧 이 결함이다.
+ *
+ * `--exclude-standard` 로 .gitignore 를 존중하므로 빌드 산출물은 들어오지 않는다.
  */
 export function changedFiles(cwd: string): string[] {
 	try {
@@ -272,8 +312,13 @@ export function changedFiles(cwd: string): string[] {
 			encoding: "utf-8",
 			stdio: ["ignore", "pipe", "ignore"],
 		}).trim();
+		const untracked = execSync("git ls-files --others --exclude-standard", {
+			cwd,
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		}).trim();
 		const merged = new Set<string>();
-		for (const line of `${staged}\n${unstaged}`.split(/\r?\n/)) {
+		for (const line of `${staged}\n${unstaged}\n${untracked}`.split(/\r?\n/)) {
 			const trimmed = line.trim();
 			if (!trimmed) continue;
 			if (trimmed === "memory/pattern-history.md") continue;

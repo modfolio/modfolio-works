@@ -1,9 +1,9 @@
 ---
 title: Agent Auth UX — 에이전트가 시작하고 브라우저로 승인하는 인증 표준
-version: 1.2.1
-last_updated: 2026-07-04
+version: 1.3.0
+last_updated: 2026-08-17
 source: [사용자 피드백 2026-06-14 (athsra/connect 터미널 떠넘기기 마찰), athsra device-login(RFC 8628)/MCP login_start 구현 실측, oidc-flow.ts, 2026-06-14 athsra_run MCP CF 직접조작 실증, athsra 2026-07-04 device-login root-cause 회신(폴링 예산·MCP teardown, feedback/athsra/2026-07-04_device-login-root-cause.md), pay 2026-07-04 session27 장세션 복호 만료 관측]
-changelog: ["1.2.1 (2026-07-04): §3 장세션 mid-session 복호(decryption) 만료 → athsra doctor 근거 시에만 device-login 재인증 추가(pay session27).", "1.2.0 (2026-07-04): device flow 폴링 지속성 + MCP 세션 수명 섹션 추가(athsra root-cause 반영 — 45s give-up 금지, teardown 금지, TTL 오귀속 정정). 실행 패턴 step 4 강화.", "1.1.0 (2026-06-14): 인증 후 direct-operation 섹션 추가(athsra_run MCP 직접조작, CF=cf-api-mastery 레퍼런스, 게이트 유지). 1.0.0: 초판(login UX 표준)"]
+changelog: ["1.3.0 (2026-08-17): §원격 운영 전제 추가 — 오너가 폰에서 원격 운영하므로 터미널 인증 떠넘기기가 물리적으로 불가. 규칙은 2026-07-24 부터 있었으나 디바이스 로컬 ~/.claude/CLAUDE.md 에만 있어 repo 를 따라가지 못했다(pdgd 제보 ③). service token 폴백 · 디렉터리명≠프로젝트명 · athsra 동시성 4 상한 동봉.", "1.2.1 (2026-07-04): §3 장세션 mid-session 복호(decryption) 만료 → athsra doctor 근거 시에만 device-login 재인증 추가(pay session27).", "1.2.0 (2026-07-04): device flow 폴링 지속성 + MCP 세션 수명 섹션 추가(athsra root-cause 반영 — 45s give-up 금지, teardown 금지, TTL 오귀속 정정). 실행 패턴 step 4 강화.", "1.1.0 (2026-06-14): 인증 후 direct-operation 섹션 추가(athsra_run MCP 직접조작, CF=cf-api-mastery 레퍼런스, 게이트 유지). 1.0.0: 초판(login UX 표준)"]
 sync_to_siblings: true
 applicability: always
 consumers: [all-agents, sso-integrate, secret, ops, connect, athsra]
@@ -107,6 +107,45 @@ hub 가 harness-owned 이슈("45s TTL")를 athsra 로 **오귀속**했고 athsra
 1. "터미널 수동 인증"을 normalize 하지 말 것 — 임시도 금지.
 2. Device Grant(RFC 8628) 또는 loopback OAuth 추가를 정공법 과제로. athsra `packages/cli/src/lib/device-login.ts` + `oidc-flow.ts` 를 참조 구현으로.
 3. 추가 전까지는 service token 주입으로 우회(사용자 터미널 인증이 아니라 athsra 주입).
+
+## 🔴 원격 운영 전제 — **사용자에게 터미널이 없을 수 있다** (v1.3.0, 2026-08-17)
+
+> pdgd 제보 `pdgd-finding-2026-08-16` ③. **이 절이 이 canon 에 없어서 생기는 마찰이 실재했다.**
+
+이 universe 의 오너는 **모바일 Claude 앱에서 워크스테이션 세션에 메시지를 적어 원격으로
+운영한다.** 즉 세션이 *"터미널에서 `athsra login` 하고 알려주세요"* 라고 답하는 순간,
+사용자는 **물리적으로 그것을 할 수 없다.**
+
+이건 어느 한 repo 의 사정이 아니라 **universe 공통 운영 사실**인데, 여태 디바이스 로컬
+`~/.claude/CLAUDE.md` 에만 있었다. 그래서 **새 디바이스에서 repo 하나만 clone 한 세션은
+이 사실을 모른 채** 정확히 그 마찰을 만든다 — 이 canon 이 막으려던 바로 그 마찰이다.
+pdgd 가 관측: *"오늘 이 세션에서 실제로 keyring 이 끊겼고, 그 규칙을 알았기에 service
+token 폴백으로 갔다."*
+
+### 행동 규칙 (MUST)
+
+1. **터미널 인증을 사용자에게 떠넘기지 않는다** — `athsra login` · `gh auth login` ·
+   `wrangler login` 어느 것도. 위 §실행 패턴대로 **에이전트가 시작하고 사람은 브라우저 승인만.**
+2. **`Not logged in` 을 「사용자를 로그인시켜라」로 읽지 않는다.** keyring identity 는
+   실제로 끊긴다. 그때 할 일은 둘이다 — **service token 으로 전환해 하던 일을 계속**하고,
+   복구가 필요하면 **에이전트가 device flow 를 직접 띄워** URL·코드·지문을 보여준다
+   (사용자 몫은 폰 브라우저 승인 1번).
+3. **service token 폴백 좌표는 디바이스 로컬이다.** 이 워크스테이션 실측 형태:
+   ```sh
+   ATHSRA_TOKEN=$(cat ~/.athsra/remote-tokens/<athsra-project>) \
+     ~/.bun/bin/athsra run <athsra-project> -- <cmd>
+   ```
+   ⚠ **디렉터리명 ≠ athsra 프로젝트명.** SoT 는 `ls ~/.athsra/remote-tokens/` 다.
+   (실측 반례: `~/code/muje` → 프로젝트 `muje-hwp`, `~/code/modfolio-infra` → `modfolio-infra-nas`)
+4. ⚠ **athsra 호출은 순차 또는 동시 4개 이하.** service token 복호가 호출당 Argon2id
+   (m=64MB)를 탄다 — 32개 동시는 CPU 폭주로 **전부 타임아웃**하고, 그것이
+   「토큰이 죽었다」로 오진된다(2026-07-27 실측: 순차 32/32 통과).
+
+### 왜 canon 인가 (문서 위치가 결함이었다)
+
+`sync_to_siblings: true` 인 이 문서에 두면 **clone 하나로 33 repo 가 받는다.** 규칙 자체는
+2026-07-24 부터 있었지만 **디바이스 로컬 파일에 있어서 repo 를 따라가지 못했다** —
+"규칙이 없었다" 가 아니라 **"규칙이 배포되지 않았다"** 가 정확한 기술이다.
 
 ## 보안 정합 (정공법)
 

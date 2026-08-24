@@ -74,6 +74,19 @@ Operational → Personal → (명시적 기여) → Domain → Collective → Da
 - 이건 sibling 수정이 아니다 — **읽기 전용 색인**이다
 
 > 실측 2026-07-26: 27 repo 가 `knowledge-rag` MCP 를 갖고 있으나 인덱스는 허브 `knowledge/` 만 훑는다. sibling 자체 지식(connect 43 · gistcore 27 · pay 19 + 앱 고유 문서)은 **한 번도 색인된 적이 없다.** universe 최대의 미개발 자산이 질의면 바로 옆에서 놀고 있었다.
+>
+> ✅ **해소됨 (실측 2026-08-17).** 위 문단은 **더 이상 참이 아니다** — 지우지 않고 남기는 이유는 «언제 왜 틀리게 됐는가» 가 다음 사람의 조사 시간을 줄이기 때문이다.
+>
+> ```
+> knowledge_query("결제 웹훅 …", scope=["modfolio-connect"])
+>   → modfolio-connect/knowledge/journal/20260701-completeness-round.md  scope=modfolio-connect
+> knowledge_query("Muse playbook 증류 …")
+>   → knowledge/canon/reasoning-playbooks.md                              scope=modfolio-ecosystem
+> ```
+>
+> 코퍼스는 이제 **허브 + 각 sibling 의 `knowledge/`** 를 함께 담고 출처 repo 가 보존된다(서버 자기 기술과 일치). 규모: 허브 386 md · connect 177 · pay 231 · gistcore 143 · modfolio 144 · visualize 102.
+>
+> ⚠ **그런데 이 문장이 stale 인 채로 3주를 살았다.** 그동안 이 법을 읽은 멤버는 «내 knowledge/ 는 색인 안 된다» 로 알았고, 실제로는 색인되고 있었다. 낡은 실측은 **조용히 틀리지 않는다 — 그것을 근거로 판단할 때 틀린다.** 실측 문단에는 날짜만이 아니라 **재확인 방법**을 같이 적는다(위 두 줄이 그것이다).
 
 ## 7. 각 repo 가 확인할 것
 
