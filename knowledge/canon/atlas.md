@@ -14,6 +14,7 @@ source:
     실측 33 repo 스캔 (provides 8/32 · subscribesTo 1/32 · event 5 live/58 선언 · MCP 8도구 중 provides 조회 0),
     ADR-017,
   ]
+related_adr: [ADR-014, ADR-015, ADR-017]
 ---
 
 # Atlas — 위치와 소유

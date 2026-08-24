@@ -7,7 +7,7 @@ sync_to_siblings: true
 tier: law
 applicability: always
 consumers: [all-agents, contracts, api, schema, deploy, sso-integrate, component, page]
-related_canon: [registry-redundancy, knowledge-sovereignty, event-consumption, platform-plane, evergreen-principle, fact-ownership]
+related_canon: [registry-redundancy, knowledge-sovereignty, event-consumption, platform-plane, evergreen-principle, fact-ownership, productization-roadmap]
 related_rules: [import-boundaries, fundamentals-first]
 ---
 

@@ -7,7 +7,7 @@ sync_to_siblings: true
 tier: law
 applicability: always
 consumers: [all-agents, knowledge-rag-query, debrief, playbooks, contracts, api, schema, security-scan]
-related_canon: [assembly-law, knowledge-flywheel, visualize-architecture, reasoning-playbooks, observability]
+related_canon: [assembly-law, knowledge-flywheel, visualize-architecture, reasoning-playbooks, observability, fact-ownership]
 related_rules: [lethal-trifecta, secrets-policy]
 ---
 
