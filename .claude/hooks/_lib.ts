@@ -1,3 +1,4 @@
+// @modfolio-detector-source — 이 파일은 억제 지시문을 *탐지*한다. 스캐너는 제외할 것.
 /**
  * scripts/hooks/_lib.ts
  *
@@ -156,6 +157,29 @@ export const DETECTOR_SOURCE_FILES: ReadonlySet<string> = new Set([
 	"scripts/hooks/stop-pattern-history.ts",
 	"scripts/hooks/pre-commit-guard.ts",
 ]);
+
+/**
+ * **이 모듈을 import 할 수 없는 스캐너**를 위한 이식 가능한 표식.
+ *
+ * 위 `DETECTOR_SOURCE_FILES` 는 하네스 **안에서만** 보인다. 멤버 repo 가 손으로 짠
+ * 스캐너(`scripts/quality-gate.sh` 류)는 이 TS 모듈에 닿지 못하므로 목록을 쓸 수 없고,
+ * 그래서 **하네스가 배포한 검출기 소스를 위반으로 잡는다.** 실측(2026-08-25 전파):
+ * `modfolio-studio` 의 `quality-gate.sh` 가 `.claude/hooks/_lib.ts:167` 과
+ * `stop-pattern-history.ts:51,56` 을 **P0「오류 우회」 3건**으로 잡아 그 repo 의
+ * `quality:all` 을 막았다 — 세 줄 다 억제 지시문을 *탐지하는* 코드다.
+ *
+ * 마커는 파일과 함께 이동하므로 `grep -L '@modfolio-detector-source'` 한 줄로 어떤
+ * 언어의 스캐너든 자기 제외 목록을 만들 수 있고, 새 검출기를 더해도 따라온다.
+ *
+ * ⚠ **이 마커는 `isDetectorSource()` 에 들어가지 않는다.** 넣으면 같은 면제가 뒷문으로
+ * 넓어져 하네스 자신의 검출력이 준다 — `_lib.ts` 는 산문에 지시문 *이름*만 담을 뿐
+ * 실제 지시문을 쓰지 않으므로 하네스 규칙(`@ts-expect-error` 실물 매칭)에는 애초에 안 걸린다.
+ * 두 기구는 대상이 다르다: **목록 = 하네스 내부 · 마커 = 외부 스캐너.**
+ *
+ * ⚠ 그리고 마커는 **면제가 아니라 분류**다. 「이 파일은 억제 지시문을 *탐지*한다」는
+ * 뜻이지 「여기서는 우회해도 된다」가 아니다.
+ */
+export const DETECTOR_SOURCE_MARKER = "@modfolio-detector-source";
 
 /**
  * Is `file` one of the detector sources, in EITHER location?

@@ -1,3 +1,4 @@
+// @modfolio-detector-source — 이 파일은 억제 지시문을 *탐지*한다. 스캐너는 제외할 것.
 /**
  * scripts/hooks/pre-commit-guard.ts
  *

@@ -22,6 +22,8 @@
 			"Bash(bun run verify:*)",
 			"Bash(bun run heavy)",
 			"Bash(bun run heavy:*)",
+			"Bash(bun run atlas)",
+			"Bash(bun run atlas:*)",
 			"Bash(bun run test:*)",
 			"Bash(bun run lint)",
 			"Bash(bun run lint:*)",

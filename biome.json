@@ -31,7 +31,8 @@
 			"!**/migrations",
 			"!.claude/harness-feedback",
 			"!.claude/harness-state.json",
-			"!**/fonts.css"
+			"!**/fonts.css",
+			"!**/coverage"
 		]
 	},
 	"overrides": [
