@@ -55,45 +55,50 @@ function resolveMode(): Mode {
 }
 
 const mode = resolveMode();
-if (mode === "off") process.exit(0);
-// Advisory by default; fail-closed only when the operator opted into
-// blocking (see _fail-closed.ts §Mode-dependent guards).
-if (mode === "block") failClosed("pre-injection-detect");
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	if (mode === "off") process.exit(0);
+	// Advisory by default; fail-closed only when the operator opted into
+	// blocking (see _fail-closed.ts §Mode-dependent guards).
+	if (mode === "block") failClosed("pre-injection-detect");
 
-const input = (await readHookInput()) as HookInput;
-const ti = input.tool_input ?? {};
-const targets: string[] = [];
-if (ti.command) targets.push(ti.command);
-if (ti.file_path) targets.push(ti.file_path);
-if (ti.path) targets.push(ti.path);
-if (ti.url) targets.push(ti.url);
-if (ti.query) targets.push(ti.query);
+	const input = (await readHookInput()) as HookInput;
+	const ti = input.tool_input ?? {};
+	const targets: string[] = [];
+	if (ti.command) targets.push(ti.command);
+	if (ti.file_path) targets.push(ti.file_path);
+	if (ti.path) targets.push(ti.path);
+	if (ti.url) targets.push(ti.url);
+	if (ti.query) targets.push(ti.query);
 
-if (targets.length === 0) process.exit(0);
+	if (targets.length === 0) process.exit(0);
 
-const haystack = targets.join("\n");
-const hits: string[] = [];
-for (const { id, re } of INJECTION_PATTERNS) {
-	if (re.test(haystack)) hits.push(id);
+	const haystack = targets.join("\n");
+	const hits: string[] = [];
+	for (const { id, re } of INJECTION_PATTERNS) {
+		if (re.test(haystack)) hits.push(id);
+	}
+
+	if (hits.length === 0) process.exit(0);
+
+	const msg = [
+		`ASI01 prompt injection 패턴 의심: ${hits.join(", ")}`,
+		`tool=${input.tool_name ?? "?"}, mode=${mode}`,
+		`패턴: ${INJECTION_PATTERNS.filter((p) => hits.includes(p.id))
+			.map((p) => p.id)
+			.join("|")}`,
+		`조치: tool input 에 embed 된 injection 가능성 검토. canon agent-governance.md ASI01 mitigation 참조.`,
+		`mode 우회: INJECTION_DETECT_MODE=off (env)`,
+	].join("\n");
+
+	if (mode === "block") {
+		console.error(`BLOCKED: ${msg}`);
+		process.exit(2);
+	}
+
+	// warn mode — stderr 출력 + allow
+	console.error(`WARN: ${msg}`);
+	process.exit(0);
 }
-
-if (hits.length === 0) process.exit(0);
-
-const msg = [
-	`ASI01 prompt injection 패턴 의심: ${hits.join(", ")}`,
-	`tool=${input.tool_name ?? "?"}, mode=${mode}`,
-	`패턴: ${INJECTION_PATTERNS.filter((p) => hits.includes(p.id))
-		.map((p) => p.id)
-		.join("|")}`,
-	`조치: tool input 에 embed 된 injection 가능성 검토. canon agent-governance.md ASI01 mitigation 참조.`,
-	`mode 우회: INJECTION_DETECT_MODE=off (env)`,
-].join("\n");
-
-if (mode === "block") {
-	console.error(`BLOCKED: ${msg}`);
-	process.exit(2);
-}
-
-// warn mode — stderr 출력 + allow
-console.error(`WARN: ${msg}`);
-process.exit(0);

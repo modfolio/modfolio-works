@@ -21,43 +21,48 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { readHookInput } from "./_lib.ts";
 
-await readHookInput();
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	await readHookInput();
 
-const cwd = process.cwd();
-const reasons: string[] = [];
+	const cwd = process.cwd();
+	const reasons: string[] = [];
 
-const lockPath = join(cwd, ".claude", "plans", ".active.lock");
-if (existsSync(lockPath)) {
-	reasons.push("active plan lock present (.claude/plans/.active.lock)");
-}
-
-const status = spawnSync("git", ["status", "--porcelain"], {
-	encoding: "utf-8",
-	shell: process.platform === "win32",
-});
-
-if (status.status === 0) {
-	const lines = (status.stdout ?? "").split("\n").filter(Boolean);
-	const planOrJournal = lines.some(
-		(l) =>
-			/\.claude\/plans\/.*\.md\s*$/.test(l) ||
-			/knowledge\/journal\/.*\.md\s*$/.test(l),
-	);
-	if (planOrJournal) {
-		reasons.push("unstaged plan or journal edit detected (draft loss risk)");
+	const lockPath = join(cwd, ".claude", "plans", ".active.lock");
+	if (existsSync(lockPath)) {
+		reasons.push("active plan lock present (.claude/plans/.active.lock)");
 	}
-	if (lines.length >= 10) {
-		reasons.push(`${lines.length} uncommitted changes (threshold: 10)`);
+
+	const status = spawnSync("git", ["status", "--porcelain"], {
+		encoding: "utf-8",
+		shell: process.platform === "win32",
+	});
+
+	if (status.status === 0) {
+		const lines = (status.stdout ?? "").split("\n").filter(Boolean);
+		const planOrJournal = lines.some(
+			(l) =>
+				/\.claude\/plans\/.*\.md\s*$/.test(l) ||
+				/knowledge\/journal\/.*\.md\s*$/.test(l),
+		);
+		if (planOrJournal) {
+			reasons.push("unstaged plan or journal edit detected (draft loss risk)");
+		}
+		if (lines.length >= 10) {
+			reasons.push(`${lines.length} uncommitted changes (threshold: 10)`);
+		}
 	}
-}
 
-if (reasons.length > 0) {
-	// Informational only — NEVER block. No `decision` field is emitted, so
-	// Claude Code proceeds with compaction normally.
-	console.error(
-		`[pre-compact-guard] notice (non-blocking): ${reasons.join("; ")}. ` +
-			"Commit drafts first if you want them preserved verbatim — your call.",
-	);
-}
+	if (reasons.length > 0) {
+		// Informational only — NEVER block. No `decision` field is emitted, so
+		// Claude Code proceeds with compaction normally.
+		console.error(
+			`[pre-compact-guard] notice (non-blocking): ${reasons.join("; ")}. ` +
+				"Commit drafts first if you want them preserved verbatim — your call.",
+		);
+	}
 
-process.exit(0);
+	process.exit(0);
+}

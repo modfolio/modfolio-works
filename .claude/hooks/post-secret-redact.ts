@@ -47,57 +47,62 @@ function resolveMode(): Mode {
 }
 
 const mode = resolveMode();
-if (mode === "off") process.exit(0);
-// Advisory by default; fail-closed only when the operator opted into
-// blocking (see _fail-closed.ts §Mode-dependent guards).
-if (mode === "block") failClosed("post-secret-redact");
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	if (mode === "off") process.exit(0);
+	// Advisory by default; fail-closed only when the operator opted into
+	// blocking (see _fail-closed.ts §Mode-dependent guards).
+	if (mode === "block") failClosed("post-secret-redact");
 
-const input = (await readHookInput()) as HookInput;
-const tr = input.tool_response ?? {};
-const fields = ["stdout", "stderr", "content", "output"] as const;
-const hits: { field: string; pattern: string }[] = [];
-const redacted: Record<string, unknown> = { ...tr };
+	const input = (await readHookInput()) as HookInput;
+	const tr = input.tool_response ?? {};
+	const fields = ["stdout", "stderr", "content", "output"] as const;
+	const hits: { field: string; pattern: string }[] = [];
+	const redacted: Record<string, unknown> = { ...tr };
 
-for (const f of fields) {
-	const raw = (tr as Record<string, unknown>)[f];
-	if (typeof raw !== "string" || raw.length === 0) continue;
-	let updated = raw;
-	for (const { id, re, tag } of SECRET_PATTERNS) {
-		if (re.test(raw)) {
-			hits.push({ field: f, pattern: id });
-			updated = updated.replace(re, `${tag}[REDACTED-ASI03-${id}]`);
+	for (const f of fields) {
+		const raw = (tr as Record<string, unknown>)[f];
+		if (typeof raw !== "string" || raw.length === 0) continue;
+		let updated = raw;
+		for (const { id, re, tag } of SECRET_PATTERNS) {
+			if (re.test(raw)) {
+				hits.push({ field: f, pattern: id });
+				updated = updated.replace(re, `${tag}[REDACTED-ASI03-${id}]`);
+			}
 		}
+		if (updated !== raw) redacted[f] = updated;
 	}
-	if (updated !== raw) redacted[f] = updated;
-}
 
-if (hits.length === 0) process.exit(0);
+	if (hits.length === 0) process.exit(0);
 
-const msg = [
-	`ASI03 secret literal 검출 in tool output:`,
-	hits.map((h) => `  - ${h.field}: ${h.pattern}`).join("\n"),
-	`tool=${input.tool_name ?? "?"}, mode=${mode}`,
-	`조치: athsra get / wrangler secret put 으로 secret 이전. git history 검토.`,
-	`mode 우회: SECRET_REDACT_MODE=off (env)`,
-].join("\n");
+	const msg = [
+		`ASI03 secret literal 검출 in tool output:`,
+		hits.map((h) => `  - ${h.field}: ${h.pattern}`).join("\n"),
+		`tool=${input.tool_name ?? "?"}, mode=${mode}`,
+		`조치: athsra get / wrangler secret put 으로 secret 이전. git history 검토.`,
+		`mode 우회: SECRET_REDACT_MODE=off (env)`,
+	].join("\n");
 
-if (mode === "block") {
-	console.error(`BLOCKED: ${msg}`);
-	process.exit(2);
-}
+	if (mode === "block") {
+		console.error(`BLOCKED: ${msg}`);
+		process.exit(2);
+	}
 
-if (mode === "redact") {
-	console.error(`REDACTED: ${msg}`);
-	const output = {
-		hookSpecificOutput: {
-			hookEventName: "PostToolUse",
-			updatedToolOutput: redacted,
-		},
-	};
-	process.stdout.write(JSON.stringify(output));
+	if (mode === "redact") {
+		console.error(`REDACTED: ${msg}`);
+		const output = {
+			hookSpecificOutput: {
+				hookEventName: "PostToolUse",
+				updatedToolOutput: redacted,
+			},
+		};
+		process.stdout.write(JSON.stringify(output));
+		process.exit(0);
+	}
+
+	// warn mode — stderr 만, allow
+	console.error(`WARN: ${msg}`);
 	process.exit(0);
 }
-
-// warn mode — stderr 만, allow
-console.error(`WARN: ${msg}`);
-process.exit(0);

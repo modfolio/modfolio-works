@@ -28,60 +28,65 @@
 import { failClosed } from "./_fail-closed.ts";
 import { bashCommand, readHookInput } from "./_lib.ts";
 
-failClosed("pre-destructive-guard");
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	failClosed("pre-destructive-guard");
 
-const input = await readHookInput();
-const cmd = bashCommand(input);
-if (!cmd) process.exit(0);
+	const input = await readHookInput();
+	const cmd = bashCommand(input);
+	if (!cmd) process.exit(0);
 
-const CATASTROPHIC: ReadonlyArray<{ re: RegExp; why: string }> = [
-	// 1a. rm with -r and -f (either order, combined or split) targeting a
-	//     catastrophic path. `rm -rf node_modules` / `rm -rf dist` are NOT
-	//     matched — only root, home, system dirs, bare cwd, or a bare glob.
-	//     System-root depth ≤2 (+`/*` glob)까지만 재앙으로 본다 — `/home`,
-	//     `/home/mod`, `/home/mod/*` 는 차단하되 `/home/mod/code/<repo>` 같은
-	//     깊은 하위 경로는 통과 (2026-07-12 오탐 정정: 절대경로가 `/home` 으로
-	//     시작한다는 이유만으로 승인된 개별 디렉토리 삭제가 막히던 것.
-	//     git 원격이 있는 작업물 삭제는 복구 가능 — v3.1 철학 그대로).
-	{
-		re: /\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)(?:\/[\w.@-]+)?(?:\/\*)?\/?(?=\s|$|[;&|)]))/i,
-		why: "recursive force-remove of root/home/system/cwd/glob",
-	},
-	{
-		re: /\brm\s+-[a-z]*f[a-z]*r[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)(?:\/[\w.@-]+)?(?:\/\*)?\/?(?=\s|$|[;&|)]))/i,
-		why: "recursive force-remove of root/home/system/cwd/glob",
-	},
-	// 3. Deleting secret material.
-	{
-		re: /\brm\s+(?:-\w+\s+)*(?:[^\s|;&]*\/)?(?:\.env(?:\.keys|\.local|\.[a-z]+)?|[^\s|;&]*\.pem|id_rsa|id_ed25519)\b/i,
-		why: "deletion of secret material (.env / .keys / .pem / ssh key)",
-	},
-];
+	const CATASTROPHIC: ReadonlyArray<{ re: RegExp; why: string }> = [
+		// 1a. rm with -r and -f (either order, combined or split) targeting a
+		//     catastrophic path. `rm -rf node_modules` / `rm -rf dist` are NOT
+		//     matched — only root, home, system dirs, bare cwd, or a bare glob.
+		//     System-root depth ≤2 (+`/*` glob)까지만 재앙으로 본다 — `/home`,
+		//     `/home/mod`, `/home/mod/*` 는 차단하되 `/home/mod/code/<repo>` 같은
+		//     깊은 하위 경로는 통과 (2026-07-12 오탐 정정: 절대경로가 `/home` 으로
+		//     시작한다는 이유만으로 승인된 개별 디렉토리 삭제가 막히던 것.
+		//     git 원격이 있는 작업물 삭제는 복구 가능 — v3.1 철학 그대로).
+		{
+			re: /\brm\s+-[a-z]*r[a-z]*f[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)(?:\/[\w.@-]+)?(?:\/\*)?\/?(?=\s|$|[;&|)]))/i,
+			why: "recursive force-remove of root/home/system/cwd/glob",
+		},
+		{
+			re: /\brm\s+-[a-z]*f[a-z]*r[a-z]*\s+(?:--no-preserve-root\s+)?(?:\/(?:\s|$)|~(?:\/\*|\s|$)|\$HOME|\*(?:\s|$)|\.(?:\s|$)|\/(?:home|etc|usr|var|bin|sbin|root|boot|lib)(?:\/[\w.@-]+)?(?:\/\*)?\/?(?=\s|$|[;&|)]))/i,
+			why: "recursive force-remove of root/home/system/cwd/glob",
+		},
+		// 3. Deleting secret material.
+		{
+			re: /\brm\s+(?:-\w+\s+)*(?:[^\s|;&]*\/)?(?:\.env(?:\.keys|\.local|\.[a-z]+)?|[^\s|;&]*\.pem|id_rsa|id_ed25519)\b/i,
+			why: "deletion of secret material (.env / .keys / .pem / ssh key)",
+		},
+	];
 
-for (const { re, why } of CATASTROPHIC) {
-	if (re.test(cmd)) {
-		console.error(`BLOCKED: ${why}. (pre-destructive-guard)`);
-		process.exit(2);
+	for (const { re, why } of CATASTROPHIC) {
+		if (re.test(cmd)) {
+			console.error(`BLOCKED: ${why}. (pre-destructive-guard)`);
+			process.exit(2);
+		}
 	}
-}
 
-// 2. Plain force-push rewrites remote history. Allow --force-with-lease.
-//    Inspect ONLY the arguments of each `git push` invocation (its token
-//    span up to the next shell separator), NOT the whole compound command.
-//    Root cause of prior false-positives: testing `git push` presence and
-//    `-f`/`--force` presence independently across the entire command meant a
-//    benign `git push origin main` next to an unrelated `-f` token elsewhere
-//    (`[ -f "$x" ]`, `grep -f`, `rm -f`, `tar -f`) blocked the safe push.
-for (const invocation of cmd.match(/\bgit\s+push\b[^\n;|&]*/gi) ?? []) {
-	if (
-		/(?:^|\s)(?:--force|-f)\b/.test(invocation) &&
-		!/--force-with-lease\b/.test(invocation)
-	) {
-		console.error(
-			"BLOCKED: git push --force rewrites remote history. Use --force-with-lease if you really must. (pre-destructive-guard)",
-		);
-		process.exit(2);
+	// 2. Plain force-push rewrites remote history. Allow --force-with-lease.
+	//    Inspect ONLY the arguments of each `git push` invocation (its token
+	//    span up to the next shell separator), NOT the whole compound command.
+	//    Root cause of prior false-positives: testing `git push` presence and
+	//    `-f`/`--force` presence independently across the entire command meant a
+	//    benign `git push origin main` next to an unrelated `-f` token elsewhere
+	//    (`[ -f "$x" ]`, `grep -f`, `rm -f`, `tar -f`) blocked the safe push.
+	for (const invocation of cmd.match(/\bgit\s+push\b[^\n;|&]*/gi) ?? []) {
+		if (
+			/(?:^|\s)(?:--force|-f)\b/.test(invocation) &&
+			!/--force-with-lease\b/.test(invocation)
+		) {
+			console.error(
+				"BLOCKED: git push --force rewrites remote history. Use --force-with-lease if you really must. (pre-destructive-guard)",
+			);
+			process.exit(2);
+		}
 	}
-}
 
-process.exit(0);
+	process.exit(0);
+}

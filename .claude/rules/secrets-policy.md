@@ -1,3 +1,14 @@
+---
+title: 시크릿 정책 — athsra 런타임 주입
+applicability: 시크릿·토큰·키를 다룰 때 · 빈 .env 를 봤을 때 · 유출이 의심될 때
+consumers: [all-agents]
+related_canon: [secret-store, agent-auth-ux]
+# ⚠ `paths:` 를 **일부러 넣지 않았다** — 이 여섯 편은 상시 주입이고 그대로 둔다.
+#   오늘(2026-08-25) 상시 주입 포화(94.3%)를 푼 방법은 **규율을 자르는 것**이 아니라
+#   누적된 «서사» 를 증례로 라우팅한 것이다(9.9KB). 이 frontmatter 는 주입을 바꾸지 않고
+#   Codex 색인에서 **찾을 수 있게** 한다 — 종전엔 라우팅 신호가 0이라 검색에 안 걸렸다.
+---
+
 # 시크릿 정책
 
 **하드코딩 금지**. API 키, 토큰, 서명 키, DB 비밀번호, OAuth client secret, encryption salt — 전부.

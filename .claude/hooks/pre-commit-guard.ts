@@ -31,110 +31,115 @@ import { bashCommand, isDetectorSource, readHookInput } from "./_lib.ts";
 
 const input = await readHookInput();
 const cmd = bashCommand(input);
-if (!cmd || !/\bgit\s+commit\b/i.test(cmd)) process.exit(0);
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	if (!cmd || !/\bgit\s+commit\b/i.test(cmd)) process.exit(0);
 
-// ─── Pattern block (V2.4) ────────────────────────────────────────────────────
+	// ─── Pattern block (V2.4) ────────────────────────────────────────────────────
 
-type PatternMode = "off" | "warn" | "block";
-function resolvePatternMode(): PatternMode {
-	const raw = (process.env.PATTERN_HISTORY_MODE ?? "warn").toLowerCase();
-	if (raw === "off" || raw === "block" || raw === "warn") return raw;
-	return "warn";
-}
-
-function stagedFiles(): string[] {
-	try {
-		const out = execSync("git diff --name-only --cached", {
-			encoding: "utf-8",
-			stdio: ["ignore", "pipe", "ignore"],
-		});
-		return out
-			.split(/\r?\n/)
-			.map((s) => s.trim())
-			.filter(Boolean);
-	} catch {
-		return [];
+	type PatternMode = "off" | "warn" | "block";
+	function resolvePatternMode(): PatternMode {
+		const raw = (process.env.PATTERN_HISTORY_MODE ?? "warn").toLowerCase();
+		if (raw === "off" || raw === "block" || raw === "warn") return raw;
+		return "warn";
 	}
-}
 
-function loadPatternExceptions(): Set<string> {
-	const lockPath = join(process.cwd(), ".claude", "harness-lock.json");
-	if (!existsSync(lockPath)) return new Set();
-	try {
-		const parsed = JSON.parse(readFileSync(lockPath, "utf-8")) as {
-			patternExceptions?: unknown;
-		};
-		if (Array.isArray(parsed.patternExceptions)) {
-			return new Set(
-				parsed.patternExceptions.filter(
-					(x): x is string => typeof x === "string",
-				),
-			);
+	function stagedFiles(): string[] {
+		try {
+			const out = execSync("git diff --name-only --cached", {
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			});
+			return out
+				.split(/\r?\n/)
+				.map((s) => s.trim())
+				.filter(Boolean);
+		} catch {
+			return [];
 		}
-	} catch {
-		// ignore malformed lock
 	}
-	return new Set();
-}
 
-const mode = resolvePatternMode();
-// Blocking only under an explicit opt-in — so fail-closed only then. An
-// advisory run must keep crashing harmlessly; an enforcing run must refuse
-// rather than silently permit (see _fail-closed.ts §Mode-dependent guards).
-if (mode === "block") failClosed("pre-commit-guard");
-if (mode !== "off") {
-	const exceptions = loadPatternExceptions();
-	if (!exceptions.has("ts_ignore_or_any")) {
-		const TS_EXT = /\.(ts|tsx)$/i;
-		const hits: Array<{ file: string; line: number; text: string }> = [];
-		for (const file of stagedFiles()) {
-			if (!TS_EXT.test(file)) continue;
-			// Self-exclusion: detector source files carry the pattern regex as a
-			// string literal — false positive. See DETECTOR_SOURCE_FILES for list.
-			if (isDetectorSource(file)) continue;
-			const abs = join(process.cwd(), file);
-			if (!existsSync(abs)) continue;
-			try {
-				if (!statSync(abs).isFile()) continue;
-			} catch {
-				continue;
+	function loadPatternExceptions(): Set<string> {
+		const lockPath = join(process.cwd(), ".claude", "harness-lock.json");
+		if (!existsSync(lockPath)) return new Set();
+		try {
+			const parsed = JSON.parse(readFileSync(lockPath, "utf-8")) as {
+				patternExceptions?: unknown;
+			};
+			if (Array.isArray(parsed.patternExceptions)) {
+				return new Set(
+					parsed.patternExceptions.filter(
+						(x): x is string => typeof x === "string",
+					),
+				);
 			}
-			let content: string;
-			try {
-				content = readFileSync(abs, "utf-8");
-			} catch {
-				continue;
+		} catch {
+			// ignore malformed lock
+		}
+		return new Set();
+	}
+
+	const mode = resolvePatternMode();
+	// Blocking only under an explicit opt-in — so fail-closed only then. An
+	// advisory run must keep crashing harmlessly; an enforcing run must refuse
+	// rather than silently permit (see _fail-closed.ts §Mode-dependent guards).
+	if (mode === "block") failClosed("pre-commit-guard");
+	if (mode !== "off") {
+		const exceptions = loadPatternExceptions();
+		if (!exceptions.has("ts_ignore_or_any")) {
+			const TS_EXT = /\.(ts|tsx)$/i;
+			const hits: Array<{ file: string; line: number; text: string }> = [];
+			for (const file of stagedFiles()) {
+				if (!TS_EXT.test(file)) continue;
+				// Self-exclusion: detector source files carry the pattern regex as a
+				// string literal — false positive. See DETECTOR_SOURCE_FILES for list.
+				if (isDetectorSource(file)) continue;
+				const abs = join(process.cwd(), file);
+				if (!existsSync(abs)) continue;
+				try {
+					if (!statSync(abs).isFile()) continue;
+				} catch {
+					continue;
+				}
+				let content: string;
+				try {
+					content = readFileSync(abs, "utf-8");
+				} catch {
+					continue;
+				}
+				const lines = content.split(/\r?\n/);
+				for (let i = 0; i < lines.length; i += 1) {
+					const text = lines[i] ?? "";
+					if (/@ts-ignore|@ts-expect-error|as\s+any\b/.test(text)) {
+						hits.push({ file, line: i + 1, text: text.trim().slice(0, 160) });
+					}
+				}
 			}
-			const lines = content.split(/\r?\n/);
-			for (let i = 0; i < lines.length; i += 1) {
-				const text = lines[i] ?? "";
-				if (/@ts-ignore|@ts-expect-error|as\s+any\b/.test(text)) {
-					hits.push({ file, line: i + 1, text: text.trim().slice(0, 160) });
+			if (hits.length > 0) {
+				console.error(
+					`\n[pattern-guard] ts_ignore_or_any (${mode.toUpperCase()} mode) — ${hits.length} hit(s):`,
+				);
+				for (const hit of hits) {
+					console.error(`  ${hit.file}:${hit.line}  ${hit.text}`);
+				}
+				if (mode === "block") {
+					console.error(
+						'\nBLOCKED: fix the root cause or add "ts_ignore_or_any" to harness-lock.json patternExceptions.',
+					);
+					process.exit(2);
 				}
 			}
 		}
-		if (hits.length > 0) {
-			console.error(
-				`\n[pattern-guard] ts_ignore_or_any (${mode.toUpperCase()} mode) — ${hits.length} hit(s):`,
-			);
-			for (const hit of hits) {
-				console.error(`  ${hit.file}:${hit.line}  ${hit.text}`);
-			}
-			if (mode === "block") {
-				console.error(
-					'\nBLOCKED: fix the root cause or add "ts_ignore_or_any" to harness-lock.json patternExceptions.',
-				);
-				process.exit(2);
-			}
-		}
 	}
+
+	// ─── No quality gate here (v3.1) ─────────────────────────────────────────────
+	//
+	// quality:all / check / typecheck no longer run on commit. They moved to the
+	// non-blocking pre-push-guard.ts and the hard `/release` gate so that the
+	// commit hot path is instant. Commits never block on quality in solo
+	// pre-production. Run `bun run quality:all` manually or rely on push/release.
+
+	process.exit(0);
 }
-
-// ─── No quality gate here (v3.1) ─────────────────────────────────────────────
-//
-// quality:all / check / typecheck no longer run on commit. They moved to the
-// non-blocking pre-push-guard.ts and the hard `/release` gate so that the
-// commit hot path is instant. Commits never block on quality in solo
-// pre-production. Run `bun run quality:all` manually or rely on push/release.
-
-process.exit(0);

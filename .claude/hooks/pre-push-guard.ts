@@ -103,389 +103,399 @@ const input = await readHookInput();
 const cmd = bashCommand(input);
 // Only act on a real `git push`. `git push --help`, `git push-something`, etc.
 // fall through untouched.
-if (!cmd || !/\bgit\s+push\b/i.test(cmd)) process.exit(EXIT_GREEN);
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	if (!cmd || !/\bgit\s+push\b/i.test(cmd)) process.exit(EXIT_GREEN);
 
-const projectRoot = process.cwd();
+	const projectRoot = process.cwd();
 
-function readJsonSafe(path: string): unknown {
-	try {
-		return JSON.parse(readFileSync(path, "utf-8"));
-	} catch {
-		return undefined;
+	function readJsonSafe(path: string): unknown {
+		try {
+			return JSON.parse(readFileSync(path, "utf-8"));
+		} catch {
+			return undefined;
+		}
 	}
-}
 
-function availableScripts(): Set<string> {
-	const pkg = readJsonSafe(join(projectRoot, "package.json")) as
-		| { scripts?: Record<string, string> }
-		| undefined;
-	return new Set(Object.keys(pkg?.scripts ?? {}));
-}
+	function availableScripts(): Set<string> {
+		const pkg = readJsonSafe(join(projectRoot, "package.json")) as
+			| { scripts?: Record<string, string> }
+			| undefined;
+		return new Set(Object.keys(pkg?.scripts ?? {}));
+	}
 
-/**
- * settings JSON 안에서 이 훅을 배선한 엔트리의 `timeout`(초) 을 찾는다.
- *
- * 형태를 가정하지 않고 재귀로 훑는다 — `hooks.PreToolUse[].hooks[]` 구조가
- * 바뀌어도, 오너가 손으로 다른 위치에 적어도 찾는다. 앵커는 커맨드 문자열에
- * 이 훅 파일 이름이 들어 있는 객체.
- */
-function scanWiredTimeoutSec(node: unknown): number | undefined {
-	if (Array.isArray(node)) {
-		for (const item of node) {
-			const found = scanWiredTimeoutSec(item);
+	/**
+	 * settings JSON 안에서 이 훅을 배선한 엔트리의 `timeout`(초) 을 찾는다.
+	 *
+	 * 형태를 가정하지 않고 재귀로 훑는다 — `hooks.PreToolUse[].hooks[]` 구조가
+	 * 바뀌어도, 오너가 손으로 다른 위치에 적어도 찾는다. 앵커는 커맨드 문자열에
+	 * 이 훅 파일 이름이 들어 있는 객체.
+	 */
+	function scanWiredTimeoutSec(node: unknown): number | undefined {
+		if (Array.isArray(node)) {
+			for (const item of node) {
+				const found = scanWiredTimeoutSec(item);
+				if (found !== undefined) return found;
+			}
+			return undefined;
+		}
+		if (!node || typeof node !== "object") return undefined;
+		const rec = node as Record<string, unknown>;
+		if (
+			typeof rec.command === "string" &&
+			rec.command.includes("pre-push-guard") &&
+			typeof rec.timeout === "number" &&
+			Number.isFinite(rec.timeout) &&
+			rec.timeout > 0
+		) {
+			return rec.timeout;
+		}
+		for (const value of Object.values(rec)) {
+			const found = scanWiredTimeoutSec(value);
 			if (found !== undefined) return found;
 		}
 		return undefined;
 	}
-	if (!node || typeof node !== "object") return undefined;
-	const rec = node as Record<string, unknown>;
-	if (
-		typeof rec.command === "string" &&
-		rec.command.includes("pre-push-guard") &&
-		typeof rec.timeout === "number" &&
-		Number.isFinite(rec.timeout) &&
-		rec.timeout > 0
-	) {
-		return rec.timeout;
-	}
-	for (const value of Object.values(rec)) {
-		const found = scanWiredTimeoutSec(value);
-		if (found !== undefined) return found;
-	}
-	return undefined;
-}
 
-/** `.claude/harness-lock.json` `extraHooks` 의 오너 선언(초). */
-function lockDeclaredTimeoutSec(): number | undefined {
-	const lock = readJsonSafe(
-		join(projectRoot, ".claude", "harness-lock.json"),
-	) as
-		| { extraHooks?: Array<string | { file?: string; timeout?: number }> }
-		| undefined;
-	for (const raw of lock?.extraHooks ?? []) {
-		if (typeof raw === "string" || !raw) continue;
-		if (raw.file !== "pre-push-guard.ts") continue;
-		if (
-			typeof raw.timeout === "number" &&
-			Number.isFinite(raw.timeout) &&
-			raw.timeout > 0
-		) {
-			return raw.timeout;
+	/** `.claude/harness-lock.json` `extraHooks` 의 오너 선언(초). */
+	function lockDeclaredTimeoutSec(): number | undefined {
+		const lock = readJsonSafe(
+			join(projectRoot, ".claude", "harness-lock.json"),
+		) as
+			| { extraHooks?: Array<string | { file?: string; timeout?: number }> }
+			| undefined;
+		for (const raw of lock?.extraHooks ?? []) {
+			if (typeof raw === "string" || !raw) continue;
+			if (raw.file !== "pre-push-guard.ts") continue;
+			if (
+				typeof raw.timeout === "number" &&
+				Number.isFinite(raw.timeout) &&
+				raw.timeout > 0
+			) {
+				return raw.timeout;
+			}
 		}
+		return undefined;
 	}
-	return undefined;
-}
 
-/** 러너 예산(초) → 자식 예산(ms). 진단 출력 몫을 남긴다. */
-function withMargin(seconds: number): number {
-	return Math.max(MIN_BUDGET_MS, Math.round(seconds * 1000) - SAFETY_MARGIN_MS);
-}
-
-function resolveBudget(): { ms: number; source: string } {
-	const raw = process.env.MODFOLIO_PRE_PUSH_TIMEOUT_MS;
-	if (raw !== undefined) {
-		const parsed = Number.parseInt(raw, 10);
-		if (Number.isFinite(parsed) && parsed > 0) {
-			return {
-				ms: parsed,
-				source: `env MODFOLIO_PRE_PUSH_TIMEOUT_MS=${parsed}ms`,
-			};
-		}
-	}
-	for (const file of ["settings.local.json", "settings.json"]) {
-		const wired = scanWiredTimeoutSec(
-			readJsonSafe(join(projectRoot, ".claude", file)),
+	/** 러너 예산(초) → 자식 예산(ms). 진단 출력 몫을 남긴다. */
+	function withMargin(seconds: number): number {
+		return Math.max(
+			MIN_BUDGET_MS,
+			Math.round(seconds * 1000) - SAFETY_MARGIN_MS,
 		);
-		if (wired !== undefined) {
+	}
+
+	function resolveBudget(): { ms: number; source: string } {
+		const raw = process.env.MODFOLIO_PRE_PUSH_TIMEOUT_MS;
+		if (raw !== undefined) {
+			const parsed = Number.parseInt(raw, 10);
+			if (Number.isFinite(parsed) && parsed > 0) {
+				return {
+					ms: parsed,
+					source: `env MODFOLIO_PRE_PUSH_TIMEOUT_MS=${parsed}ms`,
+				};
+			}
+		}
+		for (const file of ["settings.local.json", "settings.json"]) {
+			const wired = scanWiredTimeoutSec(
+				readJsonSafe(join(projectRoot, ".claude", file)),
+			);
+			if (wired !== undefined) {
+				return {
+					ms: withMargin(wired),
+					source: `.claude/${file} 배선 timeout=${wired}s`,
+				};
+			}
+		}
+		const declared = lockDeclaredTimeoutSec();
+		if (declared !== undefined) {
 			return {
-				ms: withMargin(wired),
-				source: `.claude/${file} 배선 timeout=${wired}s`,
+				ms: withMargin(declared),
+				source: `.claude/harness-lock.json extraHooks timeout=${declared}s`,
 			};
 		}
-	}
-	const declared = lockDeclaredTimeoutSec();
-	if (declared !== undefined) {
 		return {
-			ms: withMargin(declared),
-			source: `.claude/harness-lock.json extraHooks timeout=${declared}s`,
+			ms: withMargin(DEFAULT_RUNNER_TIMEOUT_SEC),
+			source: `기본값 ${DEFAULT_RUNNER_TIMEOUT_SEC}s (Claude Code 훅 기본 timeout — 선언 없음)`,
 		};
 	}
-	return {
-		ms: withMargin(DEFAULT_RUNNER_TIMEOUT_SEC),
-		source: `기본값 ${DEFAULT_RUNNER_TIMEOUT_SEC}s (Claude Code 훅 기본 timeout — 선언 없음)`,
-	};
-}
 
-const budget = resolveBudget();
+	const budget = resolveBudget();
 
-/**
- * 예산을 늘리는 법. 시간 초과·예산 소진 메시지에 항상 붙인다 — 원인이 코드가
- * 아니라 예산일 때 사람이 다음에 무엇을 할지 알아야 한다.
- */
-const BUDGET_ADVICE = [
-	"→ 예산을 자기 실측에 맞춘다 — `.claude/harness-lock.json`:",
-	'     { "extraHooks": [{ "file": "pre-push-guard.ts", "timeout": 1200 }] }',
-	"   (초 단위. harness-pull 이 이 값으로 settings.json 훅 timeout 을 배선하고,",
-	"    훅은 그보다 5초 일찍 끊어 이 진단을 남긴다.)",
-	"→ 즉시 판정이 필요하면 수동으로: `bun run quality:all`",
-].join("\n");
+	/**
+	 * 예산을 늘리는 법. 시간 초과·예산 소진 메시지에 항상 붙인다 — 원인이 코드가
+	 * 아니라 예산일 때 사람이 다음에 무엇을 할지 알아야 한다.
+	 */
+	const BUDGET_ADVICE = [
+		"→ 예산을 자기 실측에 맞춘다 — `.claude/harness-lock.json`:",
+		'     { "extraHooks": [{ "file": "pre-push-guard.ts", "timeout": 1200 }] }',
+		"   (초 단위. harness-pull 이 이 값으로 settings.json 훅 timeout 을 배선하고,",
+		"    훅은 그보다 5초 일찍 끊어 이 진단을 남긴다.)",
+		"→ 즉시 판정이 필요하면 수동으로: `bun run quality:all`",
+	].join("\n");
 
-const scripts = availableScripts();
-const steps: string[][] = [];
-if (scripts.has("quality:all")) {
-	steps.push(["bun", "run", "quality:all"]);
-} else {
-	if (scripts.has("check")) steps.push(["bun", "run", "check"]);
-	if (scripts.has("typecheck")) steps.push(["bun", "run", "typecheck"]);
-}
-
-// 검사 대상 0건은 "통과"가 아니다 (`agent-evidence.md` — 빈 대상은 통과가 아니라
-// 실패다). 이 훅이 배선돼 있다는 것은 이 repo 가 push 게이트를 원한다는 뜻인데
-// 돌릴 게이트가 없으면 그건 green 이 아니라 **판정 불능**이다.
-if (steps.length === 0) {
-	console.error(
-		"[pre-push-guard] ⚠ 판정 불능 — quality 게이트 스크립트가 없다 " +
-			"(package.json 에 `quality:all` 도 `check`/`typecheck` 도 없음). " +
-			"검사 대상 0건을 green 으로 읽지 않는다. push 는 진행(비차단).",
-	);
-	process.exit(EXIT_INDETERMINATE);
-}
-
-// WSL 호스트의 PATH 에서 Windows mount (`/mnt/c/...`) 항목 제거 — `bun run`
-// 이 child spawn 시 Windows bun shim 을 잡아 cmd.exe 를 trigger 하는 회귀
-// 방지 (2026-04-26 WSL 발견). linux 일 때만 적용.
-function sanitizePath(): NodeJS.ProcessEnv {
-	if (process.platform !== "linux") return process.env;
-	const filtered = (process.env.PATH ?? "")
-		.split(":")
-		.filter(
-			(p) =>
-				p.length > 0 && !p.startsWith("/mnt/c/") && !p.startsWith("/mnt/d/"),
-		)
-		.join(":");
-	return { ...process.env, PATH: filtered };
-}
-
-const sanitizedEnv = sanitizePath();
-
-// Windows host 가 WSL repo 를 UNC path (`\\wsl.localhost\...`) 로 접근하면
-// Windows bun 이 cmd.exe 를 child shell 로 써 UNC 를 거부 → hook 이 quality
-// 를 실행할 수 없는 platform 한계.
-//
-// v3.44: 이것도 **판정 불능**이다(구현상 exit 0 = "이상 없음"으로 읽혔다).
-// 게이트가 red 인지 green 인지 이 환경에서는 알 수 없다 — 그 사실을 그대로
-// 말한다. 여전히 비차단.
-const isWindowsWslRepo =
-	process.platform === "win32" && /^\\\\wsl/i.test(process.cwd());
-if (isWindowsWslRepo) {
-	console.error(
-		"[pre-push-guard] ⚠ 판정 불능 — Windows host + WSL UNC path 에서는 quality 를 실행할 수 없다(platform 한계). " +
-			"게이트가 green 인지 red 인지 모른다. WSL native shell 에서 `bun run quality:all` 로 판정하세요. push 는 진행(비차단).",
-	);
-	process.exit(EXIT_INDETERMINATE);
-}
-
-const isSvelteKit = isSvelteKitProject(projectRoot);
-
-type StepVerdict =
-	| { kind: "pass"; label: string; ms: number }
-	| { kind: "fail"; label: string; ms: number; status: number; tail: string }
-	| {
-			kind: "indeterminate";
-			label: string;
-			ms: number;
-			detail: string;
-			tail: string;
-	  };
-
-/**
- * spawnSync 출력은 encoding 설정에 따라 string 이거나 Buffer 다
- * (`spawnSyncWithSvelteKitRetry` 는 generic 이 아닌 `SpawnSyncOptions` 를 받으므로
- * 타입상 둘 다 가능). 어느 쪽이든 utf-8 텍스트로 정규화한다.
- */
-function toText(value: unknown): string {
-	if (typeof value === "string") return value;
-	if (value === null || value === undefined) return "";
-	return String(value);
-}
-
-/** 자식 출력의 마지막 n 줄 — 진단에 필요한 만큼만. */
-function tailOf(stdout: unknown, stderr: unknown, n: number): string {
-	return `${toText(stdout)}${toText(stderr)}`
-		.split(/\r?\n/)
-		.filter((l) => l.trim())
-		.slice(-n)
-		.join("\n");
-}
-
-const verdicts: StepVerdict[] = [];
-let remainingMs = budget.ms;
-
-for (const step of steps) {
-	const label = step.join(" ");
-
-	if (remainingMs < MIN_BUDGET_MS) {
-		verdicts.push({
-			kind: "indeterminate",
-			label,
-			ms: 0,
-			detail: `앞 단계가 예산(${(budget.ms / 1000).toFixed(1)}s)을 소진 — 실행조차 하지 않았다`,
-			tail: "",
-		});
-		continue;
+	const scripts = availableScripts();
+	const steps: string[][] = [];
+	if (scripts.has("quality:all")) {
+		steps.push(["bun", "run", "quality:all"]);
+	} else {
+		if (scripts.has("check")) steps.push(["bun", "run", "check"]);
+		if (scripts.has("typecheck")) steps.push(["bun", "run", "typecheck"]);
 	}
 
-	const head = step[0];
-	const bin = head === "bun" ? process.execPath : (head ?? "bun");
-	const isTypecheck = step.includes("typecheck") || step.includes("check");
-	if (isSvelteKit && isTypecheck) {
-		// `.svelte-kit/types/` 생성 race 회피 (modfolio-pay / modfolio-press WSL2).
-		// sync 도 같은 예산에서 나간다 — 여기서 매달리면 게이트도 못 돈다.
-		const syncStarted = Date.now();
-		spawnSync(process.execPath, ["x", "svelte-kit", "sync"], {
-			stdio: "ignore",
-			env: sanitizedEnv,
-			shell: process.platform === "win32",
-			timeout: Math.min(remainingMs, 60_000),
-		});
-		remainingMs -= Date.now() - syncStarted;
+	// 검사 대상 0건은 "통과"가 아니다 (`agent-evidence.md` — 빈 대상은 통과가 아니라
+	// 실패다). 이 훅이 배선돼 있다는 것은 이 repo 가 push 게이트를 원한다는 뜻인데
+	// 돌릴 게이트가 없으면 그건 green 이 아니라 **판정 불능**이다.
+	if (steps.length === 0) {
+		console.error(
+			"[pre-push-guard] ⚠ 판정 불능 — quality 게이트 스크립트가 없다 " +
+				"(package.json 에 `quality:all` 도 `check`/`typecheck` 도 없음). " +
+				"검사 대상 0건을 green 으로 읽지 않는다. push 는 진행(비차단).",
+		);
+		process.exit(EXIT_INDETERMINATE);
+	}
+
+	// WSL 호스트의 PATH 에서 Windows mount (`/mnt/c/...`) 항목 제거 — `bun run`
+	// 이 child spawn 시 Windows bun shim 을 잡아 cmd.exe 를 trigger 하는 회귀
+	// 방지 (2026-04-26 WSL 발견). linux 일 때만 적용.
+	function sanitizePath(): NodeJS.ProcessEnv {
+		if (process.platform !== "linux") return process.env;
+		const filtered = (process.env.PATH ?? "")
+			.split(":")
+			.filter(
+				(p) =>
+					p.length > 0 && !p.startsWith("/mnt/c/") && !p.startsWith("/mnt/d/"),
+			)
+			.join(":");
+		return { ...process.env, PATH: filtered };
+	}
+
+	const sanitizedEnv = sanitizePath();
+
+	// Windows host 가 WSL repo 를 UNC path (`\\wsl.localhost\...`) 로 접근하면
+	// Windows bun 이 cmd.exe 를 child shell 로 써 UNC 를 거부 → hook 이 quality
+	// 를 실행할 수 없는 platform 한계.
+	//
+	// v3.44: 이것도 **판정 불능**이다(구현상 exit 0 = "이상 없음"으로 읽혔다).
+	// 게이트가 red 인지 green 인지 이 환경에서는 알 수 없다 — 그 사실을 그대로
+	// 말한다. 여전히 비차단.
+	const isWindowsWslRepo =
+		process.platform === "win32" && /^\\\\wsl/i.test(process.cwd());
+	if (isWindowsWslRepo) {
+		console.error(
+			"[pre-push-guard] ⚠ 판정 불능 — Windows host + WSL UNC path 에서는 quality 를 실행할 수 없다(platform 한계). " +
+				"게이트가 green 인지 red 인지 모른다. WSL native shell 에서 `bun run quality:all` 로 판정하세요. push 는 진행(비차단).",
+		);
+		process.exit(EXIT_INDETERMINATE);
+	}
+
+	const isSvelteKit = isSvelteKitProject(projectRoot);
+
+	type StepVerdict =
+		| { kind: "pass"; label: string; ms: number }
+		| { kind: "fail"; label: string; ms: number; status: number; tail: string }
+		| {
+				kind: "indeterminate";
+				label: string;
+				ms: number;
+				detail: string;
+				tail: string;
+		  };
+
+	/**
+	 * spawnSync 출력은 encoding 설정에 따라 string 이거나 Buffer 다
+	 * (`spawnSyncWithSvelteKitRetry` 는 generic 이 아닌 `SpawnSyncOptions` 를 받으므로
+	 * 타입상 둘 다 가능). 어느 쪽이든 utf-8 텍스트로 정규화한다.
+	 */
+	function toText(value: unknown): string {
+		if (typeof value === "string") return value;
+		if (value === null || value === undefined) return "";
+		return String(value);
+	}
+
+	/** 자식 출력의 마지막 n 줄 — 진단에 필요한 만큼만. */
+	function tailOf(stdout: unknown, stderr: unknown, n: number): string {
+		return `${toText(stdout)}${toText(stderr)}`
+			.split(/\r?\n/)
+			.filter((l) => l.trim())
+			.slice(-n)
+			.join("\n");
+	}
+
+	const verdicts: StepVerdict[] = [];
+	let remainingMs = budget.ms;
+
+	for (const step of steps) {
+		const label = step.join(" ");
+
 		if (remainingMs < MIN_BUDGET_MS) {
 			verdicts.push({
 				kind: "indeterminate",
 				label,
 				ms: 0,
-				detail: "`svelte-kit sync` 가 예산을 소진 — 게이트를 실행하지 못했다",
+				detail: `앞 단계가 예산(${(budget.ms / 1000).toFixed(1)}s)을 소진 — 실행조차 하지 않았다`,
 				tail: "",
 			});
 			continue;
 		}
+
+		const head = step[0];
+		const bin = head === "bun" ? process.execPath : (head ?? "bun");
+		const isTypecheck = step.includes("typecheck") || step.includes("check");
+		if (isSvelteKit && isTypecheck) {
+			// `.svelte-kit/types/` 생성 race 회피 (modfolio-pay / modfolio-press WSL2).
+			// sync 도 같은 예산에서 나간다 — 여기서 매달리면 게이트도 못 돈다.
+			const syncStarted = Date.now();
+			spawnSync(process.execPath, ["x", "svelte-kit", "sync"], {
+				stdio: "ignore",
+				env: sanitizedEnv,
+				shell: process.platform === "win32",
+				timeout: Math.min(remainingMs, 60_000),
+			});
+			remainingMs -= Date.now() - syncStarted;
+			if (remainingMs < MIN_BUDGET_MS) {
+				verdicts.push({
+					kind: "indeterminate",
+					label,
+					ms: 0,
+					detail: "`svelte-kit sync` 가 예산을 소진 — 게이트를 실행하지 못했다",
+					tail: "",
+				});
+				continue;
+			}
+		}
+
+		const started = Date.now();
+		const run = spawnSyncWithSvelteKitRetry(bin, step.slice(1), {
+			encoding: "utf-8",
+			env: sanitizedEnv,
+			shell: process.platform === "win32",
+			timeout: remainingMs,
+		});
+		const elapsed = Date.now() - started;
+		remainingMs -= elapsed;
+
+		// 3-way 분류. 순서가 중요하다 — 시간 초과는 `error` 로 오고 `status` 는
+		// null 이므로, `status` 부터 보면 다시 "실패"로 뭉개진다.
+		const err = run.error;
+		const errCode =
+			err && "code" in err && typeof err.code === "string"
+				? err.code
+				: undefined;
+		if (errCode === "ETIMEDOUT") {
+			verdicts.push({
+				kind: "indeterminate",
+				label,
+				ms: elapsed,
+				detail: `예산 ${(budget.ms / 1000).toFixed(1)}s 소진 — 게이트가 판정을 내리기 전에 끊겼다`,
+				tail: tailOf(run.stdout, run.stderr, 10),
+			});
+		} else if (err) {
+			verdicts.push({
+				kind: "indeterminate",
+				label,
+				ms: elapsed,
+				detail: `게이트를 실행하지 못했다 (${errCode ?? "spawn error"}: ${err.message})`,
+				tail: tailOf(run.stdout, run.stderr, 10),
+			});
+		} else if (run.status === 0) {
+			verdicts.push({ kind: "pass", label, ms: elapsed });
+		} else if (run.status === 2) {
+			// ⚠ 게이트가 **스스로 «판정 불능»** 을 선언했다. 이 저장소 규율에서 exit 2 는
+			// "위반이 없다" 도 "위반이 있다" 도 아니라 **"검사가 성립하지 않았다"** 다
+			// (`agent-evidence.md` — 판정 불능과 위반은 다른 종료 코드여야 한다).
+			//
+			// ⚠ 이 branch 가 **없었다**(atelier-and-folio 제보 2026-08-05): 3-way 분류의
+			// indeterminate 는 timeout·spawn 실패·시그널로만 채워졌고, exit 2 는 아래
+			// `else` 로 떨어져 **fail** 이 됐다. 즉 이 파일 아래쪽 주석이 명시한 우선순위
+			// ("판정 불능 > 위반 > green")를 **그 코드를 읽는 유일한 소비자가 다시 뭉개고**
+			// 있었다. 의도는 맞고 배선이 한 줄 빠져 있었다.
+			//
+			// ⚠ 그리고 이건 표현만의 문제가 아니다 — 실측(2026-08-06): `bun run` 과 셸 `&&`
+			// 는 **exit 2 를 그대로 전파**한다(`bun run ok && bun run two` → 2). 그래서
+			// `quality:all` 안의 어떤 스텝이 2 를 내면 체인도 2 를 내고, 이 branch 가 그것을
+			// 받는다. 남는 잔여는 «위반이 먼저 나오면 뒤의 판정 불능이 가려진다» 뿐이다.
+			verdicts.push({
+				kind: "indeterminate",
+				label,
+				ms: elapsed,
+				detail: `게이트가 판정 불능(exit 2)을 선언했다 — 위반이 없다는 뜻이 아니라 검사가 성립하지 않았다는 뜻이다`,
+				tail: tailOf(run.stdout, run.stderr, 15),
+			});
+		} else if (typeof run.status !== "number") {
+			// 시그널로 죽었다(OOM killer, 외부 kill…). 종료 코드가 없다 = 판정이 없다.
+			verdicts.push({
+				kind: "indeterminate",
+				label,
+				ms: elapsed,
+				detail: `게이트가 종료 코드 없이 죽었다 (signal ${run.signal ?? "unknown"}) — 판정이 나온 적 없다`,
+				tail: tailOf(run.stdout, run.stderr, 10),
+			});
+		} else {
+			verdicts.push({
+				kind: "fail",
+				label,
+				ms: elapsed,
+				status: run.status,
+				tail: tailOf(run.stdout, run.stderr, 15),
+			});
+		}
 	}
 
-	const started = Date.now();
-	const run = spawnSyncWithSvelteKitRetry(bin, step.slice(1), {
-		encoding: "utf-8",
-		env: sanitizedEnv,
-		shell: process.platform === "win32",
-		timeout: remainingMs,
-	});
-	const elapsed = Date.now() - started;
-	remainingMs -= elapsed;
+	const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 
-	// 3-way 분류. 순서가 중요하다 — 시간 초과는 `error` 로 오고 `status` 는
-	// null 이므로, `status` 부터 보면 다시 "실패"로 뭉개진다.
-	const err = run.error;
-	const errCode =
-		err && "code" in err && typeof err.code === "string" ? err.code : undefined;
-	if (errCode === "ETIMEDOUT") {
-		verdicts.push({
-			kind: "indeterminate",
-			label,
-			ms: elapsed,
-			detail: `예산 ${(budget.ms / 1000).toFixed(1)}s 소진 — 게이트가 판정을 내리기 전에 끊겼다`,
-			tail: tailOf(run.stdout, run.stderr, 10),
-		});
-	} else if (err) {
-		verdicts.push({
-			kind: "indeterminate",
-			label,
-			ms: elapsed,
-			detail: `게이트를 실행하지 못했다 (${errCode ?? "spawn error"}: ${err.message})`,
-			tail: tailOf(run.stdout, run.stderr, 10),
-		});
-	} else if (run.status === 0) {
-		verdicts.push({ kind: "pass", label, ms: elapsed });
-	} else if (run.status === 2) {
-		// ⚠ 게이트가 **스스로 «판정 불능»** 을 선언했다. 이 저장소 규율에서 exit 2 는
-		// "위반이 없다" 도 "위반이 있다" 도 아니라 **"검사가 성립하지 않았다"** 다
-		// (`agent-evidence.md` — 판정 불능과 위반은 다른 종료 코드여야 한다).
-		//
-		// ⚠ 이 branch 가 **없었다**(atelier-and-folio 제보 2026-08-05): 3-way 분류의
-		// indeterminate 는 timeout·spawn 실패·시그널로만 채워졌고, exit 2 는 아래
-		// `else` 로 떨어져 **fail** 이 됐다. 즉 이 파일 아래쪽 주석이 명시한 우선순위
-		// ("판정 불능 > 위반 > green")를 **그 코드를 읽는 유일한 소비자가 다시 뭉개고**
-		// 있었다. 의도는 맞고 배선이 한 줄 빠져 있었다.
-		//
-		// ⚠ 그리고 이건 표현만의 문제가 아니다 — 실측(2026-08-06): `bun run` 과 셸 `&&`
-		// 는 **exit 2 를 그대로 전파**한다(`bun run ok && bun run two` → 2). 그래서
-		// `quality:all` 안의 어떤 스텝이 2 를 내면 체인도 2 를 내고, 이 branch 가 그것을
-		// 받는다. 남는 잔여는 «위반이 먼저 나오면 뒤의 판정 불능이 가려진다» 뿐이다.
-		verdicts.push({
-			kind: "indeterminate",
-			label,
-			ms: elapsed,
-			detail: `게이트가 판정 불능(exit 2)을 선언했다 — 위반이 없다는 뜻이 아니라 검사가 성립하지 않았다는 뜻이다`,
-			tail: tailOf(run.stdout, run.stderr, 15),
-		});
-	} else if (typeof run.status !== "number") {
-		// 시그널로 죽었다(OOM killer, 외부 kill…). 종료 코드가 없다 = 판정이 없다.
-		verdicts.push({
-			kind: "indeterminate",
-			label,
-			ms: elapsed,
-			detail: `게이트가 종료 코드 없이 죽었다 (signal ${run.signal ?? "unknown"}) — 판정이 나온 적 없다`,
-			tail: tailOf(run.stdout, run.stderr, 10),
-		});
-	} else {
-		verdicts.push({
-			kind: "fail",
-			label,
-			ms: elapsed,
-			status: run.status,
-			tail: tailOf(run.stdout, run.stderr, 15),
-		});
-	}
-}
-
-const secs = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
-
-for (const v of verdicts) {
-	if (v.kind === "pass") {
-		console.error(`[pre-push-guard] ✓ ${v.label} passed (${secs(v.ms)})`);
-		continue;
-	}
-	if (v.kind === "fail") {
+	for (const v of verdicts) {
+		if (v.kind === "pass") {
+			console.error(`[pre-push-guard] ✓ ${v.label} passed (${secs(v.ms)})`);
+			continue;
+		}
+		if (v.kind === "fail") {
+			console.error(
+				`[pre-push-guard] ✗ ${v.label} FAILED — 게이트 red (exit ${v.status}, ${secs(v.ms)}). push 는 진행(비차단).\n` +
+					`${v.tail}\n` +
+					"→ 정공법: fix the root cause before `/release` (release:gate is the hard gate).",
+			);
+			continue;
+		}
 		console.error(
-			`[pre-push-guard] ✗ ${v.label} FAILED — 게이트 red (exit ${v.status}, ${secs(v.ms)}). push 는 진행(비차단).\n` +
-				`${v.tail}\n` +
-				"→ 정공법: fix the root cause before `/release` (release:gate is the hard gate).",
+			`[pre-push-guard] ⚠ ${v.label} 시간 초과 — **판정 불능** (${secs(v.ms)}).\n` +
+				`   ${v.detail}\n` +
+				"   실패가 아니다 — 게이트가 red 인지 green 인지 아직 모른다.\n" +
+				`   예산 출처: ${budget.source}\n` +
+				(v.tail ? `   부분 출력(마지막 10줄):\n${v.tail}\n` : "") +
+				BUDGET_ADVICE,
 		);
-		continue;
 	}
+
+	const indeterminate = verdicts.filter((v) => v.kind === "indeterminate");
+	const failed = verdicts.filter((v) => v.kind === "fail");
+
+	// 우선순위: 판정 불능 > 위반 > green.
+	//
+	// 한 단계라도 판정이 성립하지 않았으면 **전체 판정도 성립하지 않는다** —
+	// 이때 exit 1(위반)을 내면 기계는 "게이트 red, 측정은 완료"로 읽고 예산 문제를
+	// 영원히 못 본다. 확인된 위반은 위에서 이미 전문(全文)으로 출력했으므로
+	// 사람에게는 아무것도 숨기지 않는다.
+	if (indeterminate.length > 0) {
+		console.error(
+			`[pre-push-guard] ⚠ 판정 불능 ${indeterminate.length}건${failed.length > 0 ? ` (+ 확인된 red ${failed.length}건)` : ""} — ` +
+				"quality 판정이 성립하지 않았다. 통과도 위반도 아니다. push 는 진행(비차단).",
+		);
+		process.exit(EXIT_INDETERMINATE);
+	}
+
+	if (failed.length > 0) {
+		console.error(
+			"[pre-push-guard] ✗ quality red — code is being pushed anyway (solo pre-production policy). Address before shipping via /release.",
+		);
+		process.exit(EXIT_GATE_RED);
+	}
+
 	console.error(
-		`[pre-push-guard] ⚠ ${v.label} 시간 초과 — **판정 불능** (${secs(v.ms)}).\n` +
-			`   ${v.detail}\n` +
-			"   실패가 아니다 — 게이트가 red 인지 green 인지 아직 모른다.\n" +
-			`   예산 출처: ${budget.source}\n` +
-			(v.tail ? `   부분 출력(마지막 10줄):\n${v.tail}\n` : "") +
-			BUDGET_ADVICE,
+		`[pre-push-guard] ✓ quality green (${verdicts.length} step, 예산 ${budget.source})`,
 	);
+	process.exit(EXIT_GREEN);
 }
-
-const indeterminate = verdicts.filter((v) => v.kind === "indeterminate");
-const failed = verdicts.filter((v) => v.kind === "fail");
-
-// 우선순위: 판정 불능 > 위반 > green.
-//
-// 한 단계라도 판정이 성립하지 않았으면 **전체 판정도 성립하지 않는다** —
-// 이때 exit 1(위반)을 내면 기계는 "게이트 red, 측정은 완료"로 읽고 예산 문제를
-// 영원히 못 본다. 확인된 위반은 위에서 이미 전문(全文)으로 출력했으므로
-// 사람에게는 아무것도 숨기지 않는다.
-if (indeterminate.length > 0) {
-	console.error(
-		`[pre-push-guard] ⚠ 판정 불능 ${indeterminate.length}건${failed.length > 0 ? ` (+ 확인된 red ${failed.length}건)` : ""} — ` +
-			"quality 판정이 성립하지 않았다. 통과도 위반도 아니다. push 는 진행(비차단).",
-	);
-	process.exit(EXIT_INDETERMINATE);
-}
-
-if (failed.length > 0) {
-	console.error(
-		"[pre-push-guard] ✗ quality red — code is being pushed anyway (solo pre-production policy). Address before shipping via /release.",
-	);
-	process.exit(EXIT_GATE_RED);
-}
-
-console.error(
-	`[pre-push-guard] ✓ quality green (${verdicts.length} step, 예산 ${budget.source})`,
-);
-process.exit(EXIT_GREEN);

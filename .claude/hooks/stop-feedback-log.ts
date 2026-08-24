@@ -19,58 +19,63 @@ const cwd = gitRoot();
 const repo = basename(cwd);
 // Self-skip: don't log when running inside the ecosystem repo itself.
 // Match both current (`modfolio-ecosystem`) and legacy (`modfolio-universe`) names.
-if (repo === "modfolio-ecosystem" || repo === "modfolio-universe")
-	process.exit(0);
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	if (repo === "modfolio-ecosystem" || repo === "modfolio-universe")
+		process.exit(0);
 
-const ecosystemRoot = findEcosystemRoot(cwd);
-if (!ecosystemRoot) process.exit(0);
+	const ecosystemRoot = findEcosystemRoot(cwd);
+	if (!ecosystemRoot) process.exit(0);
 
-const now = new Date();
-const yyyy = String(now.getFullYear());
-const mm = String(now.getMonth() + 1).padStart(2, "0");
-const dd = String(now.getDate()).padStart(2, "0");
-const date = `${yyyy}-${mm}-${dd}`;
+	const now = new Date();
+	const yyyy = String(now.getFullYear());
+	const mm = String(now.getMonth() + 1).padStart(2, "0");
+	const dd = String(now.getDate()).padStart(2, "0");
+	const date = `${yyyy}-${mm}-${dd}`;
 
-const logDir = join(ecosystemRoot, "feedback", repo, "logs", yyyy, mm);
-if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
+	const logDir = join(ecosystemRoot, "feedback", repo, "logs", yyyy, mm);
+	if (!existsSync(logDir)) mkdirSync(logDir, { recursive: true });
 
-const sessionId = randomBytes(4).toString("hex");
-const logFile = join(logDir, `${date}_${sessionId}.log`);
+	const sessionId = randomBytes(4).toString("hex");
+	const logFile = join(logDir, `${date}_${sessionId}.log`);
 
-function safeExec(cmd: string): string {
-	try {
-		return execSync(cmd, {
-			cwd,
-			encoding: "utf-8",
-			stdio: ["ignore", "pipe", "ignore"],
-		});
-	} catch {
-		return "";
+	function safeExec(cmd: string): string {
+		try {
+			return execSync(cmd, {
+				cwd,
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			});
+		} catch {
+			return "";
+		}
 	}
+
+	const stat = safeExec("git diff --stat").trim() || "no changes";
+	const names = safeExec("git diff --name-only").trim();
+	const fileList = names ? names.split(/\r?\n/) : [];
+
+	const uiCount = fileList.filter((f) =>
+		/\.(svelte|tsx|jsx|astro|vue|css)$/i.test(f),
+	).length;
+	const apiCount = fileList.filter((f) =>
+		/(routes|api|server).*\.ts$/i.test(f),
+	).length;
+	const schemaCount = fileList.filter((f) => /schema/i.test(f)).length;
+
+	const body = [
+		`# ${date} session ${sessionId}`,
+		"",
+		"## Changed Files",
+		stat,
+		"",
+		"## Categories",
+		`UI: ${uiCount} | API: ${apiCount} | Schema: ${schemaCount}`,
+		"",
+	].join("\n");
+
+	writeFileSync(logFile, body, "utf-8");
+	process.exit(0);
 }
-
-const stat = safeExec("git diff --stat").trim() || "no changes";
-const names = safeExec("git diff --name-only").trim();
-const fileList = names ? names.split(/\r?\n/) : [];
-
-const uiCount = fileList.filter((f) =>
-	/\.(svelte|tsx|jsx|astro|vue|css)$/i.test(f),
-).length;
-const apiCount = fileList.filter((f) =>
-	/(routes|api|server).*\.ts$/i.test(f),
-).length;
-const schemaCount = fileList.filter((f) => /schema/i.test(f)).length;
-
-const body = [
-	`# ${date} session ${sessionId}`,
-	"",
-	"## Changed Files",
-	stat,
-	"",
-	"## Categories",
-	`UI: ${uiCount} | API: ${apiCount} | Schema: ${schemaCount}`,
-	"",
-].join("\n");
-
-writeFileSync(logFile, body, "utf-8");
-process.exit(0);

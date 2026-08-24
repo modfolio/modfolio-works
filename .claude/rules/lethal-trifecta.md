@@ -1,3 +1,14 @@
+---
+title: Lethal Trifecta — prompt injection 유출 방어
+applicability: MCP·외부 도구를 붙일 때 · 시크릿에 닿는 코드를 짤 때 · 도구 설명이 무언가를 시킬 때
+consumers: [all-agents]
+related_canon: [agent-governance, payment-safety]
+# ⚠ `paths:` 를 **일부러 넣지 않았다** — 이 여섯 편은 상시 주입이고 그대로 둔다.
+#   오늘(2026-08-25) 상시 주입 포화(94.3%)를 푼 방법은 **규율을 자르는 것**이 아니라
+#   누적된 «서사» 를 증례로 라우팅한 것이다(9.9KB). 이 frontmatter 는 주입을 바꾸지 않고
+#   Codex 색인에서 **찾을 수 있게** 한다 — 종전엔 라우팅 신호가 0이라 검색에 안 걸렸다.
+---
+
 # Lethal Trifecta — Prompt Injection Exfiltration Defense
 
 Simon Willison (2025-06) 명명, OWASP Top 10 for Agentic Apps 2026 highlight. agent 가 다음 3 조건 **동시에** 충족되면 prompt injection 으로 sensitive data 가 외부 유출 위험:

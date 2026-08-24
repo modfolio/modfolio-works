@@ -21,49 +21,54 @@ const files = editedFiles(input);
 const touchedContract = files.some((f) => f.includes("contracts/"));
 const touchedEcosystem = files.some((f) => f.endsWith("ecosystem.json"));
 
-if (touchedContract || touchedEcosystem) {
-	const lines: string[] = [];
-	if (touchedContract) {
-		lines.push(
-			"Contract change detected. Run `bun run schema-impact` after completion to check ripple effects.",
-		);
-	}
-	if (touchedEcosystem) {
-		lines.push(
-			"ecosystem.json change detected. Run `bun run registry:generate` to refresh the App Registry (URLs/OIDC/CORS/webhook) — release-gate fails on drift.",
-		);
-	}
-	const reminder = lines.join("\n");
-	const augment = process.env.CONTRACT_TOUCH_AUGMENT === "1";
-
-	if (augment) {
-		// v2.34 P0.4: PostToolUse hookSpecificOutput.updatedToolOutput 으로 reminder inline
-		const tr = input.tool_response ?? {};
-		const augmented: Record<string, unknown> = { ...tr };
-		const inlineMsg = `\n\n[post-contract-touch]\n${reminder}`;
-		let appended = false;
-		for (const key of ["content", "stdout", "output", "message"] as const) {
-			const v = tr[key];
-			if (typeof v === "string") {
-				augmented[key] = `${v}${inlineMsg}`;
-				appended = true;
-				break;
-			}
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
+	if (touchedContract || touchedEcosystem) {
+		const lines: string[] = [];
+		if (touchedContract) {
+			lines.push(
+				"Contract change detected. Run `bun run schema-impact` after completion to check ripple effects.",
+			);
 		}
-		if (!appended) augmented.message = inlineMsg.trim();
+		if (touchedEcosystem) {
+			lines.push(
+				"ecosystem.json change detected. Run `bun run registry:generate` to refresh the App Registry (URLs/OIDC/CORS/webhook) — release-gate fails on drift.",
+			);
+		}
+		const reminder = lines.join("\n");
+		const augment = process.env.CONTRACT_TOUCH_AUGMENT === "1";
 
-		const output = {
-			hookSpecificOutput: {
-				hookEventName: "PostToolUse",
-				updatedToolOutput: augmented,
-			},
-		};
-		process.stdout.write(JSON.stringify(output));
-	} else {
-		console.log(reminder);
+		if (augment) {
+			// v2.34 P0.4: PostToolUse hookSpecificOutput.updatedToolOutput 으로 reminder inline
+			const tr = input.tool_response ?? {};
+			const augmented: Record<string, unknown> = { ...tr };
+			const inlineMsg = `\n\n[post-contract-touch]\n${reminder}`;
+			let appended = false;
+			for (const key of ["content", "stdout", "output", "message"] as const) {
+				const v = tr[key];
+				if (typeof v === "string") {
+					augmented[key] = `${v}${inlineMsg}`;
+					appended = true;
+					break;
+				}
+			}
+			if (!appended) augmented.message = inlineMsg.trim();
+
+			const output = {
+				hookSpecificOutput: {
+					hookEventName: "PostToolUse",
+					updatedToolOutput: augmented,
+				},
+			};
+			process.stdout.write(JSON.stringify(output));
+		} else {
+			console.log(reminder);
+		}
 	}
+
+	await recordHookDuration("post-contract-touch", performance.now() - start);
+
+	process.exit(0);
 }
-
-await recordHookDuration("post-contract-touch", performance.now() - start);
-
-process.exit(0);

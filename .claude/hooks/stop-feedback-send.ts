@@ -21,57 +21,65 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { basename, join } from "node:path";
 import { findEcosystemRoot, gitRoot } from "./_lib.ts";
 
-try {
-	const cwd = gitRoot();
-	const repo = basename(cwd);
-	// ecosystem 자체에서는 안 함 (current + legacy 이름).
-	if (repo === "modfolio-ecosystem" || repo === "modfolio-universe")
-		process.exit(0);
-
-	// opt-in 재확인 — wiring 이 게이트하지만 방어적 재확인.
-	let optIn = false;
+// CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
+// 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
+// (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
+if (import.meta.main) {
 	try {
-		const lock = JSON.parse(
-			readFileSync(join(cwd, ".claude", "harness-lock.json"), "utf-8"),
-		) as {
-			autoFeedbackSend?: boolean;
-		};
-		optIn = lock.autoFeedbackSend === true;
+		const cwd = gitRoot();
+		const repo = basename(cwd);
+		// ecosystem 자체에서는 안 함 (current + legacy 이름).
+		if (repo === "modfolio-ecosystem" || repo === "modfolio-universe")
+			process.exit(0);
+
+		// opt-in 재확인 — wiring 이 게이트하지만 방어적 재확인.
+		let optIn = false;
+		try {
+			const lock = JSON.parse(
+				readFileSync(join(cwd, ".claude", "harness-lock.json"), "utf-8"),
+			) as {
+				autoFeedbackSend?: boolean;
+			};
+			optIn = lock.autoFeedbackSend === true;
+		} catch {
+			optIn = false;
+		}
+		if (!optIn) process.exit(0);
+
+		// feedback-send 는 ecosystem host-sibling 의 feedback/ 에 쓴다 — 없으면 skip.
+		const ecoRoot = findEcosystemRoot(cwd);
+		if (!ecoRoot) process.exit(0);
+
+		// 의미있는 변경? 마지막 send 이후 새 commit 있을 때만.
+		const lastSendPath = join(cwd, ".claude", "last-feedback-send");
+		const lastSendMs = existsSync(lastSendPath)
+			? statSync(lastSendPath).mtimeMs
+			: 0;
+		let lastCommitMs = 0;
+		try {
+			lastCommitMs =
+				Number(
+					execSync("git log -1 --format=%ct", {
+						cwd,
+						encoding: "utf-8",
+					}).trim(),
+				) * 1000;
+		} catch {
+			lastCommitMs = 0;
+		}
+		if (lastCommitMs <= lastSendMs) process.exit(0); // 새 작업 없음 — skip.
+
+		// feedback-send 실행 (ecosystem 스크립트, 현재 repo 대상). fire-and-forget.
+		execSync(
+			`bun ${JSON.stringify(join(ecoRoot, "scripts", "feedback-send.ts"))}`,
+			{
+				cwd,
+				stdio: "ignore",
+				timeout: 30000,
+			},
+		);
 	} catch {
-		optIn = false;
+		// 절대 차단 안 함 — 실패해도 조용히 exit 0.
 	}
-	if (!optIn) process.exit(0);
-
-	// feedback-send 는 ecosystem host-sibling 의 feedback/ 에 쓴다 — 없으면 skip.
-	const ecoRoot = findEcosystemRoot(cwd);
-	if (!ecoRoot) process.exit(0);
-
-	// 의미있는 변경? 마지막 send 이후 새 commit 있을 때만.
-	const lastSendPath = join(cwd, ".claude", "last-feedback-send");
-	const lastSendMs = existsSync(lastSendPath)
-		? statSync(lastSendPath).mtimeMs
-		: 0;
-	let lastCommitMs = 0;
-	try {
-		lastCommitMs =
-			Number(
-				execSync("git log -1 --format=%ct", { cwd, encoding: "utf-8" }).trim(),
-			) * 1000;
-	} catch {
-		lastCommitMs = 0;
-	}
-	if (lastCommitMs <= lastSendMs) process.exit(0); // 새 작업 없음 — skip.
-
-	// feedback-send 실행 (ecosystem 스크립트, 현재 repo 대상). fire-and-forget.
-	execSync(
-		`bun ${JSON.stringify(join(ecoRoot, "scripts", "feedback-send.ts"))}`,
-		{
-			cwd,
-			stdio: "ignore",
-			timeout: 30000,
-		},
-	);
-} catch {
-	// 절대 차단 안 함 — 실패해도 조용히 exit 0.
+	process.exit(0);
 }
-process.exit(0);
