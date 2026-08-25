@@ -143,7 +143,7 @@ athsra run <repo> -- bunx --bun wrangler domains add <new-domain> --name <worker
 ```
 
 검증: `dig <new-domain> CNAME` + `curl -I https://<new-domain>/` → 200 (응답 헤더에 `cf-worker` 확인).
-Rollback: `wrangler domains remove <new-domain>` (사용자 트래픽 아직 없음).
+Rollback: `wrangler domains remove <new-domain>` (사용자 트래픽 아직 없음). [역사]
 
 ### 8. Smoke test + soak
 

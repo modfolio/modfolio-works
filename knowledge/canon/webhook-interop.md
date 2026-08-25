@@ -63,7 +63,7 @@ v1.0 은 이렇게 적었다:
 *"deployment results. Authenticated via HMAC-SHA256. … 1. Per-hook `callback_secret`
 (from `ma_deploy_hooks`)"*. 즉 시크릿이 **훅마다 다르고**, 발신자는 그 훅을 등록한 외부
 시스템이지 fleet producer 가 아니다. `contracts/events/wiring.ts` 에 `modfolio-admin` 이
-**0회** 등장하는 것이 그 방증이다(v1.0 은 이 부재를 "미배선"으로 읽었지만, 실제로는
+**0회** 등장하는 것이 그 방증이다(v1.0 은 이 부재를 "미배선"으로 읽었지만, 실제로는 [분류]
 "universe 이벤트 배선이 아님"이다).
 
 **정적 스캐너가 문법만 보고 방향과 발신자를 보지 않아서** 정상 배선을 충돌로 셈했다.

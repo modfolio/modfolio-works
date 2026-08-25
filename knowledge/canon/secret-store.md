@@ -167,7 +167,7 @@ athsra versions modfolio-pay:prod                         # prod 환경 버전 �
 **무중단**: config 생략 시 기존과 100% 동일. config 도입 전 데이터는 worker 3-tier read fallback
 (config → config-less → founding legacy)으로 읽히고 write self-heal 로 정식 경로에 정착. 신규 환경은
 fallback 없이 빈 세트가 정답(첫 set 으로 생성). 모든 secret 명령 + MCP secret 도구(optional `config`) +
-대시보드 환경 드롭다운이 동일 모델. config-별 ACL 은 1차 미구현(project 단위 유지, 확장 슬롯만).
+대시보드 환경 드롭다운이 동일 모델. config-별 ACL 은 1차 미구현(project 단위 유지, 확장 슬롯만). (실측 2026-08-25 — athsra 는 project 단위 ACL 만: `project share/unshare`)
 
 ### 실수 복구 (Phase 1.x.1)
 

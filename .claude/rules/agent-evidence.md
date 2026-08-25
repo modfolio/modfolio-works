@@ -3,10 +3,7 @@ title: Agent Evidence — 주장 전 증거 확보
 applicability: 무엇을 주장하기 전 · 게이트를 만들거나 판정할 때 · 「0건」「없음」「통과」를 말하기 전
 consumers: [all-agents]
 related_canon: [evidence-cases-gates, evidence-cases-green, evidence-cases-red, evidence-cases-authority]
-# ⚠ `paths:` 를 **일부러 넣지 않았다** — 이 여섯 편은 상시 주입이고 그대로 둔다.
-#   오늘(2026-08-25) 상시 주입 포화(94.3%)를 푼 방법은 **규율을 자르는 것**이 아니라
-#   누적된 «서사» 를 증례로 라우팅한 것이다(9.9KB). 이 frontmatter 는 주입을 바꾸지 않고
-#   Codex 색인에서 **찾을 수 있게** 한다 — 종전엔 라우팅 신호가 0이라 검색에 안 걸렸다.
+# `paths:` 없음 = 의도. 상시 주입 6편이며 frontmatter 는 Codex 색인용이라 주입을 바꾸지 않는다.
 ---
 
 # Agent Evidence — 주장 전 증거 확보 규칙

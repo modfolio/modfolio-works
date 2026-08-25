@@ -74,8 +74,16 @@ pdgd 뿐이었다 — **전 repo 의 `bun run dev` 가 프로덕션 Neon 을 치
     ⚠ **선결: 공인 인증서.** Hyperdrive 는 VPC 의 검증 모드와 무관하게 자체 검증하고,
     VPC 경유 시 CA 업로드가 불가(`mtls cannot be used with service_id`)라 자가서명은
     원리적으로 통과 못 한다. LE(DNS-01) + VPC **hostname 모드**가 답이다(IP 모드면 불일치)
-  - **B = Tunnel+Access → mfdb-neon-http** (dev 와 동일 드라이버·의미론) — ⚠ **미구축**.
-    prod 노출·Access service token 이 아직 없다. 비교 지연도 미측정
+  - **B = Tunnel+Access → mfdb-neon-http** (dev 와 동일 드라이버·의미론) — **2026-08-23
+    개통, 2026-08-25 허브 재검증.** 좌표 `https://mfdb-api.modfolio.io/sql` ·
+    Access 서비스토큰(`CF-Access-Client-Id`/`-Secret`) 문지기 + `Authorization: Bearer
+    <테넌트 토큰>` 이 **대상 DB 를 정한다**(identity). 재검증 3단: Access 없이 403 ·
+    토큰으로 `/healthz` 200 · pdgd 테넌트로 실 SQL 왕복 `db=pdgd user=app_pdgd
+    PostgreSQL 18.6`. 비교 지연은 아직 미측정
+    > ⚠ [역사] **이 줄은 2026-08-25 까지 「미구축. prod 노출·Access service token 이 아직
+    > 없다」로 남아 있었고 개통 이틀 뒤였다.** pdgd 가 그 문장을 근거로 «공개 종점이
+    > 없습니다» 라고 판단해 blocking 요청을 올렸다 — **멤버를 막은 것은 인프라가 아니라
+    > 허브의 낡은 문장이다.** 「낡은 운영 문서는 조용히 틀리지 않는다 — 사건 중에 틀린다」
 - **백업**: RPO(`maxDataLoss`)+RTO(`maxRecoveryTime`) 쌍 선언 · 복원 drill(`bun run
   drill:restore -- --target <repo>`) — 0행 복원 = 판정 불능(exit 2), 성공 아님. **`data:substrate`
   게이트가 drill 신선도(30일)를 본다** — 스케줄러 없이도 노후가 빨갛게 뜬다

@@ -161,7 +161,13 @@ always-auth=true
 
 이유: `bun install` 이 Tailscale 의존 안 함 → 집·사무실·CI 어디서나 동작.
 
-> **NAS Forgejo npm mirror(이중)는 미구현 — 2026-06-15 정정.** `package.json` 의 `publishConfig.registry` 가 GitHub Packages 를 고정하고 `--registry` 로 override 되지 않는다(`npm publish --dry-run` 실측: default·`--registry=forgejo` 둘 다 `npm.pkg.github.com` 으로 resolve). 즉 `npm publish` 로는 두 번째 registry 에 올릴 수 없다. 과거 `[5/5] Forgejo publish` 단계는 GitHub 으로만 가는 no-op 이라 `harness-publish.ts` 에서 제거(v3.11.3). 진짜 NAS npm mirror 가 필요하면 별도 push 메커니즘(전용 도구/ADR) — npm publish 가 아니다. NAS 의 git 이중호스팅·Forgejo Actions CI·Restic 백업은 그대로 유효.
+> ⛔ **아래 「미구현」 단락은 2026-06-28 에 뒤집혔다 — 역사 기록으로만 읽어라.** [역사]
+> 현행(2026-08-25 허브 실측): `pkg.modfolio.io` 가 **canonical registry** 이고
+> `GET /api/packages/modfolio/npm/@modfolio%2fharness` → **200 · latest 3.75.0 · 94판본**.
+> GitHub Packages 는 backfill 미러다. 「미구현」을 **현재 상태로 읽으면 안 된다** —
+> 바로 그 오독이 2026-08-25 에 pdgd 를 막았다(`modfolio-db.md` 의 같은 형태).
+>
+> **[역사] NAS Forgejo npm mirror(이중)는 미구현 — 2026-06-15 정정.** `package.json` 의 `publishConfig.registry` 가 GitHub Packages 를 고정하고 `--registry` 로 override 되지 않는다(`npm publish --dry-run` 실측: default·`--registry=forgejo` 둘 다 `npm.pkg.github.com` 으로 resolve). 즉 `npm publish` 로는 두 번째 registry 에 올릴 수 없다. 과거 `[5/5] Forgejo publish` 단계는 GitHub 으로만 가는 no-op 이라 `harness-publish.ts` 에서 제거(v3.11.3). 진짜 NAS npm mirror 가 필요하면 별도 push 메커니즘(전용 도구/ADR) — npm publish 가 아니다. NAS 의 git 이중호스팅·Forgejo Actions CI·Restic 백업은 그대로 유효.
 >
 > **갱신 2026-06-28 (modfolio-infra 2026-06-27 보고):** 위가 예고한 "별도 push 메커니즘"이 구현됨 — **`pkg.modfolio.io` 전용 Forgejo npm registry (ADR-012, modfolio-infra repo)** Phase 1 라이브(infra 보고: 라우팅 401 실측 = 엔드포인트 가동·인증 요구). 즉 `npm publish` 우회가 아니라 **전용 IaC registry** 로 NAS 미러를 별도 채널로 확보한 것. ecosystem 의 1차 publish 경로는 여전히 **GitHub Packages 단일**(`publishConfig.registry` 고정) — 불변. pkg.modfolio.io 는 infra 자율의 추가 채널이고, harness/contracts 의 sibling consume 경로 정합·이중화 시점은 infra 자율(Hub-not-enforcer). ADR-012 자체는 modfolio-infra repo 소유 — ecosystem 은 토폴로지 mirror 만.
 >
@@ -212,7 +218,7 @@ GPU 데스크탑(64GB RAM + RTX4060). mod-ai-toolkit 의 AI/관찰 스택 흡수
 ## 갱신 이력
 
 - 2026-05-22: v1.0.0 초판. modfolio-infra 등록(2026-05-21 commit `0a26e1a`) + harness 3.4.0 NAS 통합 release. local-dev-infra.md (mod-ai-toolkit v2) 를 supersede 하고 `archive/` 로 이동. GitHub Actions 전면 제거(canon `gh-actions-policy.md` v2.0) + 이중 git/레지스트리/CI 토폴로지 cement.
-- 2026-06-28: v1.1.0. **pkg.modfolio.io 전용 Forgejo npm registry (ADR-012, modfolio-infra) Phase 1 라이브** 반영(modfolio-infra 2026-06-27 보고). 「npm mirror 미구현」 노트를 additive 갱신 — 예고했던 "별도 push 메커니즘"이 전용 IaC registry 로 구현됨. ecosystem 1차 publish 경로(GitHub Packages 단일)는 불변. ADR-012 는 infra repo 소유, ecosystem 은 topology mirror.
+- 2026-06-28: v1.1.0. **pkg.modfolio.io 전용 Forgejo npm registry (ADR-012, modfolio-infra) Phase 1 라이브** 반영(modfolio-infra 2026-06-27 보고). 「npm mirror 미구현」 노트를 additive 갱신 — 예고했던 "별도 push 메커니즘"이 전용 IaC registry 로 구현됨. ecosystem 1차 publish 경로(GitHub Packages 단일)는 불변. ADR-012 는 infra repo 소유, ecosystem 은 topology mirror. [역사]
 - 2026-07-01: v1.2.0. **NAS-primary 체인 (dev→Forgejo→push-mirror→GitHub→CF Builds) 착수 + doc-reality drift 정정.** 실측 결과 과거 기술한 "GitHub→NAS pull-mirror 라이브"는 거짓(26 repo 전부 `mirror:false`, 1회성 stale 스냅샷)이었음을 발견·정정. 오너 NAS-primary 비전대로 push-mirror 방향(`sync_on_commit:true`) 신규 구축. 파일럿 **keepnbuild end-to-end 검증 완료**(push→Forgejo `49b5d57d`→GitHub <5s→CF Build success→app.keepnbuild.com 200). resilience model = `github` fallback remote. 정확한 per-repo 레시피 + fleet rollout + NAS-down 복구 = **journal `20260701-nas-primary-chain.md`**. ⚠ fleet rollout 은 오너 결정/배치 사안 — ecosystem 은 파일럿+레시피만 cement(Hub-not-enforcer: 타 repo 의 origin 전환은 각 repo 작업).
 - 2026-07-04: v1.3.0. **dual-push 토폴로지 정정(§1) + npm publish→pkg.modfolio.io 실증(§2).** ① NAS-primary 실현 = **dual-push**(origin fetch=Forgejo SoT·push=Forgejo+GitHub·`github` fallback) 명문화 — "GitHub 미러 없음"·"fallback 없음" 과거 기술 정정(28·64·186행, 2026-07-04 hub 정정에 frontmatter/changelog 정합). ② 2026-06-15 "npm publish 불가" **stale 정정** — publishConfig.registry SET override 로 실효, `@modfolio/harness` 3.17.3 pkg 라이브(GET 200), write 토큰 least-privilege(`FORGEJO_NPM_PUBLISH_TOKEN`). 수신 = infra `feedback/modfolio-infra/ecosystem-opinion-20260704-crossproject-response.md`.
 

@@ -2,7 +2,7 @@
 title: Owner Voice — 발화에서 성향을 만든다 (canon 이 실측이면 voice 는 발화다)
 version: 1.0.0
 last_updated: 2026-08-05
-source: [2026-08-05 오너 지시 "내가 채팅 치면서 주는 정보들을 매번 우리 Modfolio universe 자체의 말뭉치 구축에 다 쌓아 갔으면 좋겠어 … 내가 원하는 방식, 스타일 등이 우리 하네스나 ai의 특색, 성향이 되도록", modfolio-notify docs/voice/ 형식 제안(2026-08-05, 관측 9건 + gate:voice), atelier-and-folio knowledge/voice/ 초판(cf90c4d), 실측 2026-08-05 (global.md 30행 위치 절단·voice sync 미배선·Stop 훅 입력 불가)]
+source: [2026-08-05 오너 지시 "내가 채팅 치면서 주는 정보들을 매번 우리 Modfolio universe 자체의 말뭉치 구축에 다 쌓아 갔으면 좋겠어 … 내가 원하는 방식, 스타일 등이 우리 하네스나 ai의 특색, 성향이 되도록", modfolio-notify docs/voice/ 형식 제안(2026-08-05, 관측 9건 + gate:voice), atelier-and-folio knowledge/voice/ 초판(cf90c4d), 실측 2026-08-05 (global.md 30행 위치 절단·voice sync 미배선·Stop 훅 입력 불가)] [분류]
 sync_to_siblings: true
 tier: standard
 applicability: always

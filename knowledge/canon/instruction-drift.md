@@ -79,7 +79,7 @@ better 3 / worse 0 · Wilcoxon p=0.109 (미유의)
 |---|---|---|---|
 | **1. 불가능하게** | 팀 간 통신은 인터페이스로만 · *"no back-doors whatsoever"* | Bezos API mandate (2002) → AWS | `assembly-law` 3표면 · [[judgment-core]] (**I/O 가 없으면 남의 도메인에 닿을 수단이 없다**) · 패키지 경계 |
 | **2. 자동으로 잡기** | fitness function — 경계·의존을 테스트로 | Nx tags · dependency-cruiser · ArchUnit | `quality:all` · `release:gate` · `pre-*-guard` 훅 |
-| **3. 사람** | 골든 패스 — *"말해주는 게 아니라 대신 해준다"* | Netflix Wall-E · Spotify Golden Path | 스캐폴더 (미구축) |
+| **3. 사람** | 골든 패스 — *"말해주는 게 아니라 대신 해준다"* | Netflix Wall-E · Spotify Golden Path | 스캐폴더 (미구축) | (실측 2026-08-25 — 스캐폴더성 npm script 0건)
 
 **1층이 가장 강한 이유**: 순응이 필요 없다. [[judgment-core]] 의 순수성은 «지키자» 가
 아니라 «할 수단이 없다» 다.

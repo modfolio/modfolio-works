@@ -26,7 +26,7 @@ supersedes: [ecosystem.json domainModel 의 "app.{domain} 폐기 대상" 문구(
 - **`.app` TLD (munseo.app·sincheong.app)**: **App = apex `<domain>`** (`.app` TLD 자체가 "app" 의미 → `app.X.app` 중복 회피), **Landing = `www.<domain>`**, `app.` 서브도메인 없음.
 - **워커 네이밍은 두 경우 동일**(§3): apex 가 app 이든 landing 이든, app 워커 = `<project>-app`, landing 워커 = `<project>`. `.app` 은 apex 가 `<project>-app` 워커에 매핑될 뿐 — **네이밍 예외 아님**.
 - 서브시디어리는 **대부분 app 영역을 빌드 예정** — "app 미빌드" 는 transient. app 도메인(`app.<domain>` 또는 `.app` apex) 타겟 표준.
-- **폐기**: "www=랜딩 / apex=리다이렉트 / `app.`=가변" 혼재. `entryMode` 301/302 redirect 모델 미구현 → 폐기(직접 바인딩).
+- **폐기**: "www=랜딩 / apex=리다이렉트 / `app.`=가변" 혼재. `entryMode` 301/302 redirect 모델 미구현 → 폐기(직접 바인딩). [역사]
 
 **(b) 인프라/플랫폼 앱 (`*.modfolio.io`)** — **기존 서브도메인 그대로 유지**(변경 안 함):
 - Landing = `<sub>.modfolio.io` (admin·dev·on·axiom·studio·pay·docs·press·ls·works…)

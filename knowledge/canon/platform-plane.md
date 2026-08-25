@@ -142,7 +142,7 @@ universe 는 세 평면으로 분리된다. 이 분리가 "GHA·외부 SaaS 의�
 string[]`(계약 이벤트 event_type 목록). 규칙:
 
 - **정직 선언**: webhook 핸들러/queue subscriber 가 **실존할 때만** 선언한다. 의도만으로 선언하면
-  gap 리포트가 거짓 green 이 된다 (ecosystem 자신도 동일 — platform.* consumer 를 아직 미배선이라
+  gap 리포트가 거짓 green 이 된다 (ecosystem 자신도 동일 — platform.* consumer 를 아직 미배선이라 (실측 2026-08-25 — 계약만 있고 consumer 핸들러 0건)
   선언하지 않음).
 - **수집(hub-side)**: ecosystem 이 host-sibling layout 에서 각 repo 의 manifest 를 read-only 스캔 —
   CLI `bun run event-wiring`(리포트) / `--json`, MCP `event_wiring_gaps`(declared 인자 생략 시 자동

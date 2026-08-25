@@ -15,7 +15,7 @@ related_rules: [contracts]
 
 ## 한 줄
 
-`@modfolio/contracts/webhook` 가 웹훅 **서명 검증 + 파싱 + 타입 디스패치**를 제공한다 — 소비 앱은 핸들러 로직만 쓰면 된다(HMAC 손구현 금지). 이게 없어서 24개 intended 이벤트 흐름이 대부분 미배선이었다(`event_wiring_gaps`, `wiring.ts` "siblings hand-rolled off-contract").
+`@modfolio/contracts/webhook` 가 웹훅 **서명 검증 + 파싱 + 타입 디스패치**를 제공한다 — 소비 앱은 핸들러 로직만 쓰면 된다(HMAC 손구현 금지). 이게 없어서 24개 intended 이벤트 흐름이 대부분 미배선이었다(`event_wiring_gaps`, `wiring.ts` "siblings hand-rolled off-contract"). [분류]
 
 ## 소비자 (consumer) — 3줄 프론트도어
 
