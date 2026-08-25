@@ -3,6 +3,7 @@ tier: reference
 version: 1.0.0
 status: active
 applicability: always
+consumers: [new-app, plan, atlas, ops]
 sync_to_siblings: true
 owner: modfolio-ecosystem
 adr: ADR-017

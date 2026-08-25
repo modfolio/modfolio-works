@@ -7,6 +7,7 @@ changelog: ["1.0.0 (2026-07-05): 초판 — @modfolio/contracts/webhook 소비/�
 sync_to_siblings: true
 applicability: always
 consumers: [all-agents, api, contracts, sso-integrate]
+related_adr: [ADR-005]
 related_canon: [platform-plane, visualize-architecture, billing-architecture]
 related_rules: [contracts]
 ---
