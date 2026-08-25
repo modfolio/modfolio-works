@@ -71,6 +71,37 @@ export type QuoteMode =
  * 리터럴인 것은 작은따옴표 안뿐이다. 하나의 «인용부 제거» 로 뭉치면 오탐을 고치면서
  * 검출력이 함께 지워진다(대조쌍에 진짜 결함을 같이 넣지 않았으면 못 봤을 자리다).
  */
+/**
+ * `$( … )` 안을 같은 길이의 공백으로 지운다 — **명령 치환 안의 파이프는 그 세그먼트의
+ * 파이프라인이 아니다.**
+ *
+ * ⚠ 실측 2026-08-25 (네 번째 오탐):
+ * `timeout 300 bun run $S > /tmp/x-$(echo $S | tr ':' '-').log 2>&1; echo "exit=$?"`
+ * 가 막혔다. `$?` 는 `timeout` 의 종료코드이고, 파이프는 **파일명을 만드는 치환 안**에
+ * 있었다. 중첩을 세어 짝을 맞춘다.
+ */
+export function stripCommandSubstitution(cmd: string): string {
+	let out = "";
+	let depth = 0;
+	for (let i = 0; i < cmd.length; i += 1) {
+		const c = cmd[i] as string;
+		if (depth === 0 && c === "$" && cmd[i + 1] === "(") {
+			depth = 1;
+			out += "  ";
+			i += 1;
+			continue;
+		}
+		if (depth > 0) {
+			if (c === "(") depth += 1;
+			else if (c === ")") depth -= 1;
+			out += " ";
+			continue;
+		}
+		out += c;
+	}
+	return out;
+}
+
 export function stripQuoted(cmd: string, mode: QuoteMode = "both"): string {
 	let out = "";
 	let quote: string | null = null;
@@ -93,8 +124,20 @@ export function stripQuoted(cmd: string, mode: QuoteMode = "both"): string {
 				out += c;
 				continue;
 			}
-			// `single` 모드에서는 큰따옴표 **안의 내용을 보존**한다.
-			out += mode === "both" || quote === "'" ? " " : c;
+			/*
+			 * `single` 모드에서는 큰따옴표 **안의 내용을 보존**한다 — `$?` 는 거기서도
+			 * 확장되기 때문이다.
+			 *
+			 * ⚠ **단 줄바꿈은 예외다.** 줄바꿈은 확장이 아니라 **셸 문법**(세그먼트 경계)
+			 * 이라 모드에 따라 다르게 다루면 두 마스킹본의 세그먼트 수가 어긋나고,
+			 * `pipeExitTrap` 이 그때 `return false` 로 **판정을 통째로 끈다.**
+			 *
+			 * 실측 2026-08-25: 여러 줄 커밋 메시지를 낀
+			 * `… && git push -q 2>&1 | tail -2; echo "push exit=$?"` 가 **그냥 통과했다.**
+			 * 즉 이 가드는 내가 쓰는 명령의 큰 부류에서 조용히 꺼져 있었다 —
+			 * 「판정 불능을 통과로 접는다」의 교과서적 형태다.
+			 */
+			out += mode === "both" || quote === "'" || c === "\n" ? " " : c;
 			continue;
 		}
 		out += c;
@@ -150,8 +193,11 @@ function hasTopLevelPipe(seg: string): boolean {
 function pipeExitTrap(cmd: string): boolean {
 	if (/pipefail|PIPESTATUS|pipestatus/.test(cmd)) return false;
 	// 파이프는 **셸 문법** → 두 인용부 모두 밖. `$?` 는 **확장** → 작은따옴표만 밖.
-	const forPipe = segments(stripQuoted(cmd, "both"));
-	const forQuery = segments(stripQuoted(cmd, "single"));
+	// 명령 치환 안은 **그 세그먼트의 파이프라인이 아니다** — 두 축 모두에서 지운다.
+	const forPipe = segments(stripCommandSubstitution(stripQuoted(cmd, "both")));
+	const forQuery = segments(
+		stripCommandSubstitution(stripQuoted(cmd, "single")),
+	);
 	// 마스킹 두 벌의 세그먼트 수가 다르면 짝을 못 맞춘다 — 판정 불능이므로 물지 않는다.
 	if (forPipe.length !== forQuery.length) return false;
 	for (let i = 1; i < forQuery.length; i += 1) {
