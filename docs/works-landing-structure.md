@@ -74,7 +74,7 @@ apps/landing/src/
 **데스크톱 네비게이션 바:**
 - 로고: **Modfolio Works** → `/`
 - 메뉴: **앱** (mega menu 트리거) · **소개** → `/about` · **FAQ** → `/faq`
-- CTA: **시작하기** → `https://edu.modfolio.io`
+- CTA: **시작하기** → `https://campus.modfolio.io`
 
 **Mega Menu — Education:**
 | 아이콘 | 이름 | 설명 | 링크 |
@@ -145,7 +145,7 @@ apps/landing/src/
 >
 > Works가 하나로 연결합니다.
 >
-> [시작하기] → edu.modfolio.io
+> [시작하기] → campus.modfolio.io
 > [앱 둘러보기] → /apps
 
 #### AppHighlight
@@ -171,7 +171,7 @@ apps/landing/src/
 >
 > Modfolio Connect 계정으로 1분 안에 시작
 >
-> [시작하기] → edu.modfolio.io
+> [시작하기] → campus.modfolio.io
 
 ---
 
@@ -273,7 +273,7 @@ apps/landing/src/
 
 | 대상 | URL | 사용 위치 |
 |------|-----|----------|
-| 시작하기 (CTA) | https://edu.modfolio.io | Hero, Nav, CTA, 모바일 드로어 |
+| 시작하기 (CTA) | https://campus.modfolio.io | Hero, Nav, CTA, 모바일 드로어 |
 | Naviaca 랜딩 | https://naviaca.com | Nav, Footer |
 | Naviaca 앱 | https://app.naviaca.com | /apps 페이지 |
 | GistCore 랜딩 | https://gistcore.com | Nav, Footer |

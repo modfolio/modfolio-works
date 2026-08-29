@@ -22,11 +22,14 @@
 		"ts7:ready": "bun node_modules/@modfolio/harness/scripts/ci/ts7-readiness.ts",
 		"verify:frozen-lockfile": "bun node_modules/@modfolio/harness/scripts/ci/frozen-lockfile.ts",
 		"verify:no-nul": "bun node_modules/@modfolio/harness/scripts/ci/no-nul-bytes.ts",
-		"heavy": "bash node_modules/@modfolio/harness/scripts/ops/heavy.sh"
+		"heavy": "bash node_modules/@modfolio/harness/scripts/ops/heavy.sh",
+		"verify:supply-chain": "bun node_modules/@modfolio/harness/scripts/ci/supply-chain-gate.ts",
+		"atlas:adopt-plainly": "bun node_modules/@modfolio/harness/scripts/atlas/adopt-plainly.ts",
+		"verify:bunx-leak": "bun node_modules/@modfolio/harness/scripts/ci/bunx-leak-gate.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.2",
-		"@modfolio/harness": "^3.63.0",
+		"@modfolio/harness": "^3.79.0",
 		"typescript": "^6.0.3",
 		"wrangler": "~4.115.0"
 	},

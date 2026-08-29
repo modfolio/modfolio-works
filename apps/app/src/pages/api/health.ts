@@ -10,7 +10,7 @@ const SLOW_THRESHOLD_MS = 2500;
 /** How long the aggregated result is cached at the edge (seconds). */
 const CACHE_TTL_SECONDS = 45;
 /** Synthetic, stable key for the Cloudflare Cache API entry. */
-const CACHE_KEY = "https://edu.modfolio.io/__health-cache/v1";
+const CACHE_KEY = "https://campus.modfolio.io/__health-cache/v1";
 
 /**
  * Probe a single origin. Resolves to a {@link HealthResult} — never throws, so one
