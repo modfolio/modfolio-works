@@ -139,11 +139,74 @@ granularity 로 **내려서** 유지한다.
 | 마감·일정 알림 | atelier-and-folio | parts |
 | 학습 기록·포트폴리오 | atelier-and-folio | claimed |
 | 검색(전문) | modfolio-docs | parts |
+| 온보딩·첫 실행 | modfolio-ecosystem | parts |
+| 파일 업로드·저장 | | open |
+| 빈 상태·에러 표면 | | open |
+| 제품 분석(퍼널·리텐션) | | open |
+| 고객 지원·문의 | modfolio-ecosystem | parts |
+| 동의 스코프 발급 | | open |
+| 수집 동의 게이트 | modfolio | parts |
+| 약관·법적 고지 | modfolio-ecosystem | parts |
+| 환불·취소 | | open |
+| 구독 관리 | | open |
+| 알림 설정·선호 | | open |
 <!-- ledger:end -->
 
 <!-- totals:begin -->
-역량 52 · parts 44 · claimed 5 · open 3 · 주인 repo 27
+역량 63 · parts 48 · claimed 5 · open 10 · 주인 repo 27
 <!-- totals:end -->
+
+## 제품 표면 축 10 — 2026-08-30 신설 (전부 `open`)
+
+2026-08-29 실측: **앱을 만들 때 반드시 필요한 14개 키워드가 이 원장에 0 언급**이었다
+(온보딩·업로드·빈 상태·퍼널·리텐션·지원·문의·동의·약관·환불·취소·구독관리·알림설정·제품분석).
+중복을 합치면 **10축**이다.
+
+> ### 원장이 «우리가 무엇을 할 수 있나» 로 짜였고 «앱이 무엇을 필요로 하나» 로 짜이지 않았다.
+> 기존 52축은 기술 분류학(문서변환·OCR·RAG·폰트·RPA)이고, 앱의 필요는 제품 표면에서 온다.
+
+⚠ **`consent` 는 `tier: law` 인데 이 원장에 칸조차 없었다**(`knowledge-sovereignty`:
+*"consent 는 게이트다"*). 법이 있고, 부품이 없고, 자리도 없었다.
+계약(`@modfolio/contracts/events/user-knowledge.ts`)에는 `corpus.personal`·`corpus.behavioral`·
+`corpus.sensitive` 가 정의돼 있고 *"it is the gate"* 라고 적혀 있는데,
+**connect 는 `user_knowledge` 언급 0건**이고 발급 스코프에 `corpus.*` 가 없다(2026-08-30 실측).
+
+### 주인 — 전부 비어 있다. 그리고 그것이 정확하다
+
+**아무 repo 도 아직 주장하지 않았다.** 허브가 `claimed` 로 적으면 그 repo 를 대신해
+주장하는 것이고 fact-ownership 위반이다(ADR-014). 아래는 **허브 관측이지 배정이 아니다** —
+각 repo 가 스스로 판정하고 `platform-adapter.json` 에 선언할 때 원장이 따라간다.
+
+| 축 | 허브가 보는 후보 | atlas 법칙 2 대입 |
+|---|---|---|
+| ~~파일 업로드·저장~~ | ~~`modfolio-infra`~~ → **후보 철회** | ⚠ 2026-08-30 `plan:build` 실측: **이미 `@modfolio/document-convert`(munseo)가 업로드 판정을 한다.** 원장은 「R2 를 가진 repo」로 후보를 봤는데 atlas 법칙 2 는 **소비**를 본다 — 실제 소비는 munseo 다. 후보를 지운다 |
+| 빈 상태·에러 표면 | `modfolio-design` | 디자인 시스템이 그 repo 의 제품 |
+| 제품 분석(퍼널·리텐션) | `modfolio` | Data Hub 가 그 repo 의 제품 |
+| 동의 **스코프 발급** | `modfolio-connect` | 신원이 그 repo 의 제품 · 스코프 발급은 신원의 일부 |
+| **수집 동의 게이트** | `modfolio` ✅ | ⚠ 2026-08-30 에 **갈랐다**. 덩어리일 때는 후보가 connect 하나였는데, `event-wiring` 실측이 ingest 소비자를 **`modfolio`(Data Hub)** 로 짚었다 — 계약이 *"rejected **at ingest**"* 라고 적으므로 게이트는 수집이 일어나는 곳에 산다. 갈라 놓으니 **한쪽은 답이 나오고 진짜 미정은 하나**다(법칙 3 → 2 순서) |
+| 환불·취소 · 구독 관리 | `modfolio-pay` | 결제가 그 repo 의 제품 |
+| 알림 설정·선호 | `modfolio-notify` | 알림이 그 repo 의 제품 |
+| **온보딩 · 고객 지원·문의 · 약관·법적 고지** | `modfolio-ecosystem` | **§2-bis** — 어느 제품도 아니라 관제탑이 **마지막 수단으로** 소유 (2026-08-30 채택) |
+
+> ### ⚠ 후보를 정할 때 「가진 것」이 아니라 「쓰는 것」을 본다
+> 2026-08-30 에 「파일 업로드·저장」 후보를 `modfolio-infra` 로 적었다 — R2 와 호스팅을
+> 가졌으니까. 그런데 `plan:build` 로 물어보니 **`@modfolio/document-convert`(munseo)가
+> 이미 업로드 판정을 하고 있었다.** atlas 법칙 2 는 *"소유 = **최대 소비** AND 그것이 그
+> repo 의 제품"* 이다 — 「인프라를 가졌다」는 소비가 아니다.
+> **부품을 짓기 전에 `plan:build` 로 묻는 것이 이 오류를 잡았다.**
+
+> ### ✅ Atlas §2-bis — 2026-08-30 채택 (D23)
+> 법칙 2 는 *"소유 = 최대 소비 AND 그것이 그 repo 의 «제품»"* 인데 **온보딩·고객지원·
+> 약관은 어느 repo 의 제품도 아니었다.** 두 항을 다 요구하면 답이 «없음» 이 되고,
+> 그러면 아무도 안 만들거나 **모두가 각자 만든다.**
+>
+> §2-bis 는 새 규칙이 아니라 **하고 있던 것의 이름**이다 — 게이트를 배선하자
+> `feature-flags`·`quota-verdict` 가 **이미 그 상태로** 허브에 있는 것이 잡혔다.
+> 조건 셋(순수 판단 · 도메인 지식 0 · 제품 repo 를 고를 수 없음)을 전부 만족해야 하고,
+> **기각한 후보를 `crossCutting.consideredRepos` 에 적어야** 선언이 받아들여진다 —
+> 그 판정을 허브가 자기에 대해 내리기 때문이다.
+>
+> 상한 6종에서 `atlas:gate` 가 조건 3의 전수 재판정을 요구한다. 현재 **5종**.
 
 ⚠ 이 총계는 게이트가 표와 대조한다. 손으로 맞추지 않는다 — `release:gate` 가 자기 총계를
 대조하지 않아 **174 로 stale 했던** 전례가 이 저장소에 있다(2026-08-08).

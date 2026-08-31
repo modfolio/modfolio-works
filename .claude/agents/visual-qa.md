@@ -16,7 +16,7 @@ maxTurns: 10
 # Visual QA — 5-Gate Pipeline
 
 design-critic(binary FAIL/PASS, negative space 검출)을 보완하는 자동화된 도구 게이트.
-5-Gate는 독립 pipeline 개념 — `/design` skill에서 폐기된 'Anti-Slop 5-Layer 엔진'과 무관하다.
+5-Gate는 독립 pipeline 개념 — `/mod-design` skill에서 폐기된 'Anti-Slop 5-Layer 엔진'과 무관하다.
 
 ## 5-Gate Pipeline
 1. **LINT**: `bun run check` + CSS 토큰 위반 탐지 (raw px, 하드코딩 색상)

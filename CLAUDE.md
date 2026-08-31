@@ -52,7 +52,6 @@
 | Atelier and Folio | 0.2.0-folio-core | active |
 | PD Guide | 0.1.0 | active |
 | DLE Desk | 1.0.0 | active |
-| Muje HWP | 0.1.0 | landing |
 
 ## 이 repo 실측 (pull 시점 로컬 판독 — hub 미경유)
 

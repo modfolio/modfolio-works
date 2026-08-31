@@ -1,7 +1,7 @@
 ---
 title: Knowledge Sovereignty — 지식은 사용자 소유, consent 는 게이트다
-version: 1.0.0
-last_updated: 2026-07-26
+version: 1.1.0
+last_updated: 2026-08-30
 source: [2026-07-26 오너 세션 "통합된 지식, 커스터마이징된 개인의 말뭉치, 영역에 따른 지식을 쌓아나가는 기반", Modfolio_Universe_Architecture_Reference_v1.1 §5.2·§9 (의도 SoT), visualize-architecture.md P0 5원칙, contracts/events/user-knowledge.ts, 실측 2026-07-26 (RAG 인덱스 허브 단독·sibling knowledge 미색인·Connect 에 corpus consent scope 부재)]
 sync_to_siblings: true
 tier: law
@@ -20,6 +20,32 @@ related_rules: [lethal-trifecta, secrets-policy]
 지식 자산은 universe 의 장기 목표지만, **신뢰 경계를 한 번 넘으면 되돌릴 수 없다.** 삭제 요청이 임베딩·그래프·집계·배포된 데이터셋까지 닿지 못하는 상태가 되면 그때는 사과로 해결되지 않는다. 그래서 이 축은 속도보다 우선한다(참조문서 §0.4 판단 우선순위 1).
 
 `tier` 계약은 동일하다 — **무엇(what)은 예외 없음, 언제·어떻게(when/how)는 repo 자율.**
+
+### ⚠ 단 하나의 예외 — consent 축은 **when 도 고정된다** (오너 결정 2026-08-30)
+
+> *"consent 만 예외로 기한 고정"*
+
+**왜 이 축만인가.** 다른 법칙은 늦게 지켜도 늦게 좋아진다 — 부품을 나중에 옮겨도
+그 사이에 잃는 것은 시간뿐이다. **consent 는 반대다.** 스코프 없이 들어온 데이터는
+「나중에 동의를 받아」 소급 정당화되지 않는다. 늦은 만큼 **되돌릴 수 없는 것이
+쌓이고**, 그 상태에서 정보주체가 열람을 요구하면 사과로 해결되지 않는다.
+
+즉 여기서 `when` 을 repo 자율로 두면 **what 도 지켜지지 않는다** — 「언젠가 붙인다」는
+「안 붙인다」와 관측상 구분되지 않기 때문이다.
+
+**고정되는 선은 날짜가 아니라 사건이다:**
+
+> **수집을 시작하기 전에 그 화면에 동의·방침이 서 있어야 한다.**
+
+날짜가 아닌 이유: 달력은 **조용히 지나간다.** 아무것도 실패하지 않고 아무도 못
+알아챈다. 「수집 전」은 지나갈 수가 없다 — 수집이 시작되는 순간이 그 선이고,
+그 순간은 배포·코드·로그에 남는다.
+
+⚠ **이미 받고 있는 곳에는 이 선이 이미 지나갔다.** 그쪽은 별도의 기한이 필요하고,
+그것은 오너가 정한다(`knowledge/DECISIONS.md` D18).
+
+⚠ 이 예외는 **consent 축에만** 적용된다. 다른 법칙의 `when` 을 고정하는 근거로
+인용하지 않는다 — 이 문단이 드는 이유(소급 정당화 불가)가 그쪽에는 없다.
 
 ## 1. 데이터 5분류 — 섞지 않는다
 
@@ -100,5 +126,21 @@ Operational → Personal → (명시적 기여) → Domain → Collective → Da
 
 ## 미결 (오너 결정 대기)
 
-1. **Connect 의 `corpus.*` consent scope** — 계약(`user_knowledge.*`)은 이미 있으나 **Connect 에 데이터수집 스코프/클레임이 없다.** 이것이 개인 말뭉치의 유일한 실질 차단 지점이다 (connect 자율 과제, `feedback/modfolio-connect/` 로 의견 발신)
+1. ~~**Connect 의 `corpus.*` consent scope**~~ — **✅ 해소 2026-08-30.** connect 가
+   다섯 스코프를 발급·열람·철회하고 `corpus_scopes` 클레임을 토큰에 싣는다.
+   라이브 실측: `login.modfolio.io/.well-known/openid-configuration` 의
+   `scopes_supported` 에 `corpus.personal`·`corpus.behavioral`·`corpus.voice`·
+   `corpus.sensitive`·`corpus.commerce`, `claims_supported` 에 `corpus_scopes`.
+   D1 V75 적용(테이블 직접 조회 확인). 동의 화면은 **항목별 체크박스**다 —
+   §3 의 「일괄 동의 금지」가 화면까지 닿았다.
+   ⚠ **남은 것은 소비 층이고, 그 모양이 예상보다 나쁘다** (실측 2026-08-30):
+   `user_knowledge.collected` 를 **발행하는 앱은 둘**인데
+   (`gistcore` → `corpus.voice`, `modfolio-press` → `corpus.commerce`)
+   그 스코프를 connect 동의 화면에서 **요청하는 앱은 0** 이다.
+   즉 지금은 **발행 → 집계기(ingest) 게이트**로만 막힌다 — 그 설계 자체는 §3 정합이다
+   (스코프 미보유 = 거부). 그러나 **아무도 요청하지 않으므로 아무도 허용된 적이 없고**,
+   그 축은 「거부되고 있다」와 「아무 일도 안 일어난다」가 관측상 같다.
+   ⓘ gistcore 의 소스 주석이 아직 *"Connect has no data-collection scope yet"* 이라고
+   적고 있다 — 오늘 생겼으므로 **낡은 문장**이다. 낡은 「없다」가 남의 저장소에 없는
+   작업을 만든 사례가 이미 있다(2026-08-30 hangul).
 2. **per-user 격리 방식** — per-user collection(권장, 구조적 불가능) vs 공유 + 서버측 필터

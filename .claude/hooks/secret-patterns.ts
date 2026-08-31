@@ -37,6 +37,11 @@ export interface SecretPattern {
  * | 셸/템플릿 보간 | `postgresql://${PG_USER:-x}:${PG_PASSWORD}@db` | 값이 여기 없다 |
  * | 로컬 개발 관례 | `postgres://postgres:postgres@127.0.0.1` | user==pw, 로컬 |
  * | 문서 예시 | `postgresql://user:password@host:port/db` | 문서가 하는 일 |
+ * | **비번을 안 쓰는 종점** | `postgres://app_pdgd:unused@mfdb-api…` | 토큰 인증이라 그 자리가 **의미 없다** |
+ *
+ * 2026-08-26 orbit 서베이가 같은 클래스를 한 번 더 냈다: `unused`. mfdb-api 는 **서명 토큰**
+ * 인증이라 DSN 의 비밀번호 자리가 실제로 쓰이지 않고, pdgd 는 주석 예시에 그대로 `unused` 를
+ * 적었다. 자리표시 목록에 그 낱말이 없어서 **P0** 가 됐다.
  *
  * 진짜 하나 없이 P0 5건이면 그 신호는 **읽히지 않는다** — 그리고 그때 진짜 하나가 섞이면
  * 같이 안 읽힌다. 오탐은 검출력의 반대편이 아니라 **검출력을 깎는 쪽**이다.
@@ -51,7 +56,7 @@ function looksLikeCredentialPlaceholder(user: string, pw: string): boolean {
 	if (/^[A-Z][A-Z0-9_]*$/.test(pw)) return true;
 	// 흔한 자리표시 단어.
 	const PLACEHOLDER =
-		/^(password|passwd|pass|pwd|secret|changeme|change_me|user|username|postgres|mysql|mongo|redis|root|admin|example|test|dummy|placeholder|todo|xxx+)$/i;
+		/^(password|passwd|pass|pwd|secret|changeme|change_me|user|username|postgres|mysql|mongo|redis|root|admin|example|test|dummy|placeholder|todo|xxx+|unused|none|null|na|n_a|ignored|notused|not_used)$/i;
 	if (PLACEHOLDER.test(pw)) return true;
 	// 로컬 개발 관례 — 사용자명과 비밀번호가 같다(`modfolio:modfolio`).
 	if (user.length > 0 && user.toLowerCase() === pw.toLowerCase()) return true;

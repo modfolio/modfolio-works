@@ -39,7 +39,8 @@ export interface MeasurementFinding {
 		| "pipe-exit"
 		| "zsh-pipestatus"
 		| "rg-bundled-r"
-		| "pgrep-self-count";
+		| "pgrep-self-count"
+		| "zsh-word-split";
 	readonly why: string;
 	readonly fix: string;
 }
@@ -285,6 +286,53 @@ function pgrepSelfCount(cmd: string): boolean {
 	);
 }
 
+/**
+ * ⑤ `X=$(...)` 로 담아 놓고 `for y in $X` — **zsh 는 스칼라를 쪼개지 않는다.**
+ *
+ * 실측 (zsh 5.9, 2026-08-30):
+ * ```
+ *   v=$'a\nb\nc'
+ *   for x in $v            → 1 회   ✗ 안 쪼개진다
+ *   for x in $(printf …)   → 3 회   ✓ 명령 치환은 쪼개진다
+ *   for x in ${=v}         → 3 회   ✓ 명시적 split
+ *   arr=(a b c); for x in $arr → 3 회 ✓ 배열은 쪼개진다
+ * ```
+ *
+ * bash 습관으로 쓰면 **루프가 1회만 돌고 조용히 틀린 답이 나온다.** 2026-08-29 하루에
+ * 세 번 밟았고 셋 다 결론이 반대로 나올 뻔했다:
+ *   ① 심볼 조회가 32행 전부 「1/6」  → 「거의 전부 기존 구현 있음」
+ *   ② 판별자가 32종 중 22종 「부분 추출」 → 「절반이 추출」
+ *   ③ 링크 스윕이 **「0건」 거짓 초록**   → 죽은 링크 13개를 놓칠 뻔
+ *
+ * ⚠ **배열이면 정상이다**(`arr=(a b c)`). 명령문만 보고 스칼라인지 배열인지 가를 수
+ * 없으므로 **같은 명령 안에서 `$(...)`·`$'...'`·백틱으로 할당된 것**만 문다.
+ * 그렇게 할당된 것은 반드시 스칼라 문자열이다 — 오탐이 원리적으로 없다.
+ * (`set -- $X` 도 같은 축이다 — 위치 인자를 쪼개려는 것이므로.)
+ */
+function zshWordSplit(cmd: string): boolean {
+	const bare = stripQuoted(cmd, "single");
+	// 같은 명령 안에서 «명령 치환/ANSI-C 인용» 으로 할당된 이름들
+	const assigned = new Set<string>();
+	for (const m of bare.matchAll(
+		/(^|[;&|(\s])([A-Za-z_][A-Za-z0-9_]*)=(?:"?\$\(|\$'|`)/g,
+	)) {
+		const name = m[2];
+		if (name) assigned.add(name);
+	}
+	if (assigned.size === 0) return false;
+	for (const name of assigned) {
+		// for y in $NAME / ${NAME}   ·  set -- $NAME
+		const forRe = new RegExp(
+			`\\bfor\\s+[A-Za-z_][A-Za-z0-9_]*\\s+in\\s+[^;&\n]*\\$\\{?${name}\\}?(?![A-Za-z0-9_({=+:\\[])`,
+		);
+		const setRe = new RegExp(
+			`\\bset\\s+--\\s+\\$\\{?${name}\\}?(?![A-Za-z0-9_({=+:\\[])`,
+		);
+		if (forRe.test(bare) || setRe.test(bare)) return true;
+	}
+	return false;
+}
+
 /** 순수 판단 — I/O 없음. */
 export function judgeMeasurement(raw: string): MeasurementFinding[] {
 	if (!raw || ESCAPE.test(raw)) return [];
@@ -317,6 +365,13 @@ export function judgeMeasurement(raw: string): MeasurementFinding[] {
 			id: "pgrep-self-count",
 			why: "`pgrep -c -f` 는 **그 패턴을 담은 이 셸 자신**을 함께 센다 — 「0인가」가 영원히 거짓이 된다.",
 			fix: "PID 로 기다려라(`kill -0 $PID`). 굳이 세려면 `/proc/<pid>/cmdline` 을 열어 자기(`$$`)를 빼고 확인한다.",
+		});
+	}
+	if (zshWordSplit(cmd)) {
+		out.push({
+			id: "zsh-word-split",
+			why: "zsh 는 `$VAR` 를 **워드 스플리팅 하지 않는다** — `X=$(...)` 를 `for y in $X` 로 돌리면 루프가 **1회만** 돈다(실측 zsh 5.9).",
+			fix: "`printf '%s\\n' \"$X\" | while IFS= read -r y; do …` · 또는 `for y in ${=X}` · 또는 애초에 `$(...)` 를 for 목록에 직접 둔다(명령 치환은 쪼개진다).",
 		});
 	}
 	return out;
