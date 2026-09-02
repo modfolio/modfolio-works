@@ -45,7 +45,7 @@ authoritative 표와 불일치). v2.0.0 에서 중복 표를 제거하고 이 �
 ## 금지 패턴
 
 - **`CLAUDE_CODE_EFFORT_LEVEL` env 설정** — env 는 최상위 우선순위라 전 subagent 의 frontmatter effort 를 덮어쓴다(fleet-wide overthinking + `ultracode` 비활성). 세션 기본값은 `.claude/settings.json` 의 `effortLevel` 로 준다. 실사건 = `opus-4-7-effort-policy.md` §환경변수 정책
-- **settings 파일에 `effortLevel: "max"`** — 무효값이다(settings 는 `low|medium|high|xhigh` 만 받는다). `max` 는 `/effort max` 세션 토글 전용
+- **settings 파일에 `effortLevel: "max"`** — 2.1.258 실측 **수용된다**(2026-09-02, 허브 `-p` 세션 + pdgd 대화형). 종전 «무효값·거부» 서술은 낡았다. 그래도 기본은 `xhigh`: `max` 는 ultracode 와 양립하지 않고, 상시 max 는 «근거 있는 상향» 원칙과 어긋난다. `max` 는 `/effort max` 세션 토글로
 - **`[1m]` 접미사** — Opus 5·Sonnet 5 는 1M 이 기본이자 유일한 컨텍스트 창이라 접미사가 무의미하고, Claude Code 가 subagent spawn 시 strip 하거나 실패시킨다
 - **근거 없는 `max`** — max 는 "비가역·expensive-if-wrong" 카테고리다. 이유를 `_effort_change_note` 에 남기지 않을 거면 xhigh
 - **Haiku agent 에 `xhigh`/`max`** — Haiku 4.5 는 지원하지 않는다(가장 가까운 하위 레벨로 떨어진다)

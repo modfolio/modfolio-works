@@ -389,7 +389,7 @@ Astro node adapter, vite SSR. CF Workers 배포는 번들이 단일 파일이라
 - **Browser Run** (Browser Rendering 리브랜드): 동시 세션 30→120개. Live View 공유 시 PII 노출 주의
 - **Workflows V2 limits**: 50K concurrent, 2M queued, 300/sec creation. 기존 Queue 패턴과 중복 투자 주의 — 앱별 ADR
 - **`[1m]` context variant**: Claude Opus 4.8/4.7/4.6 모두 1M 지원 (`/model claude-opus-4-8[1m]`). 새 토크나이저가 최대 +35% 토큰 소비 가능 — 실효 비용 관찰 필요
-- **`effortLevel: "max"` 가 안 먹는 것처럼 보이는 현상** (Issue #30726, #40093): **원인은 버그가 아니라 무효값일 가능성이 높다** — Claude Code 문서상 settings 파일의 `effortLevel` 은 `low|medium|high|xhigh` 만 받는다. `max` 와 `ultracode` 는 **세션 전용**(`/effort max`, `--effort`)이라 settings 에 적으면 무시된다. ⚠ **구 완화책이던 "frontmatter + env 이중 설정"은 철회됨** — env 는 최상위 우선순위라 전 subagent 의 보정된 frontmatter effort 를 덮어쓴다(정확히 우리가 피하려던 overthinking). 올바른 처방: settings 는 `xhigh`, `max` 는 `/effort max` 세션 토글, env 는 미설정. canon `opus-4-7-effort-policy.md` v2.0.0
+- **`effortLevel: "max"` 가 안 먹는 것처럼 보이는 현상** (Issue #30726, #40093): **⚠ 2026-09-02 정정 — 2.1.258 에서 settings `max` 는 수용된다**(허브 `-p` 세션 전사록 `effort: max` + pdgd 대화형 관측, 2건). «무효값» 가설은 낡았다 — 그 현상이 있었다면 원인은 다른 곳이다. `ultracode` 만 세션 전용. ⚠ **구 완화책이던 "frontmatter + env 이중 설정"은 철회됨** — env 는 최상위 우선순위라 전 subagent 의 보정된 frontmatter effort 를 덮어쓴다(정확히 우리가 피하려던 overthinking). 올바른 처방: settings 는 `xhigh`, `max` 는 `/effort max` 세션 토글, env 는 미설정. canon `opus-4-7-effort-policy.md` v2.0.0
 
 ## WSL 개발 워크스테이션
 

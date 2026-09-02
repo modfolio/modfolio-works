@@ -1,7 +1,7 @@
 ---
 title: Opus Effort Policy (baseline Opus 5)
-version: 2.0.0
-last_updated: 2026-07-26
+version: 2.1.0
+last_updated: 2026-09-02
 source: [knowledge/canon/opus-4-7-effort-policy.md, platform.claude.com whats-new-opus-5 (1M default·thinking 기본 ON·effort 변환률·512 토큰 캐시 하한), code.claude.com model-config (effort 우선순위·모델 기본값 high·settings 는 max 거부·ultracode·[1m] 스트립), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1), 2026-07-26 v2.0.0 (Opus 5 전환 + effort 상향 프로파일 — 오너 결정: 재작업 비용 > 토큰 비용; .mise.toml env-max 실사건 정정)]
 sync_to_siblings: true
 applicability: always
@@ -19,7 +19,7 @@ consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-a
 | 티어 | 모델 ID | Context | 용도 |
 |------|---------|---------|------|
 | Baseline | `claude-opus-5` | **1,000,000** tokens | 코딩·리뷰·아키텍처 — **전 agent 기본** |
-| Frontier (opt-in) | `claude-fable-5` | 1,000,000 tokens | 추론형 최상단 전용 (`model-escalation.md` rung-3) |
+| Frontier (opt-in) | `claude-fable-5-1` | 1,000,000 tokens | 추론형 최상단 전용 (`model-escalation.md` rung-3). 2026-09-01 출시 · 세션이 이 모델이면 `.claude/rules/fable-5-1-behavior.md` |
 | Fast | `claude-haiku-4-5-20251001` | 200,000 tokens | 검색·요약·결정적 검증 (비용 효율) |
 | Fallback | `claude-sonnet-5` | 1,000,000 tokens | 429/529·과부하 시 자동 폴백 |
 
@@ -48,6 +48,8 @@ consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-a
 - **#30726 / #40093 은 "버그"가 아닐 가능성이 높다.** Claude Code 문서: settings 파일의 `effortLevel` 은 **`low|medium|high|xhigh` 만** 받는다. `max` 와 `ultracode` 는 **세션 전용**이다. `~/.claude/settings.json` 에 `"effortLevel": "max"` 를 적으면 무효값이라 무시되고, 그게 "max 로 설정했는데 medium 으로 돈다"로 관측된다.
 - 올바른 처방: settings 는 **`xhigh`**, `max` 는 `/effort max` 또는 `--effort max` 세션 토글, env 는 **미설정**.
 - Opus 5 는 **model-default hold 가 없다** — Fable 5·Opus 4.8·4.7 은 첫 실행 시 모델 기본값을 강제로 잡고 명시 선택 전까지 유지하지만, Opus 5 는 이전에 설정한 레벨이 그대로 이어진다. 즉 settings 의 `xhigh` 가 깔끔하게 적용된다.
+- ✅ **실측 정정 (2026-09-02, Claude Code 2.1.258)**: settings `"effortLevel":"max"` 는 **수용된다.** 허브가 settings 를 `max` 로 두고 `claude -p` 세션(model `claude-opus-5`)을 띄우자 전사록에 `"effort":"max"` 가 실렸고, pdgd 는 같은 날 대화형 세션에서 같은 값을 관측했다 — **2건·두 모드**. 즉 위 «settings 는 max 를 거부한다(#30726/#40093 재해석)» 는 **낡았다**(그 재해석이 옳았던 버전이 있었는지는 재지 못했다 — 당시 버전으로 재실측하지 않음). **처방은 그대로 `xhigh`** — 이유가 바뀐다: 거부돼서가 아니라 ① `max` 는 ultracode 와 양립하지 않고 ② 전 세션 상시 max 는 rung-2 «근거 있는 상향»(`model-escalation.md` rule (b))과 어긋난다. `max` 는 여전히 세션 토글로 올린다.
+- **`max` 와 `ultracode` 는 한 세션에 같이 켜지지 않는다** (pdgd 2026-09-02 실측 — CLI 문자열 *"ultracode needs xhigh"* · ultracode 가동 알림 0건). ultracode 를 쓰려면 세션은 `xhigh`.
 
 ## 환경변수 정책 (전역 max 금지)
 

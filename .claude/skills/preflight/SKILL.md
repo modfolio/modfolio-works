@@ -16,14 +16,14 @@ user-invocable: true
 6. **환경 변수** — athsra 주입 경로 확인(`athsra doctor`). ⚠ **빈/부재 `.env` 는 정상이고 예상된 상태다** — athsra 는 runtime 주입이라 시크릿이 디스크에 남지 않는다. 빈 `.env` 를 "시크릿 누락 → 사용자에게 로그인 요청" 으로 결론짓지 않는다(`.claude/rules/secrets-policy.md` §athsra runtime-injection). 순서: 세션 env(`process.env.<KEY>`) → `athsra run <repo> -- <cmd>` → `athsra get <repo> <KEY>`. "인증 필요" 결론은 `athsra doctor` 가 실제로 토큰/세션 부재를 보고할 때만. Doppler/dotenvx 는 폐기(2026-04-25 / 2026-05-02)
 7. **테스트** — `bun run test` 또는 `bun run test:unit` 실행
 8. **Claude Code 환경** — `claude --version` ≥ v2.1.203 (`ultracode` 지원), `CLAUDE_CODE_EFFORT_LEVEL` 이 **설정돼 있지 않은지** 확인 — 설정돼 있으면 agent frontmatter effort 가 전부 무효화되므로 WARN (canon `opus-4-7-effort-policy.md` v2.0.0 §환경변수 정책). 세션 기본값은 `.claude/settings.json` 의 `effortLevel` 로 준다
-9. **`effortLevel` 값이 유효한가** — settings 파일은 `low|medium|high|xhigh` **만** 받는다. `max`·`ultracode` 는 **세션 전용**이라 settings 에 적으면 **조용히 무시되고** 모델 기본값(`high`)으로 떨어진다 — 올린 줄 알았는데 오히려 내려간다. **프로젝트와 사용자 전역 둘 다** 본다:
+9. **`effortLevel` 값이 유효한가** — settings 파일은 `low|medium|high|xhigh|max` 를 받는다(`max` 수용은 2.1.258 실측 · 2026-09-02). `ultracode` 는 **세션 전용**. 정책 기본값은 `xhigh` — `max` 는 ultracode 와 양립하지 않고 상시 max 는 «근거 있는 상향» 원칙과 어긋나므로, `max` 가 적혀 있으면 «의도한 것인가» 를 묻는다. **프로젝트와 사용자 전역 둘 다** 본다:
 
    ```bash
    for f in .claude/settings.json .claude/settings.local.json ~/.claude/settings.json; do
      [ -f "$f" ] && node -e "
        const v=require(require('node:path').resolve('$f')).effortLevel;
-       if (v && !['low','medium','high','xhigh'].includes(v))
-         console.log('WARN $f: effortLevel=' + JSON.stringify(v) + ' 는 settings 에서 무효 → 모델 기본값으로 강등. xhigh 로.');
+       if (v && !['low','medium','high','xhigh','max'].includes(v))
+         console.log('WARN $f: effortLevel=' + JSON.stringify(v) + ' 는 알 수 없는 값 → 무시될 수 있다. xhigh 로.');
      "
    done
    ```

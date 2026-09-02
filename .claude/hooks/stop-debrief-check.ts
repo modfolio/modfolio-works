@@ -103,6 +103,28 @@ function editCount(transcript: string): number {
  */
 const SUBSTANTIVE_EDITS = 3;
 
+/**
+ * 프론티어 «가족» 정규식 — `modelTiers.frontier` 정확 목록의 보완.
+ *
+ * 종전 판정은 `transcript.includes(\`"model":"${id}"\`)` — **닫는 따옴표까지 정확 일치**라
+ * `claude-fable-5-1` 이 목록의 `claude-fable-5` 에 안 걸렸다(2026-09-02 pdgd 제보). 정확
+ * 목록은 모델이 나올 때마다 낡고, 그 사이 `frontierUsed` 는 조용히 거짓이다.
+ *
+ * ⚠ 이 리터럴은 `contracts/debrief/tiering.ts` 의 frontier 가족 정규식과 **동일해야** 한다.
+ * 훅은 멤버 repo 에 단독 파일로 배포되어 contracts 를 import 할 수 없으므로 리터럴을 두고,
+ * `scripts/hooks/tests/stop-debrief-check.test.ts` 의 동일성 테스트가 두 소스를 대조한다.
+ */
+const FRONTIER_FAMILY = /fable|mythos|gpt-5\.\d|gemini-\d+-ultra/i;
+
+/** 전사록에 실린 `"model":"…"` 값 전부 — 어떤 모델이 이 세션에서 한 번이라도 답했는가. */
+function modelsUsed(transcript: string): string[] {
+	const seen = new Set<string>();
+	for (const m of transcript.matchAll(/"model":"([^"]+)"/g)) {
+		if (m[1]) seen.add(m[1]);
+	}
+	return [...seen];
+}
+
 function frontierIds(cwd: string, ecoRoot: string | undefined): string[] {
 	const candidates = [
 		ecoRoot ? join(ecoRoot, "ecosystem.json") : undefined,
@@ -173,8 +195,11 @@ try {
 	//   escalation 비용이 아니라 **배운 것**이고, 후자는 편집 수로 결정적으로 잴 수 있다.
 	//   frontier 경로는 남긴다 — 편집이 적어도 escalation 자체가 캡처 가치를 갖는다.
 	const ids = frontierIds(cwd, findEcosystemRoot(cwd));
-	const frontierUsed =
-		ids.length > 0 && ids.some((id) => transcript.includes(`"model":"${id}"`));
+	// 정확 목록 ∪ 가족 정규식. 목록이 비어도(ecosystem.json 미발견) 가족만으로 판정한다 —
+	// 종전엔 목록이 비면 frontierUsed 가 무조건 거짓이었다.
+	const frontierUsed = modelsUsed(transcript).some(
+		(m) => ids.includes(m) || FRONTIER_FAMILY.test(m),
+	);
 	const substantive = editCount(transcript) >= SUBSTANTIVE_EDITS;
 	if (!frontierUsed && !substantive) process.exit(0);
 

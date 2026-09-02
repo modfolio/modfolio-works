@@ -1,7 +1,7 @@
 ---
 title: Claude Code 2026 H1 Features — 권고 (Adopt/Trial/Watch)
-version: 1.2.0
-last_updated: 2026-07-02
+version: 1.3.0
+last_updated: 2026-09-02
 source: [Anthropic Claude Fable 5 announcement 2026-06-09, code.claude.com/docs/en/changelog, code.claude.com/docs/en/workflows, code.claude.com/docs/en/memory, code.claude.com/docs/en/model-config (fallback-model-chains, 2026-06-14 검증), claude-api skill (model ground truth)]
 sync_to_siblings: true
 applicability: always
@@ -16,16 +16,19 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 
 | 기능 | 분류 | 한 줄 | 영향 범위 |
 |------|------|-------|-----------|
-| **Fable 5** (`claude-fable-5`) | **Adopt / opt-in** (2026-07-02 재평가 완료) | Mythos-class(Opus 상위)·$10/$50. 무료창 6/22 종료. baseline=Opus 유지, **오너 세션 opt-in** `/model fable` 로 심층작업. | 모델 레지스트리 (`ecosystem.json`) |
+| **Fable 5.1** (`claude-fable-5-1`) | **Adopt / opt-in** (2026-09-02 갱신) | Mythos-class · $10/$50 · **cache read $0.25**(0.025× — Opus 5 $0.50 의 절반). 2026-09-01 출시. baseline=Opus 5 유지, 세션이 5.1 이면 `.claude/rules/fable-5-1-behavior.md`. Fable 5 는 legacy(동일 단가, cache read $1). | 모델 레지스트리 (`ecosystem.json`) |
 | **Dynamic Workflows** (`Workflow` tool) | **Trial (2026-07-02 G15 실사용)** | 대규모 fan-out (100+ 파일 마이그레이션·전수 감사). 토큰 폭증 주의. per-agent `model`/`effort` 로 비용 조정. | 사용자 명시 호출 시 |
 | **`/goal`** | Trial | 완료조건 기반 자율 반복. long-running 작업. | 세션 운영 |
 | **Fallback models** | **Adopt** (ecosystem 적용 v3.7.0) | 과부하(429/529) 시 최대 3 모델 자동 폴백. 가용성·복원력↑. | `.claude/settings.json.fallbackModel` |
 | **Subagent memory** (`memory:` frontmatter) | Watch | agent별 격리 메모리. 24 agent 영향 → 신중. | agent frontmatter |
 | 3-layer memory / `/cd` / Agent View | Watch | 점진 개선. 기록만. | — |
 
-> baseline 무변: 모델 = `claude-opus-4-8`(+`[1m]`)/`claude-haiku-4-5-*`, effort = max3/xhigh13/high5/medium3 (`opus-4-7-effort-policy.md`). 이 canon 은 그 위에 **추가 가능성**을 기록할 뿐 기존 calibration 을 바꾸지 않는다.
+> baseline: 모델 = `claude-opus-5`/`claude-haiku-4-5-*`, effort = max7/xhigh12/high2/medium3 (`opus-4-7-effort-policy.md` v2.0.0, 2026-07-26). ⚠ 이 각주는 2026-09-02 까지 낡은 값(`claude-opus-4-8`, max3/xhigh13/high5/medium3)을 적고 있었다. 이 canon 은 그 위에 **추가 가능성**을 기록할 뿐 기존 calibration 을 바꾸지 않는다.
 
-## 모델 — Fable 5 (Adopt / opt-in, 오너 승인 사용 — 2026-07-02 재평가 완료)
+## 모델 — Fable 5.1 / Fable 5 (Adopt / opt-in)
+
+- **Fable 5.1** `claude-fable-5-1` — **2026-09-01 출시**(retirement not sooner than 2027-09-01). Fable 5 와 같은 단가($10/$50)에 **cache read $0.25**(0.025× · Opus 5 $0.50 의 절반 — pricing 페이지 각주, Mythos 5.1 도 동일). 같은 토크나이저. 1M context · 128K output · thinking 항상 ON · 기본 effort `high`. **API 차이**(Fable 5 대비): 강제 `tool_choice`(`any`/`tool`) 400 · thinking 블록은 생성 모델에 귀속(다른 모델은 조용히 버림) · 이력 편집 시 사고 블록 무효(append-only 하네스) · 30일 보존 필수(ZDR 불가). **행동 차이**: 턴이 길다 · 위임을 억제하지 말 것 · fresh-context 검증자 · 산문 조밀·서식 절제 · 전면 재작성 경향 → 하네스 규칙 `.claude/rules/fable-5-1-behavior.md`(UNIVERSAL, 3.82.0). 세션 선택: `/model fable` 이 가리키는 모델(pdgd 2.1.258 관측) 또는 `--model claude-fable-5-1` 명시(허브 2.1.255 세션 실측). 출처: platform.claude.com/docs/en/about-claude/pricing · models/overview (2026-09-02 fetch) · claude-api 스킬 번들(2.1.255) `shared/model-migration.md`.
+- **Fable 5** 아래 원문은 2026-07-02 재평가 기록 — 단가·opt-in 정책은 5.1 에도 그대로 적용된다.
 
 - **ID** `claude-fable-5` — GA **2026-06-09**. 1M context 기본, **128K max output**, reasoning 지원, text/image/file 입력. **Mythos-class** 티어(Opus 상위) — "가장 강력한 generally-available 모델", SWE·지식업무·비전·과학연구 거의 전 벤치 SOTA. (Mythos 5 = 동일 underlying 모델, 세이프가드 해제판, Project Glasswing 한정. Fable 5 = 세이프가드 분류기 포함 — 일부 주제 쿼리는 보수적으로 **Opus 4.8 로 라우팅**, 평균 세션의 <5% 발동.)
 - **가격** $10 / $50 per MTok (input/output) = Opus 4.8($5/$25)의 **2배**. Fable=Mythos 동일가.

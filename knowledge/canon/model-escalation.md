@@ -1,8 +1,8 @@
 ---
 title: Model Escalation — task-class → effort/model 사다리 (권고)
-version: 2.0.0
-last_updated: 2026-07-26
-source: [opus-4-7-effort-policy.md v2.0.0 (effort precedence·agent 분포 baseline), platform.claude.com whats-new-opus-5 (effort 변환률·1M default·thinking 기본 ON), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1 — 에이전틱 코딩), code.claude.com model-config (effort 우선순위·모델 기본 high·ultracode), velocity-mode.md (semantic 판단은 결정적 hook 불가), ecosystem.json pricing.genai + distillation.frontierEquivalent (단가·티어 SoT), reasoning-playbooks.md (rung 사전 질의 + escalate→debrief, Inter-Cascade arXiv 2509.22984)]
+version: 2.1.0
+last_updated: 2026-09-02
+source: [opus-4-7-effort-policy.md v2.0.0 (effort precedence·agent 분포 baseline), platform.claude.com whats-new-opus-5 (effort 변환률·1M default·thinking 기본 ON), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1 — 에이전틱 코딩), code.claude.com model-config (effort 우선순위·모델 기본 high·ultracode), velocity-mode.md (semantic 판단은 결정적 hook 불가), ecosystem.json pricing.genai + distillation.frontierEquivalent (단가·티어 SoT), reasoning-playbooks.md (rung 사전 질의 + escalate→debrief, Inter-Cascade arXiv 2509.22984), platform.claude.com/docs/en/about-claude/pricing (2026-09-02 fetch — Fable 5.1·Mythos 5.1 cache read 0.025× · Sonnet 5 $2/$10 표준화), pdgd 제보 2026-09-02 (rule (e) 는 Fable 5 실측 · 5.1 미측정)]
 sync_to_siblings: true
 applicability: always
 consumers: [plan, modfolio, generate-review]
@@ -26,10 +26,10 @@ consumers: [plan, modfolio, generate-review]
 |---|---|---|---|
 | **1 (기본)** | 구조화 코딩·리뷰 — 컴포넌트·API·스키마·contract·리뷰 | **`xhigh`** · Opus 5 (`claude-opus-5`) | 코딩·agentic sweet spot. **의심되면 여기 머문다.** |
 | **2 (상향)** | expensive-if-wrong — 보안 코드·결제/돈 이동·아키텍처 tradeoff·P0 장애 triage·비가역 마이그레이션 | **`/effort max`** · Opus 5 | Opus 5 는 max 를 실제 품질로 바꾼다. **추가 비용 0**(같은 단가, 토큰만 증가). **근거 명시 필수.** |
-| **3 (프론티어)** | 추론형 최상단 — 신규 아키텍처 설계·미지 문제·GEPA reflection | `/model fable` (`claude-fable-5`, **2× 단가**) | **추론형 task-class 한정.** 코딩형은 rung-2 에서 끝낸다(Opus 5 가 Fable 초과). |
+| **3 (프론티어)** | 추론형 최상단 — 신규 아키텍처 설계·미지 문제·GEPA reflection | `/model fable` (`claude-fable-5-1`, **2× 단가** · 단 cache read **0.025×** = Opus 의 절반) | **추론형 task-class 한정.** 코딩형은 rung-2 에서 끝낸다(Opus 5 가 Fable **5** 초과 — 5.1 은 미측정, rule (e)). |
 | **0 (하향)** | 기계적 fan-out — 포매팅·의존성 bump·대량 전파·검색/요약 | `high`/`medium` · 또는 Sonnet 5 / Haiku **서브에이전트** | **Opus lead + Sonnet subagent**: 비용↓·품질 유지. |
 
-> 단가는 `ecosystem.json` `pricing.genai` 가 SoT (Opus 5 $5/$25 · Fable $10/$50 = **2×** · Sonnet 5 $3/$15 · Haiku $1/$5). 위 표는 사람용 미러 — 스크립트는 SoT 를 읽는다 (`cost-attribution.md`).
+> 단가는 `ecosystem.json` `pricing.genai` 가 SoT (Opus 5 $5/$25 · Fable 5.1 $10/$50 = **2×**, 단 cache read $0.25 는 Opus $0.50 의 **절반** · Sonnet 5 $2/$10 · Haiku $1/$5). 위 표는 사람용 미러 — 스크립트는 SoT 를 읽는다 (`cost-attribution.md`).
 
 ## rung 상세
 
@@ -39,7 +39,7 @@ consumers: [plan, modfolio, generate-review]
 
 > ⚠ `thinking: disabled` 와 `xhigh`/`max` 는 **동시 사용 불가**(Opus 5 는 400). Claude Code 세션에서는 문제되지 않지만 SDK 를 직접 부르는 sibling 은 주의 — `MAX_THINKING_TOKENS=0` 을 쓰면서 effort 를 올리면 깨진다.
 
-**3. 프론티어 (`/model fable`).** **추론형 task-class 에서만** — `architecture`·`security`·`incident` 의 *신규 설계*, GEPA reflection(`/harness-compile`), 미지 문제. 코딩형(`api`·`schema`·`testing`·`refactor`·`deploy`·`infra`·`ops`·`ui`·`docs`)에서 Fable 을 쓰는 것은 **더 비싸고 더 나쁜** 선택이다. Fable 은 thinking 을 끌 수 없고 턴이 길다.
+**3. 프론티어 (`/model fable`).** **추론형 task-class 에서만** — `architecture`·`security`·`incident` 의 *신규 설계*, GEPA reflection(`/harness-compile`), 미지 문제. 코딩형(`api`·`schema`·`testing`·`refactor`·`deploy`·`infra`·`ops`·`ui`·`docs`)에서 Fable 을 쓰는 것은 **더 비싸고 더 나쁜** 선택이다. Fable 은 thinking 을 끌 수 없고 턴이 길다. (Fable **5** 실측 — 5.1 은 rule (e) 의 재측정 항목이다.)
 
 **0. de-escalate.** 포매팅·dep bump·대량 전파·검색/요약처럼 결정론적이거나 저-위험인 fan-out 은 `high`/`medium` 로 내리거나 **Opus lead 가 Sonnet 5 / Haiku 서브에이전트로 위임**한다. ⚠ Opus 5 는 4.8 과 **반대로 위임을 과하게** 하므로, de-escalate 는 "위임을 늘려라"가 아니라 "이 *특정* 기계적 작업을 싼 모델로"다 (`opus-5-behavior.md` §2).
 
@@ -49,6 +49,7 @@ consumers: [plan, modfolio, generate-review]
 - **(b) escalation 은 근거를 남긴다.** `max`/Fable 로 올렸으면 **왜** 인지(어떤 실패 비용이 판단 비용을 정당화하나)를 응답·커밋 메시지·journal 에 1줄 명시. 근거 없는 상향은 비용만 태운다.
 - **(c) 의심되면 xhigh(sweet spot)에 머문다.** escalate 는 명시적 정당화가 있을 때의 예외지 기본이 아니다.
 - **(e) 코딩형에서 Fable 로 올리지 않는다.** rung-3 는 추론형 전용이다. 코딩형에서 Fable 은 Opus 5 보다 **비싸면서 성능이 낮다**(Frontier-Bench 33.7 vs 43.3). 코딩 상향은 rung-2(`/effort max`)에서 끝낸다.
+  ⚠ **이 수치는 Fable 5 실측이다 — Fable 5.1(2026-09-01 출시)은 미측정.** 5.1 은 «agentic coding over long sessions» 가 공표된 첫째 강점이고 cache read 가 0.025×(Opus 0.1×)라 세션 비용 구조가 다르다. **재측정 전까지 규칙은 유지한다**(수치 없이 규칙을 뒤집지 않는다). 재측정: pdgd `metrics/fable-5-1-day0/`(2026-09-02 대조군) + 허브 `bun run scripts/budget/model-usage-report.ts --all-projects` 를 **2026-09-09** 에 대조. 메인 세션이 이미 5.1 이면 이 사다리는 «모델 상향» 이 아니라 «effort 상향 + 비용 레버는 하향(`model:"opus"` 서브에이전트)» 으로 읽는다 — `.claude/rules/fable-5-1-behavior.md` §1.
 - **(d) escalation 은 debrief 로 끝난다.** `max`/Fable/프론티어 모델을 썼으면 세션 종료 전 `/debrief` 로 `escalation` 블록(trigger = rule (b) 의 근거 1줄, `what_weaker_missed` = 하위 모델이 놓친 것) 포함 카드를 남긴다 — escalation 비용을 1회성 소비에서 영속 자산으로 바꾸는 단계다. 다음 유사 태스크가 이 카드 덕에 escalate 없이 풀리는 것이 목표 (`reasoning-playbooks.md` §capture). opt-in `harness-lock.json {"autoDebrief":true}` 시 Stop hook 이 누락을 1회 차단으로 상기.
 
 ## escalate-if / stay-down-if 신호 (S5 v1 — 2026-07-12, 증거 기반 시드)
