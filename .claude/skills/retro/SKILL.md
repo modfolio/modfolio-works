@@ -2,6 +2,8 @@
 name: retro
 description: Git 기반 스프린트 회고. 통계 분석 + 패턴 식별 + 자가학습 시스템 입력 (메모리 쓰기는 사용자 승인 후)
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

@@ -2,6 +2,13 @@
 name: layout-patterns
 description: 레이아웃 구조 원칙 참조. 시맨틱/접근성/법적 고지는 외부 표준(WCAG/법) 정합, pixel 값·breakpoint·헤더 높이 등 구체 수치는 앱 자율.
 user-invocable: true
+# 2026-09-06 skill:usage 0회 — 패턴 스킬은 끄지 않고 paths 로 자동 표면 범위를 좁힌다. 되돌리기 = paths 블록 삭제.
+paths:
+  - "**/*.astro"
+  - "**/*.svelte"
+  - "**/*.vue"
+  - "**/layouts/**"
+  - "**/components/**/*.tsx"
 ---
 
 # /layout-patterns — 레이아웃 구조 원칙 참조

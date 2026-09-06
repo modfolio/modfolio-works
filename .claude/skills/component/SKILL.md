@@ -2,6 +2,8 @@
 name: component
 description: 토큰 제약 내 UI 컴포넌트 생성 파이프라인. Figma Canvas to Code + 디자인 토큰 검증
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

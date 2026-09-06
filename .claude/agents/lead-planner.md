@@ -3,7 +3,6 @@ name: lead-planner
 description: Multi-Agent Research 3-tier 의 Tier 1 — orchestration only. 사용자 요청을 task decomposition + Generator subagent 에 structured artifact 로 delegate. untrusted input 직접 처리 금지 (lethal-trifecta 회피).
 model: claude-opus-5
 effort: max
-cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "xhigh → max. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
 trust_class: trusted-input-only
 governance: owasp-agentic-2026
@@ -12,8 +11,8 @@ skills:
   - multi-review
   - generate-review
   - harness-evolve
-allowedTools:
-  - Task
+tools:
+  - Agent
   - Read
   - Glob
   - Grep
@@ -58,7 +57,7 @@ canon `agentic-engineering.md` §1.1 (Atomic task 분해) 정합:
 
 - 1 task = 1 measurable outcome (예: "Card 컴포넌트 + Storybook 추가, WCAG AA 통과")
 - 의존성 명시 (task A → task B)
-- 병렬 가능한 task 는 N agent 병렬 fork (Task 도구로)
+- 병렬 가능한 task 는 N agent 병렬 fork (Agent 도구로)
 - task 분해 후 시간/비용 estimate (cost-ledger.jsonl 정합)
 
 ## Structured Artifact 형식 (Lead Planner → Generator)

@@ -2,6 +2,8 @@
 name: map-codebase
 description: 기존 코드베이스 분석. 스택/아키텍처/컨벤션/기술부채를 Explore Agent로 매핑. 새 앱 전환 시 사용
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

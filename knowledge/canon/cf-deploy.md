@@ -234,6 +234,62 @@ CF 도 통과한다" 는 **거짓**이고, 그 명령으로 게이트를 짜면 
 
 **검증 — CSP (정적 자산 앱·라이브 enforce 후 필수, athsra 2026-07-09 실측)**: 정적 사이트(Astro `security.csp` 해시 기반 등)의 CSP 는 **로컬 preview 로 검증되지 않는다** — CF 엣지가 배포 후 주입하는 리소스가 소스에 없어 로컬엔 위반이 안 보인다. 배포 후 **브라우저 콘솔에서 enforce 위반을 재검증**한다. 실관측된 엣지-주입 위반 2종: ① CF Browser Insights 비콘(`static.cloudflareinsights.com` — 엣지 주입, 소스 부재) → `script-src`/`connect-src` 허용 필요, ② `font-src 'self'` 가 base64 `data:` 폰트(pretendard 등 한글 fallback) 차단 → `font-src` 에 `data:` 추가. 이메일 난독화·Web Analytics 등도 CSP 를 조용히 위반할 수 있다.
 
+## `_headers` — 두 가지가 문서와 다르다 (2026-09-05 `wrangler dev` 실측)
+
+Workers Static Assets 의 `_headers` 는 여러 repo 가 쓴다(connect 4장 · pay 2장 ·
+sign 1장 · atelier 1장). 그 두 가지를 실측으로 확인했다 — **문서를 읽지 않고 쟀다.**
+
+### ① 규칙이 겹치면 «덮어쓰기» 가 아니라 **이어 붙이기** 다
+
+`/_astro/*` 와 `/*` 가 둘 다 매치하면 승자를 고르지 않고 두 값을 연결한다:
+
+```
+Cache-Control: public, max-age=31536000, immutable, public, max-age=0, s-maxage=600
+```
+
+`max-age` 가 **한 줄에 두 번**. 어느 쪽을 따를지는 캐시 구현에 달렸고, 하필 그
+미정의 동작이 걸리는 곳이 **해시된 immutable 번들**이다. 즉 `/*` 는 «우선순위를
+맞추면 되는 규칙» 이 아니라 **모든 자산에 대한 깨진 헤더**다.
+
+→ **HTML 에 캐시 정책을 주려면 `/*` 가 아니라 라우트별 정확 경로를 낸다.**
+빌드 산출물의 `.html` 을 열거하면 목록이 유한하고 자동으로 최신이다.
+구현 참조: `modfolio-connect/scripts/modfolio/html-cache-headers.ts`.
+(겹치지 않는 정확 경로는 깔끔한 단일 값을 낸다 — 같은 실측에서 확인.)
+
+### ② `immutable` 은 **약속**이다 — 파일명에 내용 해시가 없으면 지킬 수 없다
+
+`immutable` 은 «이 URL 의 바이트는 절대 변하지 않는다» 는 뜻이다. 고정 파일명에
+걸면 자산을 재생성했을 때 캐시한 브라우저가 **만료까지 옛 바이트**를 쓴다.
+
+**실제로 일어났다** — pay `d37c532c`(2026-08-09):
+
+```
+Monoplex.bold.woff2 | Bin 30416 -> 58880 bytes
+Monoplex.woff2      | Bin 30484 -> 59872 bytes
+```
+
+같은 이름, 다른 내용, 그리고 그 경로엔 `max-age=31536000, immutable` 이 걸려 있었다.
+새 `fonts.css` 의 `unicode-range` 가 옛 woff2 에 없는 글리프를 가리켜
+**재방문자에게만 글자가 빠진다.** 렌더는 성공하므로 어떤 게이트도 실패하지 않는다.
+
+⚠ 더 중요한 것: **그 위험은 이미 주석으로 적혀 있었고 처방까지 있었다**
+(*"재생성하면 디렉터리명으로 경로를 버스트할 것"*). 재생성 때 지켜지지 않았다.
+**주석은 실행되지 않는다.**
+
+**플릿 실측(2026-09-05)** — connect 21개 woff2 전부 해시(`Monoplex.42e4c27b.woff2`) ·
+sign `/_astro/*`·atelier `/_nuxt/*` 는 프레임워크가 해시 · **pay 만 고정 이름이었다.**
+
+→ 둘 중 하나만 하면 된다:
+- **파일명에 내용 해시**를 넣는다(connect 방식). 그러면 `immutable` 이 정직해진다.
+- 못 하면 `immutable` 을 빼고 `max-age` + **`stale-while-revalidate`** 로 낮춘다.
+  swr 이 재검증을 백그라운드로 보내므로 **사용자는 기다리지 않는다** — 캐시 이득은
+  거의 그대로 두고 거짓 약속만 걷어낸다.
+- ⚠ **규칙을 지우는 것은 고치는 것이 아니다.** 그러면 CF 기본값
+  `max-age=0, must-revalidate` 로 돌아가 렌더 블로킹 왕복이 다시 생긴다.
+
+집행 참조: `modfolio-pay/scripts/perf/check-immutable-honesty.ts`
+(immutable 을 선언한 규칙의 파일이 이름에 해시를 갖는지 본다 · 대조쌍 포함).
+
 ## compatibility_date 정책 (F, 2026-05-18 명문화)
 
 `wrangler.jsonc` 의 `compatibility_date` 는 앱별 자율이나 universe 권고 기준값을 `ecosystem.json.cfCompatibilityDate` 에 둔다(현 `2026-04-15`). **월 1회 갱신** 권고: 매월 ecosystem 점검 시 전월 15일 기준으로 전진(예: 6월 → `2026-05-15`). 하드코딩 방치 금지 — 갱신 시 CHANGELOG/journal 에 근거 기록. 개별 앱이 신 런타임 기능을 쓰면 그 앱만 더 최신 날짜 사용 가능(자율). breaking runtime 변경은 `compatibility_flags` 로 점진 적용.

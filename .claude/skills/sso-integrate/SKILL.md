@@ -2,6 +2,8 @@
 name: sso-integrate
 description: Connect SDK SSO OIDC PKCE 연동·업그레이드. 현행 latest 는 ecosystem.json connectSdkLatest 가 SoT. 신규 연동, 버전 업그레이드(9.x major 포함), 콜백/JWT 문제 해결 시 사용
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 # /sso-integrate — Connect SDK SSO 연동

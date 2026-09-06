@@ -3,7 +3,6 @@ name: incident-handler
 description: P0 장애 triage SOP. 포스트모템 템플릿 + escalation 체인
 model: claude-opus-5
 effort: max
-cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 disallowedTools:
   - Edit

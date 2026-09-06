@@ -2,6 +2,8 @@
 name: contracts
 description: 앱 간 이벤트 계약 Zod 스키마 정의/변경/영향 분석 시 사용
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

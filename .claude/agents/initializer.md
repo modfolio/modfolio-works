@@ -3,7 +3,6 @@ name: initializer
 description: 세션 시작 시 claude-progress.txt + git state + 최근 plan/journal 읽어 next step 보고 (Haiku, read-only). canon long-running-harness.md 정합. SessionStart hook 으로 자동 호출 가능.
 model: claude-haiku-4-5-20251001
 effort: medium
-cache_control: { ttl: 1h }
 disallowedTools: [Edit, Write, Bash]
 governance: owasp-agentic-2026
 ---

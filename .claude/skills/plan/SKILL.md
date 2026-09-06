@@ -2,6 +2,8 @@
 name: plan
 description: 기획 품질 기준 (Plan Mode 참조). 제품 설계 수준 상세도. Product Lens + Scope 결정 포함
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

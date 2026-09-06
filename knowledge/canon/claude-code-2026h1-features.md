@@ -1,7 +1,7 @@
 ---
 title: Claude Code 2026 H1 Features — 권고 (Adopt/Trial/Watch)
-version: 1.3.0
-last_updated: 2026-09-02
+version: 1.4.0
+last_updated: 2026-09-06
 source: [Anthropic Claude Fable 5 announcement 2026-06-09, code.claude.com/docs/en/changelog, code.claude.com/docs/en/workflows, code.claude.com/docs/en/memory, code.claude.com/docs/en/model-config (fallback-model-chains, 2026-06-14 검증), claude-api skill (model ground truth)]
 sync_to_siblings: true
 applicability: always
@@ -22,6 +22,13 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 | **Fallback models** | **Adopt** (ecosystem 적용 v3.7.0) | 과부하(429/529) 시 최대 3 모델 자동 폴백. 가용성·복원력↑. | `.claude/settings.json.fallbackModel` |
 | **Subagent memory** (`memory:` frontmatter) | Watch | agent별 격리 메모리. 24 agent 영향 → 신중. | agent frontmatter |
 | 3-layer memory / `/cd` / Agent View | Watch | 점진 개선. 기록만. | — |
+| **scope-aware `permissions.defaultMode`** (2.1.257) | **Adopt** (허브 v3.83.0 후보) | `bypassPermissions`·`auto` 는 project/local 스코프에서 **무시** → 운반체는 user 스코프 + `--permission-mode`. `settings-adapt` 가 멤버 잔재를 걷어낸다. | `permission-mode.md` v2.0.0 |
+| **`PreModelSwitch` / `PostCompact` 훅** (2.1.24x) | **Adopt-hub** | 허브 전용: 모델 전환 원장(deny 안 함) · 압축 뒤 런 로그 재정독 상기. 멤버엔 안 흘린다. | `.claude/settings.json` hooks |
+| **`bashOutputMaxChars` / `taskOutputMaxChars`** | **Adopt-hub** | 판정 출력 절단 상한 100,000(≤128K). «판정 출력을 자르지 않는다»(agent-evidence §C). | `.claude/settings.json` |
+| **`modelSettings`** (모델별 effort, 2.1.257) | Watch | `/effort` 가 쓰는 숫자 인코딩 · 미문서 → 손으로 쓰지 않는다. | `opus-4-7-effort-policy.md` §modelSettings |
+| `Setup(--maintenance)` · `StopFailure` · `SubagentStart/Stop` · 훅 `async/asyncRewake/if` | Trial | 적응형 currency 루프(Wave 5)에서 `Setup` + `SessionStart async` 를 쓴다. `asyncRewake` 는 기각(요청 없는 모델 턴). | 허브 전용 |
+| `skillListingBudgetFraction` · `skillOverrides` · `/skill-doctor` (2.1.252) | Trial | 스킬 정리(Wave 6) 의 계측·처방. `/context` Skills 행 실측 뒤에만. | `.claude/settings.local.json` |
+| `attribution` (`includeCoAuthoredBy` 폐기) · 제거 키 `disableArtifact`·`keybindingFlavor`·`permissionExplainerEnabled` | Adopt | 설정할 것 없음 — `verify:claude-code-currency` 가 폐기 키 사용을 잡는다. | 게이트 |
 
 > baseline: 모델 = `claude-opus-5`/`claude-haiku-4-5-*`, effort = max7/xhigh12/high2/medium3 (`opus-4-7-effort-policy.md` v2.0.0, 2026-07-26). ⚠ 이 각주는 2026-09-02 까지 낡은 값(`claude-opus-4-8`, max3/xhigh13/high5/medium3)을 적고 있었다. 이 canon 은 그 위에 **추가 가능성**을 기록할 뿐 기존 calibration 을 바꾸지 않는다.
 
@@ -92,11 +99,19 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 | Scaling Managed Agents (brain/hands 분리) | `agent-runtime-layers.md` (+ Managed Agents 자체는 P3 보류, `project_harness-v3-managed-agents-p3`) |
 | Building Agents with the Claude Agent SDK | `agentic-engineering.md` (gather→act→verify) |
 
+## 2.1.257 ~ 2.1.261 — 설정·훅 (2026-09-06 · v1.4.0)
+
+`verify:claude-code-currency`(2026-09-06 신설)가 처음 돈 날 **살아 있는 결함 50건**을 냈다 — 위 표의 Adopt 행은 그 수정의 기록이다. 요지 셋:
+
+- **효과 없는 선언이 가장 오래 산다.** 24 agent 의 `cache_control:` 은 문서에 없는 키라 no-op 이었고, project 스코프 `defaultMode` 는 2.1.257 부터 무시되는데 이 머신은 user 설정이 받쳐서 아무것도 안 깨졌다. 둘 다 «잘못 설정하면 무엇이 실패하는가 → 아무것도» 부류(agent-evidence 판별 질문 ②).
+- **허브 전용과 배포용을 가른다.** `PreModelSwitch`·`PostCompact`·`bashOutputMaxChars` 는 허브 `.claude/settings.json` 에만 있고 `settings-adapt` 가 멤버에 흘리지 않는다(멤버 hooks 는 harness-pull 소유). 멤버가 원하면 자기 settings 에 적는다(Hub-not-enforcer).
+- **미터는 주간 한도 여유.** 모델·effort 선택은 `bun run currency:budget` 의 여유 비율이 하향을 **권고**한다 — `model-escalation.md` §사용량 거버너.
+
 ## 재평가 trigger
 
 - ✅ **2026-06-22 Fable 무료창 종료 → 2026-07-02 재평가 완료**: Fable 5 = Adopt/opt-in(오너 세션 선택), baseline Opus 유지, 심층작업만 Fable·기계작업 Opus/Sonnet. (위 모델 섹션.)
 - **Dynamic Workflows Trial 진행 중** (2026-07-02 G15 첫 실사용 — fleet TS6 전파·evergreen 배치·platform-adapter 스윕에 적용). 결과·비용을 이 canon 에 기록 후 Trial→Adopt 재분류 판단.
-- Claude Code changelog 신 릴리스 시 이 표 갱신 (harness-evolve `/evolve` 경로).
+- Claude Code changelog 신 릴리스 시 이 표 갱신 — `verify:claude-code-currency`(오프라인) 가 우리 설정 쪽 드리프트를, `currency:probe`(Wave 5) 가 상류 변경로그 쪽을 잡는다.
 
 ## 관련
 

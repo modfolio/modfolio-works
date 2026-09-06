@@ -3,6 +3,8 @@ name: security-scan
 description: OWASP Top 10 (web) + Agentic Top 10 2026 (ASI01-10) 보안 감사. XSS/CSRF/injection 탐지 + CSP 헤더 + 시크릿 검출 + agent governance 검증 (10 ASI 함수 + 4 hooks 자동화 v1.1) + 자동 수정
 effort: xhigh
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 
@@ -62,7 +64,7 @@ ASI01-10 mitigation 매핑 (canon agent-governance.md v1.1) 이 실 코드 자�
 | ASI04 | Supply Chain | bun.lock 부재, exact version 미사용, MCP server 신뢰성 |
 | ASI05 | RCE | `eval`, dynamic shell escape, parameterized query 미사용 |
 | ASI06 | Memory Poisoning | knowledge/journal/canon 의 변동 token, MEMORY.md 변경 검증 |
-| ASI07 | Inter-Agent Comms | Task fork prompt 의 untrusted data, 결과 size 제한 부재 |
+| ASI07 | Inter-Agent Comms | Agent fork prompt 의 untrusted data, 결과 size 제한 부재 |
 | ASI08 | Cascading Failures | multi-review fork 의 prefix 변동, harness-pull dry-run skip |
 | ASI09 | Human-Agent Trust | broad Bash wildcard, AskUserQuestion 옵션 모호, handoff prompt 의 destructive 명령 |
 | ASI10 | Rogue Agents | MCP server allowlist 부재, 신규 agent 의 disallowedTools 누락 |

@@ -566,3 +566,19 @@ Langfuse 는 `cacheReadInputTokens`, `cacheCreationInputTokens`, `promptTokens` 
 ## 갱신 이력
 
 - **2026-04-22 v1.0.0** — 초판. Anthropic 공식 문서 + 2026-03-06 TTL 변경 + Claude Code 자동 caching + Opus 4.7 tokenizer 영향 반영. member repo 관점의 배치 원칙 + SDK 코드 샘플 포함. `prompt-caching-strategy.md` (harness 운영) 와 교차 참조.
+
+## 부록 — agent frontmatter `cache_control` 제거 (2026-09-06)
+
+24개 `.claude/agents/*.md` 가 `cache_control: { type: "ephemeral", ttl: "1h" }` 를 frontmatter 에 갖고
+있었다. **Claude Code 의 subagent 문서 필드 목록에 그 키는 없다**(2026-09-05 공식 문서 실측) — 지운
+`thinking_budget` 과 같은 부류의 no-op 였다. 이 canon §5.2 가 이미 «Claude Code 안에서는 불필요» 라
+적어 두었고, 실제 레버는 Claude Code 쪽에 있다:
+
+| 레버 | 어디 | 버전 |
+|---|---|---|
+| `promptCacheTtl` / `subagentPromptCacheTtl` | `.claude/settings.json` | 2.1.243 |
+| `experimental: { cacheTtl: "1h" }` | agent frontmatter(문서 필드) | 2.1.248 |
+| `ENABLE_PROMPT_CACHING_1H=1` | settings `env` / `.mise.toml` — **현행 채택** | — |
+
+집행은 `bun run verify:claude-code-currency`(문서에 없는 frontmatter 키 = 위반). `cache_control` 문법
+자체(§2)는 **SDK 직접 호출**에만 해당한다 — 이 문서의 나머지는 그대로 유효하다.

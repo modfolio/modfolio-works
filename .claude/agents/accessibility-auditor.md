@@ -3,7 +3,6 @@ name: accessibility-auditor
 description: WCAG AA 접근성 전문 리뷰어. 읽기 전용
 model: claude-opus-5
 effort: xhigh
-cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 disallowedTools:
   - Edit

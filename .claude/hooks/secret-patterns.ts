@@ -131,6 +131,19 @@ export const SECRET_PATTERNS: ReadonlyArray<SecretPattern> = [
 		re: /\bgithub_pat_[A-Za-z0-9_]{30,}\b/g,
 		tag: "github_pat_",
 	},
+	// ⚠ **`gho_` 가 빠져 있었고, 그게 이 머신이 실제로 가진 형식이다** (2026-09-05).
+	//
+	// `gh auth login` 이 발급하는 것은 PAT 가 아니라 **OAuth 토큰(`gho_`)** 이다.
+	// 위 두 줄은 PAT 두 계열만 덮었으므로, 이 저장소에서 실제로 새어 나간 토큰은
+	// **redactor 가 아는 형식이 아니었다.** 그래서 두 번 다 평문으로 나갔다:
+	//   · 2026-08-07 `${VAR:+SET}${VAR:-UNSET}` 의 `:-` 분기가 값을 냈다
+	//   · 2026-09-05 `rg` 패턴 안의 백틱이 `set` 을 실행해 env 전체가 덤프됐다
+	// 두 사건의 처방은 **산문**이었다(「이렇게 쓰지 마라」). 산문은 재발을 막지 못했다.
+	//
+	// GitHub 토큰 계열 전부를 덮는다 — `gho_`(OAuth) · `ghu_`(user-to-server) ·
+	// `ghs_`(server-to-server) · `ghr_`(refresh). 하나만 더 넣고 끝내면 다음에
+	// 빠진 접두사로 같은 일이 난다.
+	{ id: "github-oauth", re: /\bgh[ousr]_[A-Za-z0-9]{30,}\b/g, tag: "gh*_" },
 	{ id: "hf-token", re: /\bhf_[A-Za-z0-9]{30,}\b/g, tag: "hf_" },
 	{ id: "resend-key", re: /\bre_[A-Za-z0-9_]{30,}\b/g, tag: "re_" },
 	// Stripe — payment-safety 의 최고 심각도 벡터. secret·restricted 둘 다.

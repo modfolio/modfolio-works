@@ -36,7 +36,6 @@
 			"Bash(git branch*)",
 			"Bash(git show*)"
 		],
-		"defaultMode": "bypassPermissions",
 		"deny": [
 			"Edit(.claude/payment-approval.json)",
 			"Bash(*payment-approval.json*)"

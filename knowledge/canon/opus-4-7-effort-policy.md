@@ -1,7 +1,7 @@
 ---
 title: Opus Effort Policy (baseline Opus 5)
-version: 2.1.0
-last_updated: 2026-09-02
+version: 2.2.0
+last_updated: 2026-09-06
 source: [knowledge/canon/opus-4-7-effort-policy.md, platform.claude.com whats-new-opus-5 (1M default·thinking 기본 ON·effort 변환률·512 토큰 캐시 하한), code.claude.com model-config (effort 우선순위·모델 기본값 high·settings 는 max 거부·ultracode·[1m] 스트립), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1), 2026-07-26 v2.0.0 (Opus 5 전환 + effort 상향 프로파일 — 오너 결정: 재작업 비용 > 토큰 비용; .mise.toml env-max 실사건 정정)]
 sync_to_siblings: true
 applicability: always
@@ -50,6 +50,11 @@ consumers: [preflight, plan, generate-review, modfolio, harness-evolve, claude-a
 - Opus 5 는 **model-default hold 가 없다** — Fable 5·Opus 4.8·4.7 은 첫 실행 시 모델 기본값을 강제로 잡고 명시 선택 전까지 유지하지만, Opus 5 는 이전에 설정한 레벨이 그대로 이어진다. 즉 settings 의 `xhigh` 가 깔끔하게 적용된다.
 - ✅ **실측 정정 (2026-09-02, Claude Code 2.1.258)**: settings `"effortLevel":"max"` 는 **수용된다.** 허브가 settings 를 `max` 로 두고 `claude -p` 세션(model `claude-opus-5`)을 띄우자 전사록에 `"effort":"max"` 가 실렸고, pdgd 는 같은 날 대화형 세션에서 같은 값을 관측했다 — **2건·두 모드**. 즉 위 «settings 는 max 를 거부한다(#30726/#40093 재해석)» 는 **낡았다**(그 재해석이 옳았던 버전이 있었는지는 재지 못했다 — 당시 버전으로 재실측하지 않음). **처방은 그대로 `xhigh`** — 이유가 바뀐다: 거부돼서가 아니라 ① `max` 는 ultracode 와 양립하지 않고 ② 전 세션 상시 max 는 rung-2 «근거 있는 상향»(`model-escalation.md` rule (b))과 어긋난다. `max` 는 여전히 세션 토글로 올린다.
 - **`max` 와 `ultracode` 는 한 세션에 같이 켜지지 않는다** (pdgd 2026-09-02 실측 — CLI 문자열 *"ultracode needs xhigh"* · ultracode 가동 알림 0건). ultracode 를 쓰려면 세션은 `xhigh`.
+  ✅ **실사건 정정 (2026-09-06)**: 허브의 pod 런처(`scripts/ops/pod.ts`)가 `--effort max` 와 `ultracode` 를 **같이** 주입하고 있었다 — 위 문장이 canon 에 적힌 지 나흘 뒤까지 코드는 반대였고, 테스트(`pods.test.ts`)가 그 모순을 **정답으로 잠그고** 있었다. 테스트를 «max ⊥ ultracode» 로 먼저 뒤집어 1 fail 을 인용한 뒤 런처를 `--effort xhigh` 로 고쳤다. 산문이 코드를 못 고친 또 하나의 사례 — 게이트가 잠근다.
+
+### `modelSettings` (모델별 effort · 2.1.257) — 손으로 쓰지 않는다 (2026-09-06)
+
+`/effort` 가 **모델별로** 레벨을 저장하는 키다(2.1.257 릴리즈 노트 «effort saved per-model»). 허브가 «Fable xhigh · Opus xhigh · Sonnet high · Haiku medium» 을 여기 미리 적으려 했으나 **보류**했다: 실제 저장 형식이 **숫자 인코딩**이고 문서화돼 있지 않다 — 추측으로 적으면 `/effort` 가 덮어쓰거나 무시하거나 깨진다. 세션 기본은 그대로 `effortLevel: "xhigh"`(문자열 · 저장된 레벨이 없는 모든 모델에 적용). 모델별 분리는 Claude Code 가 그 키를 문서화하면 재검토. **주간 사용량 여유에 따른 모델 하향 권고**는 `model-escalation.md` §사용량 거버너(`bun run currency:budget`).
 
 ## 환경변수 정책 (전역 max 금지)
 

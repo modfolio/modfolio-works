@@ -37,6 +37,16 @@ export interface HookInput {
 	session_id?: string;
 	/** UserPromptSubmit — the prompt text, before Claude processes it. */
 	prompt?: string;
+	/** SessionStart — `startup|resume|clear|compact|fork` (2.1.251+). 없으면 «모른다» 로 다룬다. */
+	source?: string;
+	/** SessionStart · PreModelSwitch — 세션 모델 id (생략될 수 있다). */
+	model?: string;
+	/** SessionStart(resume) — 캐시가 식었는지와 재캐시 추정 비용 (2.1.251+). 판단 억제용 신호. */
+	resume?: { is_stale?: boolean; re_cache_cost?: number };
+	/** PreModelSwitch / PostModelSwitch — 전환 전·후 모델. */
+	from_model?: string;
+	to_model?: string;
+	cwd?: string;
 }
 
 /** Maximum ms to wait for the Claude Code hook runner to close stdin. */

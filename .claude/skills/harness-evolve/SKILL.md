@@ -2,6 +2,8 @@
 name: harness-evolve
 description: universe 차원 트렌드 진단 + 도입 제안 + plan 작성. 내부 진단 → retrospective → 3-agent 병렬 WebSearch → script 기반 synthesize (가산 score + URL HEAD + anti-cheating + sibling-adoption + cost ledger) → AskUserQuestion 게이트 3중 → plan + canon. 권고만, 자동 도입 X. 단축어 /evolve. v2.0 (2026-05-13) — Phase 2 retrospective + Phase 4 synthesize script 추가.
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 # /harness-evolve — universe 트렌드 진단 + 도입 제안
@@ -54,19 +56,20 @@ bun run evolve -- --no-url-check
 /evolve
 ```
 
-### Routine 등록 (선택, Claude Code v2.1.112+)
+### 주기 실행 — cron 이 아니라 currency 루프 (2026-09-06 · 종전 `/schedule create --cron "0 9 1 * *"` 절 은퇴)
 
-매월 1일 자동 실행하고 싶으면:
+매월 1일 cron 으로 `/evolve` 를 돌리는 안은 **은퇴**했다. 일일 cron 은 2026-07-09 에 신호 0 + 자율 커밋
+마찰로 이미 은퇴했고(PB-ARCH-0011 「세션 경계에 건다」), 남은 것은 오너 제약 — *"cron 같은 거로 기계적으로
+하는 게 아니라 스마트하게 알아서 판단해서 … 사용량을 깎아먹지 않도록"* — 과 정면으로 어긋난다.
 
-```bash
-/schedule create \
-  --name "harness-evolve-monthly" \
-  --cron "0 9 1 * *" \
-  --skill "harness-evolve" \
-  --args "--focus all --depth standard"
-```
+대신 **currency 루프**가 «언제 볼지» 를 정한다:
 
-AskUserQuestion 게이트는 routine 모드에서도 유지 (사용자 반응 후 Phase 5 진행).
+    signal  SessionStart 펄스 ⑤   — `.evolve-state/currency.json` 만 읽는다 (0 토큰)
+    probe   `bun run currency:probe` — $0 · SessionStart async(20h 스로틀) · `claude --maintenance`(Setup)
+    judge   `bun run currency:judge` — **오너가 시작** · `currency:budget --reserve` 통과 시에만 · 단일 Sonnet 정찰자
+    close   tech-trends-<YYYY-MM>(파싱 가능 H2) + skip-registry `probe:` 트리거
+
+`/evolve` 전체(3-agent 웹서치)는 그대로 손으로 부른다 — 주기 실행 대상이 아니다.
 
 ## 6-Phase 동작 알고리즘 (v2.0)
 
@@ -110,7 +113,7 @@ Stage A.2 정렬:
 
 ### Phase 3 — 3-agent 병렬 WebSearch (~3-5분, ~$0.2-1.5/회)
 
-`run.ts` 가 handoff prompt 출력 후 정지. 사용자가 메인 LLM 으로 Task fork ×3 실행:
+`run.ts` 가 handoff prompt 출력 후 정지. 사용자가 메인 LLM 으로 Agent fork ×3 실행:
 
 | Agent | 영역 | focus=all 시 검색 키 |
 |---|---|---|

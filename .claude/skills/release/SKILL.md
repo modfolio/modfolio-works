@@ -1,5 +1,6 @@
 ---
 name: release
+disable-model-invocation: true
 description: 릴리즈 파이프라인. 테스트 실행 → P0/P1 triage → 분할 커밋 → 체인지로그 → main 직접 push (무사용자) / PR (실사용자 앱)
 user-invocable: true
 ---

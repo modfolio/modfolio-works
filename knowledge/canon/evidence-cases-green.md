@@ -903,3 +903,31 @@ class) — 전부 틀려도 초록이 나온다.
 - **`svelte-check` 0 errors 인데 화면에 `[object Object]`** (athsra). 타입 검사가 통과해도
   **렌더 결과의 문자열화**는 아무도 안 본다. 객체를 텍스트 슬롯에 넣는 것은 타입상 합법이다.
   → 렌더 산출물에서 `[object Object]` · `undefined` · `NaN` 을 찾는 스윕을 따로 둔다.
+
+### 다섯 번째 부류의 새 얼굴 — **앱이 어댑터의 제거를 자기 선언으로 가린다** (2026-09-06 dle-desk · 허브 Writ lane)
+
+Astro 5→7 + `@astrojs/cloudflare` 12→14 상향. **check 0 · lint 0 · test 479/479 · build 0 · `wrangler deploy --dry-run` 0** —
+다섯 게이트가 초록이었고 프로덕션 `/dashboard`·`/api/*` 는 500 이었다. `/login` 은 200 이라 «살아 있다» 로 보였다.
+
+로컬 `astro preview`(workerd) 재현 원문:
+
+```
+[ERROR] Error: Astro.locals.runtime.env has been removed in Astro v6. Use 'import { env } from "cloudflare:workers"' instead.
+    at get env (file:///…/dist/server/entry.mjs:55:11)
+```
+
+어댑터 13+ 는 `locals.runtime` 을 **제거**하고 접근에 throw 하는 getter 를 남겼다. 그런데 이 앱의 `src/env.d.ts` 가
+`App.Locals.runtime` 을 **스스로 선언**해 두었으므로 `astro check` 는 통과했고, 빌드는 실행이 아니라 번들이고, vitest 는
+어댑터 런타임을 타지 않는다. 검사 표면(타입·번들·단위 테스트)이 **배포 대상(workerd 런타임)을 포함하지 않았다** —
+다섯 번째 부류 그대로다. 다른 점은 **가린 쪽이 우리 자신**이라는 것: 앱의 선언이 라이브러리의 제거를 덮었다.
+
+- ***"이 조건을 만족시키는 가장 싼 방법이 무엇인가?"*** — 타입 검사를 통과시키는 가장 싼 것은 «우리가 선언한 타입» 이고,
+  그것은 라이브러리가 무엇을 실제로 내놓는지와 무관하다. **자체 `declare global` 로 라이브러리 타입을 덮는 곳은 전부**
+  런타임 프로브가 필요한 자리다.
+- 검출기는 하나뿐이었다: `astro preview` + `curl /api/health`. 그것을 **배포 뒤에** 돌렸다. 같은 날 muje 는 배포 전에
+  돌렸고(`/` · `/login` · `/api/health` 200) 같은 클래스를 사전에 잡았다.
+- 부수 사건: `athsra run … -- wrangler deploy --env staging` 이 **프로덕션 워커**로 갔다(출력의 워커 이름·최상위 var 로
+  확인). `--dry-run` 을 돌리고도 **exit 0 만 읽고 `Uploaded <name>` 을 읽지 않았다** — 「초록불 = 검사됐다」 의 오독이
+  운영 축에서도 반복됐다.
+- 처방: `predeploy` 런타임 프로브 · dry-run 이름 대조 · Writ 는 배포 위임이 아니다(`orbit.md`). 사건 기록
+  `docs/incidents/2026-09-06-dle-desk-astro7-prod-deploy-500.md`.

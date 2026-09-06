@@ -1,8 +1,8 @@
 ---
 title: 권한 모드 — bypassPermissions 표준 (zero-prompt, fleet)
-version: 1.0.0
-last_updated: 2026-05-18
-source: [2026-05-18 속도회복 세션, claude-code-guide 권위 확인 + 실측]
+version: 2.0.0
+last_updated: 2026-09-06
+source: [2026-05-18 속도회복 세션, claude-code-guide 권위 확인 + 실측; 2026-09-06 Claude Code 2.1.257 settings-reference 실측 — project/local 스코프의 bypassPermissions·auto 무시]
 sync_to_siblings: true
 applicability: always
 consumers: [ops, preflight, harness-pull]
@@ -26,33 +26,41 @@ consumers: [ops, preflight, harness-pull]
 4. `skipDangerousModePermissionPrompt`(첫 진입 빨간 경고 스킵)는 보안상 **프로젝트 `.claude/settings.json` 에서는 무시**되고 **User `~/.claude/settings.json` 또는 managed/CLI 에서만** 유효.
 5. "Edit automatically" 모드 = classifier 없음(자기설정 편집 통과). 단 Bash 등 비편집 도구는 여전히 prompt 가능 → zero-prompt 아님. **진짜 zero-prompt = bypassPermissions.**
 
-## 표준 구성 (3계층, 정공법)
+## 표준 구성 (정공법 · v2.0.0 — 운반체가 바뀌었다)
 
-### 1. 프로젝트 `.claude/settings.json` — fleet cement (1순위, 가장 신뢰)
-```jsonc
-{ "permissions": { "defaultMode": "bypassPermissions", "allow": [ ... ] } }
-```
-- precedence 상 User 설정보다 우선 + CLI·확장 양쪽에 일관 적용 + harness 가 전 sibling 에 전파.
-- 하네스 생성기 `scripts/harness-pull/settings-adapt.ts` 가 `defaultMode = existing ?? "bypassPermissions"` 로 **전 sibling 에 cement**. child 가 의도적으로 다른 값을 박았으면 그것만 존중(Hub-not-enforcer).
+> ⚠ **(실측 2026-09-06) Claude Code ≥2.1.257 부터 `permissions.defaultMode` 의 `bypassPermissions`·`auto` 는
+> project/local `.claude/settings.json` 에서 무시된다.** 공식 설정 레퍼런스 원문: *"values `auto` and
+> `bypassPermissions` don't take effect from project or local settings; set them in user or managed settings instead."*
+> v1.0.0 의 «프로젝트 settings = 1순위» 는 그날의 실측이었고 지금은 거짓이다. 표준(**bypass · zero-prompt**)은
+> 그대로이고 **운반체만** 옮긴다. 집행: `bun run verify:claude-code-currency`(project/local 스코프의 두 값 = 위반).
 
-### 2. User `~/.claude/settings.json` — 경고 스킵 (1회, 개인)
+### 1. User `~/.claude/settings.json` — 진짜 운반체 (1순위)
 ```json
 { "permissions": { "defaultMode": "bypassPermissions" },
   "skipAutoPermissionPrompt": true, "skipDangerousModePermissionPrompt": true }
 ```
-- 이미 설정돼 있음(2026-05-18 확인). 빨간 경고 prompt 제거 — 프로젝트 설정으로는 불가하므로 이 계층 필수.
+- 이 머신은 이미 설정돼 있다(2026-05-18 확인 · 2026-09-06 재확인 `~/.claude/settings.json:373`). **새 머신은 이 한 줄이 없으면
+  조용히 default 모드로 시작한다** — 훅은 모든 모드에서 돌므로 안전은 안 줄지만, 승인 버튼이 돌아온다.
 
-### 3. VS Code 확장 설정 — 피커 노출 + 새 세션 기본값 (편의, 1회)
-VS Code `settings.json`(User):
+### 2. CLI 플래그 — 세션 단위 확정
+`claude --permission-mode bypassPermissions` (`claude --help` 실측 2026-09-06). `scripts/ops/pod.ts` 의 런처가 이 플래그를 명시한다
+— 종전 주석 «settings `defaultMode` 로 이미 동작한다» 는 2.1.257 부터 거짓이라 정정했다.
+
+### 3. 프로젝트 `.claude/settings.json` — **더 이상 쓰지 않는다**
+- 하네스 생성기 `scripts/harness-pull/settings-adapt.ts` 의 `resolveDefaultModeMigration` 이 **허브가 심었던 값만 걷어내고**
+  노트를 남긴다(`acceptEdits`·`plan` 같은 멤버 선택은 보존 · `auto` 는 보존+경고 — Hub-not-enforcer). 기본값을 다시 채우지 않는다:
+  **없는 키는 거짓말을 못 한다.**
+- 허브 자신의 `.claude/settings.json` 에서도 그 줄을 지웠다(2026-09-06).
+
+### 4. VS Code 확장 설정 — 피커 노출 (편의, 1회)
 ```json
 { "claudeCode.allowDangerouslySkipPermissions": true,
   "claudeCode.initialPermissionMode": "bypassPermissions" }
 ```
-- (1)만으로도 새 세션은 bypass 로 시작하나, 이 설정은 피커에 Bypass 를 노출시켜 수동 재선택을 가능케 한다(보조).
 
 ## 적용 절차
 
-1. 위 1·2 는 harness/ecosystem 이 cement (이 세션에서 완료 — `.claude/settings.json` + 생성기).
+1. (1) 은 오너가 머신마다 1회 · (2) 는 pod 런처가 자동 · (3) 은 하네스가 다음 pull 에서 걷어낸다.
 2. 사용자 1회: VS Code 설정에 (3) 추가(선택), 그리고 **반드시 새 Claude Code 세션 시작**(Reload 아님).
 3. 검증: 새 세션에서 모드 인디케이터가 "Bypass permissions" + approve 버튼 한 번도 안 뜸.
 

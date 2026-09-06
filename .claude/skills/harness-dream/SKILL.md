@@ -2,6 +2,8 @@
 name: harness-dream
 description: 하네스 자가개선 — 내부 텔레메트리(pattern-history·feedback·payment-approvals·loop·cost·reasoning-playbooks)를 주기적으로 통합해 반복 실수·선호를 추출하고 canon/feedback 개선안을 제안. playbook 승격/은퇴 게이트 포함. 반영은 사용자 승인 후. 단축어 /dream.
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

@@ -30,6 +30,15 @@ supersedes: [cf-deploy.md 의 "AI 는 연결 자체 못 한다" 주장(line 42-4
 > 관측된 것이라 결론은 유효하지만, **200 만 보고 완료로 판정하지 말 것**. 양성 증거 4종
 > (build_outcome · **Version ID 변화** · 자산 해시 대조 · 배포본 안의 실제 값) = `cf-deploy.md` §검증.
 
+
+> **정정 (2026-09-06 · 허브 실측)** — 위 endpoint 들은 **토큰이 Builds 읽기 권한을 갖고 있을 때만** 답한다. 지금 fleet 이 쓰는
+> «All API» 메가토큰(account-scoped · D28)과 repo 토큰은 `/accounts/{id}/builds/*` **네 경로 전부에 `10000 Authentication error`** 를 받는다
+> (`/accounts/{id}/tokens/verify` 는 `active` — 토큰이 죽은 게 아니라 **그 자원에 권한이 없다**). 이 응답을 «빌드 0건 · 트리거 사망» 으로
+> 읽으면 안 된다: 실제로 pay `verify-deploy.ts` 가 `!res.ok → null → no-builds(exit 1)` 로 접어 **하루 동안 «트리거 미작동»** 이라는 거짓
+> 사실이 레인 원장에 실렸다(원리 = `agent-evidence.md` §A «읽기 실패를 판정값으로 환원하지 않는다»). 규칙: Builds API 를 부르는 모든
+> 스크립트는 `success:false`/비-2xx 를 **exit 2(판정 불능)** 로 내고 응답 `code` 를 인용한다. 권한이 없는 동안의 배포 검증은
+> `wrangler deployments list` 의 **Version ID 변화 + 라이브 응답 내용** 으로 한다(둘 다 이 토큰으로 읽힌다).
+
 ## TL;DR (가장 흔한 실패 시나리오 + 복구)
 
 증상: "한참 동안 잘 deploy 됐는데 어느 날부터 push 해도 production 이 갱신 안 됨. wrangler CLI 로는 deploy 잘 됨." (실제 gistcore — 23일간 자동 deploy 멈춤)

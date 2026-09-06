@@ -1,8 +1,8 @@
 ---
 title: Model Escalation — task-class → effort/model 사다리 (권고)
-version: 2.1.0
-last_updated: 2026-09-02
-source: [opus-4-7-effort-policy.md v2.0.0 (effort precedence·agent 분포 baseline), platform.claude.com whats-new-opus-5 (effort 변환률·1M default·thinking 기본 ON), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1 — 에이전틱 코딩), code.claude.com model-config (effort 우선순위·모델 기본 high·ultracode), velocity-mode.md (semantic 판단은 결정적 hook 불가), ecosystem.json pricing.genai + distillation.frontierEquivalent (단가·티어 SoT), reasoning-playbooks.md (rung 사전 질의 + escalate→debrief, Inter-Cascade arXiv 2509.22984), platform.claude.com/docs/en/about-claude/pricing (2026-09-02 fetch — Fable 5.1·Mythos 5.1 cache read 0.025× · Sonnet 5 $2/$10 표준화), pdgd 제보 2026-09-02 (rule (e) 는 Fable 5 실측 · 5.1 미측정)]
+version: 2.2.0
+last_updated: 2026-09-06
+source: [opus-4-7-effort-policy.md v2.0.0 (effort precedence·agent 분포 baseline), platform.claude.com whats-new-opus-5 (effort 변환률·1M default·thinking 기본 ON), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1 — 에이전틱 코딩), code.claude.com model-config (effort 우선순위·모델 기본 high·ultracode), velocity-mode.md (semantic 판단은 결정적 hook 불가), ecosystem.json pricing.genai + distillation.frontierEquivalent (단가·티어 SoT), reasoning-playbooks.md (rung 사전 질의 + escalate→debrief, Inter-Cascade arXiv 2509.22984), platform.claude.com/docs/en/about-claude/pricing (2026-09-02 fetch — Fable 5.1·Mythos 5.1 cache read 0.025× · Sonnet 5 $2/$10 표준화), pdgd 제보 2026-09-02 (rule (e) 는 Fable 5 실측 · 5.1 미측정), 오너 결정 2026-09-06 (Fable 5.1 기본 + 주간 한도 여유 거버너 · API 키 지출 0 — `config/currency-budget.json`)]
 sync_to_siblings: true
 applicability: always
 consumers: [plan, modfolio, generate-review]
@@ -51,6 +51,33 @@ consumers: [plan, modfolio, generate-review]
 - **(e) 코딩형에서 Fable 로 올리지 않는다.** rung-3 는 추론형 전용이다. 코딩형에서 Fable 은 Opus 5 보다 **비싸면서 성능이 낮다**(Frontier-Bench 33.7 vs 43.3). 코딩 상향은 rung-2(`/effort max`)에서 끝낸다.
   ⚠ **이 수치는 Fable 5 실측이다 — Fable 5.1(2026-09-01 출시)은 미측정.** 5.1 은 «agentic coding over long sessions» 가 공표된 첫째 강점이고 cache read 가 0.025×(Opus 0.1×)라 세션 비용 구조가 다르다. **재측정 전까지 규칙은 유지한다**(수치 없이 규칙을 뒤집지 않는다). 재측정: pdgd `metrics/fable-5-1-day0/`(2026-09-02 대조군) + 허브 `bun run scripts/budget/model-usage-report.ts --all-projects` 를 **2026-09-09** 에 대조. 메인 세션이 이미 5.1 이면 이 사다리는 «모델 상향» 이 아니라 «effort 상향 + 비용 레버는 하향(`model:"opus"` 서브에이전트)» 으로 읽는다 — `.claude/rules/fable-5-1-behavior.md` §1.
 - **(d) escalation 은 debrief 로 끝난다.** `max`/Fable/프론티어 모델을 썼으면 세션 종료 전 `/debrief` 로 `escalation` 블록(trigger = rule (b) 의 근거 1줄, `what_weaker_missed` = 하위 모델이 놓친 것) 포함 카드를 남긴다 — escalation 비용을 1회성 소비에서 영속 자산으로 바꾸는 단계다. 다음 유사 태스크가 이 카드 덕에 escalate 없이 풀리는 것이 목표 (`reasoning-playbooks.md` §capture). opt-in `harness-lock.json {"autoDebrief":true}` 시 Stop hook 이 누락을 1회 차단으로 상기.
+
+## 사용량 거버너 — 사다리의 «하향» 은 예산이 정한다 (2026-09-06 · v2.2.0)
+
+오너 결정 원문(2026-09-06): *"Fable 5.1을 기본으로 하고 싶긴한데 사용량이 제한되어 있어서... 1주 사용
+한도에서 run out 하는 일이 없는 선상에서"* · *"subscription 사용량 이상으로 claude 에 한해서는 돈을 더
+쓰고싶지 않은데"*.
+
+- **기본 = Fable 5.1** — Claude Code 가 2026-09-01 부터 기본으로 띄우는 모델이고 이 허브의 세션도 그렇다.
+  «모델 상향» 이 아니라 **이미 사실**이다. 이 사다리의 rung-3 는 그래서 «올라가는 곳» 이 아니라
+  **«내려오지 않아도 되는가»** 의 질문이 된다.
+- **미터는 USD 가 아니라 구독 주간 한도의 여유**다. `bun run currency:budget`(`quality:all` 배선 · 0 네트워크)
+  이 이 머신 **전 프로젝트**의 세션 원장에서 trailing 7일 실사용(입력+캐시생성+출력 · 캐시 읽기 제외)을
+  세고, 잣대 `config/currency-budget.json weeklyAllowanceTokens`(= 관측된 «한도를 안 넘긴 가장 바쁜 주»,
+  2026-07-18 주 460,830,563 tok) 대비 **여유**를 낸다. Anthropic 은 한도를 토큰으로 공개하지 않으므로
+  오너가 `/usage` 를 보고 잣대를 조정한다.
+- **하향 사다리 = 거버너 권고** (`modelDownshiftAt: 0.80`): 주간 사용이 잣대의 80% 를 넘으면 rung −1
+  «코딩은 `/model opus`(Opus 5 · `.claude/rules/opus-5-behavior.md`)» · rung −2 «fan-out 은 `sonnet`».
+  권고이지 전환이 아니다 — **`PreModelSwitch` 훅은 원장(`.evolve-state/model-switch.jsonl`)에만 적고 절대
+  deny 하지 않는다**(오너의 `/model fable` 을 막지 않는다).
+- **API 키 지출은 0.** 판단·리서치·서브에이전트 전부 오너 세션 안(subscription). `payment-safety.md` §5 —
+  신호가 스스로 판단을 켜는 일은 없다(펄스는 제안, 오너가 시작).
+- **rule (e) 는 유지** — 수치 없이 규칙을 뒤집지 않는다. 재측정은 **오너가 시작**(2026-09-09): 입력 셋 =
+  pdgd `metrics/fable-5-1-day0/` + `bun run scripts/budget/model-usage-report.ts --all-projects` +
+  `.evolve-state/model-switch.jsonl`(전환 시점 · 이유가 붙는 첫 원장). 결과가 «5.1 코딩 ≥ Opus 5» 면 (e) 를
+  «비용 규칙» 으로 바꾸고, 아니면 그대로 둔다.
+- `modelSettings`(모델별 effort · 2.1.257) 는 **손으로 쓰지 않는다** — `/effort` 가 저장하는 형식이고 인코딩이
+  문서화돼 있지 않다(`opus-4-7-effort-policy.md` §modelSettings). 세션 기본은 여전히 `effortLevel: "xhigh"`.
 
 ## escalate-if / stay-down-if 신호 (S5 v1 — 2026-07-12, 증거 기반 시드)
 

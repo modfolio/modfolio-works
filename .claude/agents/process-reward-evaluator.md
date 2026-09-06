@@ -3,7 +3,6 @@ name: process-reward-evaluator
 description: Process Reward Model (PRM) step-wise verifier — Generator step sequence 의 매 step 마다 0-10 score 출력. v2.35 evaluator (binary pass/fail) 의 step-wise 확장. best-of-N sampling + tree search gating 의 reward function.
 model: claude-opus-5
 effort: xhigh
-cache_control: { type: "ephemeral", ttl: "1h" }
 _effort_change_note: "high → xhigh. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
 _status_note: "⚠ 2026-08-17 — canon process-reward-model.md v2.0.0 에서 **범용 PRM 도입 안 함**으로 축소됐다. 범용 PRM 의 도메인 전이가 동전 던지기(49.2~52.8%)이고 프론티어 LLM judge 가 24점 앞선다. 이 에이전트는 **도메인 특화 검증이 필요한 전용 표면에서만** 쓴다 — 일반 리뷰 경로의 기본값이 아니다."
 governance: owasp-agentic-2026
@@ -12,7 +11,7 @@ skills:
   - generate-review
   - security-scan
   - ui-quality-gate
-allowedTools:
+tools:
   - Read
   - Glob
   - Grep

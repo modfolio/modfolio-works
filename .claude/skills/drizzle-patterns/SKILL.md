@@ -2,6 +2,12 @@
 name: drizzle-patterns
 description: Drizzle ORM 규칙 (prefix, helpers, migrations)
 user-invocable: true
+# 2026-09-06 skill:usage 0회 — 패턴 스킬은 끄지 않고 paths 로 자동 표면 범위를 좁힌다. 되돌리기 = paths 블록 삭제.
+paths:
+  - "**/schema/**/*.ts"
+  - "**/drizzle/**"
+  - "drizzle.config.*"
+  - "**/migrations/**"
 ---
 
 ## Auto Context

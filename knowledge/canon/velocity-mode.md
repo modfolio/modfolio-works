@@ -26,7 +26,7 @@ consumers: [harness-pull, ops, release]
 흔한 오해: "hook/cron 이 백그라운드에서 토큰을 비정상 소모한다." **실측상 거짓이다.**
 
 - harness hook 은 **전부 결정적 스크립트** — LLM/에이전트 호출 0 → **토큰 0**. (과거 Stop Haiku 에이전트는 v3.1 에 제거됨.)
-- 등록된 cron 0개. `/dream`·`/evolve`·`/retro`·`/audit` 는 **수동 전용** — 작업 후 자동 실행 없음.
+- **Claude 를 부르는 cron 은 0개.** `/dream`·`/evolve`·`/retro`·`/audit` 는 **수동 전용** — 작업 후 자동 실행 없음. ⚠ «등록된 cron 0개» 는 2026-09-06 실측으로 **거짓**이었다: `.evolve-state/cron-registry.jsonl` 에 `playbooks-weekly`(schtasks · 월 10:33) 1건, `.forgejo/workflows/pulse.yml` 이 6시간마다 — 둘 다 **bun 스크립트만** 돌리고 LLM 토큰 0 이다. 문장이 «토큰을 쓰는 자동화가 없다» 를 뜻했다면 맞고 «cron 이 없다» 를 뜻했다면 틀렸다. 이제 전자로 적는다. currency 루프(2026-09 Wave 5)도 cron 이 아니라 SessionStart(async·20h 스로틀)·Setup(--maintenance) 훅이고, 판단은 오너가 `bun run currency:judge` 로 연다.
 
 훅의 실제 비용은 **지연(wall-clock)** 이다:
 

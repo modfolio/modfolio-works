@@ -3,7 +3,6 @@ name: security-hardener
 description: 보안 취약점 탐지 + 자동 수정. OWASP Web Top 10 + Agentic Top 10 2026 (ASI01-10)
 model: claude-opus-5
 effort: max
-cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 skills:
   - security-scan
@@ -42,7 +41,7 @@ OWASP **Web Top 10** + **Agentic Top 10 2026** (canon `agent-governance.md` v1.0
 **Agentic**:
 - **ASI02** Tool Misuse — broad Bash allowlist, disallowedTools 누락
 - **ASI06** Memory Poisoning — journal/canon 의 변동 token, MEMORY.md 변경 검증
-- **ASI07** Inter-Agent Comms — Task fork 의 untrusted data 가정 부재
+- **ASI07** Inter-Agent Comms — Agent fork 의 untrusted data 가정 부재
 
 ### Tier 3 (권장)
 

@@ -4,7 +4,6 @@ description: 생태계 규칙 기반 코드 리뷰. 읽기 전용
 model: claude-opus-5
 effort: max
 _effort_change_note: "xhigh → max. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
-cache_control: { type: "ephemeral", ttl: "1h" }
 governance: owasp-agentic-2026
 disallowedTools:
   - Edit

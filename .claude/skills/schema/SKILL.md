@@ -2,6 +2,8 @@
 name: schema
 description: Drizzle 스키마 생성. 생태계 prefix + DB별 helper + FK 인덱스 + JSONB 타입 안전
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

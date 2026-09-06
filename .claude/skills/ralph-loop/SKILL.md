@@ -3,6 +3,8 @@ name: ralph-loop
 description: Ralph Loop 기법. 측정 가능한 완료 기준으로 자율 반복 개선. 생성→검증→수정 사이클
 effort: xhigh
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 

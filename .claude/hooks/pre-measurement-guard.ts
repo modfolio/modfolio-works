@@ -349,7 +349,8 @@ export function judgeMeasurement(raw: string): MeasurementFinding[] {
 	if (zshPipestatus(cmd)) {
 		out.push({
 			id: "zsh-pipestatus",
-			why: "`${PIPESTATUS[…]}` 는 bash 문법이고 이 셸은 zsh 다 — **빈 문자열**이 되어 조건이 조용히 거짓이 된다.",
+			// 템플릿 리터럴 + `\${` — 일반 문자열에 `${…}` 를 두면 멤버 기본 biome(noTemplateCurlyInString)이 경고한다(허브는 그 규칙을 꺼 두어 안 보였다 · 2026-09-06 umbracast·worthee 실측).
+			why: `\`\${PIPESTATUS[…]}\` 는 bash 문법이고 이 셸은 zsh 다 — **빈 문자열**이 되어 조건이 조용히 거짓이 된다.`,
 			fix: "zsh 는 `$pipestatus[1]` (소문자 · 1-indexed). 또는 파이프를 쓰지 말고 종료코드를 변수에 받아라.",
 		});
 	}
@@ -371,7 +372,7 @@ export function judgeMeasurement(raw: string): MeasurementFinding[] {
 		out.push({
 			id: "zsh-word-split",
 			why: "zsh 는 `$VAR` 를 **워드 스플리팅 하지 않는다** — `X=$(...)` 를 `for y in $X` 로 돌리면 루프가 **1회만** 돈다(실측 zsh 5.9).",
-			fix: "`printf '%s\\n' \"$X\" | while IFS= read -r y; do …` · 또는 `for y in ${=X}` · 또는 애초에 `$(...)` 를 for 목록에 직접 둔다(명령 치환은 쪼개진다).",
+			fix: `\`printf '%s\\n' "$X" | while IFS= read -r y; do …\` · 또는 \`for y in \${=X}\` · 또는 애초에 \`$(...)\` 를 for 목록에 직접 둔다(명령 치환은 쪼개진다).`,
 		});
 	}
 	return out;

@@ -2,6 +2,8 @@
 name: mod-design
 description: modfolio 자체 디자인 «구현» 파이프라인 — Canva 단일 클라우드 크리에이티브 + forge(infra) 미디어 소비. 브랜드 납품물 저작 + 토큰 제약 검증. 미학 방향은 Anthropic `frontend-design` 스킬을 쓴다(둘은 겹치지 않는다). Figma/Paper 미사용(2026-07-26)
 user-invocable: true
+# 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.
+disable-model-invocation: true
 ---
 
 ## Auto Context

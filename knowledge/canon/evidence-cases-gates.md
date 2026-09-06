@@ -293,6 +293,20 @@ base.use({ colorScheme: 'dark', reducedMotion: 'reduce' });
 `page.emulateMedia(...)`. 그리고 **어느 쪽을 쓰든 전제 자체를 단언한다** — 이 버그가
 고쳐지면 평평한 형태가 다시 동작할 텐데, 그때 단언이 없으면 **바뀐 줄도 모른다.**
 
+### ★ 그리고 고쳐졌다 — «바뀐 줄도 모른다» 가 33일 뒤 그대로 일어났다 (modfolio-pay 2026-09-06)
+
+Playwright **1.63.0** 릴리즈 노트(https://github.com/microsoft/playwright/releases/tag/v1.63.0): *"New standalone
+`testOptions.reducedMotion`, `testOptions.forcedColors` and `testOptions.contrast` options."* — 평평한 `use.reducedMotion` 이
+**이제 컨텍스트에 도달한다.** pay 의 a11y 설정은
+`use.reducedMotion: 'reduce'` 를 (axe 대비색 안정을 위해) 선언해 두었지만 1.62 에서는 조용히 무시돼 왔고, **단언이 없었다.**
+플릿 currency 레인이 `@playwright/test` 를 1.62.1→1.63.0 으로 올리자 «모션이 켜져 있어야 하는» 테스트 4건(motion-gate ×3 ·
+skeleton shimmer)이 전부 빨강 — 양성 대조(*"there must be a real duration to kill"*)가 0 을 읽었다. 코드도 CSS 도 안 바뀌었다.
+**설정이 어느 날 먹기 시작한 것**이다. pre-push 훅(verify:a11y)이 push 를 막았고, 처방은 그 두 스펙 파일에
+`test.use({ reducedMotion: 'no-preference' })` 를 명시(저자 의도 = 스위트는 reduce · 모션 테스트는 on).
+
+→ 위 표의 «false» 는 **`@playwright/test` ≤1.62 에서만** 참이다. 1.63+ 에서는 평평한 형태가 **간다.** 두 버전을 오가는
+플릿(atelier·connect·dle-desk 1.63 · sign 1.62)에서는 **버전이 아니라 조건을 단언한다** — 이 절이 처음부터 말한 것.
+
 **★ 왜 오래 사나 — 침묵이 두 원인을 구분해 주지 않는다.** 같은 파일의 `bypassCSP` 는 안
 걸리면 **axe 주입이 막혀 테스트가 죽는다** — 결과가 원인을 증명한다. `reducedMotion` 은
 반대다: 걸려도 «위반 0», 안 걸려도 «위반 0»(애니메이션 중 요소를 건너뛰어서). **두 0 이

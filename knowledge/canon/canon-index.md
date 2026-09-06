@@ -68,7 +68,8 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 
 ## AI · Context · Cost
 
-- [**tech-trends-2026-08.md**](tech-trends-2026-08.md) v1.0.0 (2026-08-17) — **현재 월 SSoT.** 이번 달 1순위 Adopt 는 새 도구가 아니라 **인용 위생**이다: 우리 canon 이 fleet 에 배포하던 근거 하나가 **원문에 없는 문장**이었고 방향이 정반대였다(「80% 절감」 ↔ 원문 「15× more tokens」). + Muse 창립 논문 ACE 가 2026년 두 그룹에 정면 대조에서 패 · 컨텍스트 파일 무효 증거의 외부 독립 재현(p=1.00/0.66) 과 그 짝(HANDBOOK 천장 36.2%) · GraphRAG **MS 유지보수 모드**(2026-08-14) · 스택은 뒤처지지 않았고 남은 것은 의도적 선택뿐
+- [**tech-trends-2026-09.md**](tech-trends-2026-09.md) v1.0.0 (2026-09-06) — **현재 월 SSoT.** 현행화 판단: Claude Code ≥2.1.257 설정 의미론(project 스코프 `defaultMode` 무시 · no-op frontmatter 걷어냄) · Bun 1.4.2/Biome 2.5.12/wrangler 4.129 + workers-types v5 · contracts 1.28 · **적응형 currency 루프**(cron 0 · 판단은 오너) · **배포 전 런타임 프로브**(adapter 13+ 의 `locals.runtime` 제거가 다섯 게이트를 통과해 프로덕션 500 — dle-desk). Hold: Zod 4.5(`.datetime()` 초 필수) · better-auth 1.7(`Account.issuer`). 파싱 가능 H2 규약(retrospect 가 읽는다).
+- [tech-trends-2026-08.md](tech-trends-2026-08.md) v1.0.0 (2026-08-17) — 지난 달. 이번 달 1순위 Adopt 는 새 도구가 아니라 **인용 위생**이다: 우리 canon 이 fleet 에 배포하던 근거 하나가 **원문에 없는 문장**이었고 방향이 정반대였다(「80% 절감」 ↔ 원문 「15× more tokens」). + Muse 창립 논문 ACE 가 2026년 두 그룹에 정면 대조에서 패 · 컨텍스트 파일 무효 증거의 외부 독립 재현(p=1.00/0.66) 과 그 짝(HANDBOOK 천장 36.2%) · GraphRAG **MS 유지보수 모드**(2026-08-14) · 스택은 뒤처지지 않았고 남은 것은 의도적 선택뿐
 - [tech-trends-2026-07.md](tech-trends-2026-07.md) v1.1 — TypeScript 7 GA 인데 도구 생태계 미추종(Hold) · Cross-App Access(ID-JAG) · MCP 2026-07-28 스펙 · CF KV 레거시 폐지(2026-10-15)
 - [tech-trends-2026-04.md](tech-trends-2026-04.md) · [tech-trends-2026-05.md](tech-trends-2026-05.md) · [tech-trends-2026-06.md](tech-trends-2026-06.md) — 지난 달 스냅샷. ⚠ **시점 문서다** — 현행 권고는 위 최신 월을 본다(04 는 은퇴 선언 대상: `RETIRED_CANON`)
 - [claude-code-2-1-112-diff.md](claude-code-2-1-112-diff.md) — v2.1.105-112 changelog.
