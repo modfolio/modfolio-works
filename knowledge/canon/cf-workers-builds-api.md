@@ -31,13 +31,14 @@ supersedes: [cf-deploy.md 의 "AI 는 연결 자체 못 한다" 주장(line 42-4
 > (build_outcome · **Version ID 변화** · 자산 해시 대조 · 배포본 안의 실제 값) = `cf-deploy.md` §검증.
 
 
-> **정정 (2026-09-06 · 허브 실측)** — 위 endpoint 들은 **토큰이 Builds 읽기 권한을 갖고 있을 때만** 답한다. 지금 fleet 이 쓰는
-> «All API» 메가토큰(account-scoped · D28)과 repo 토큰은 `/accounts/{id}/builds/*` **네 경로 전부에 `10000 Authentication error`** 를 받는다
-> (`/accounts/{id}/tokens/verify` 는 `active` — 토큰이 죽은 게 아니라 **그 자원에 권한이 없다**). 이 응답을 «빌드 0건 · 트리거 사망» 으로
-> 읽으면 안 된다: 실제로 pay `verify-deploy.ts` 가 `!res.ok → null → no-builds(exit 1)` 로 접어 **하루 동안 «트리거 미작동»** 이라는 거짓
-> 사실이 레인 원장에 실렸다(원리 = `agent-evidence.md` §A «읽기 실패를 판정값으로 환원하지 않는다»). 규칙: Builds API 를 부르는 모든
-> 스크립트는 `success:false`/비-2xx 를 **exit 2(판정 불능)** 로 내고 응답 `code` 를 인용한다. 권한이 없는 동안의 배포 검증은
-> `wrangler deployments list` 의 **Version ID 변화 + 라이브 응답 내용** 으로 한다(둘 다 이 토큰으로 읽힌다).
+> **정정의 정정 (2026-09-06 20:40 KST · 허브 실측)** — 같은 날 아침 «Builds API 는 어떤 토큰으로도 안 읽힌다» 라고 적었던 것은 **틀렸다.
+> 키를 잘못 골랐다.** athsra `modfolio-ecosystem` 의 `CLOUDFLARE_API_TOKEN` 은 D28(2026-09-04) 이후 **account-scoped 최소권한 토큰**이라
+> `/accounts/{id}/builds/*` 에 `10000` 을 내지만, **`CLOUDFLARE_ALL_API_TOKEN`**(user · All API · `CLOUDFLARE_ADMIN_TOKEN`·`CF_API_TOKEN` 도 동류)은
+> 트리거·빌드·로그 전부 읽는다(프로브 `BUILDS_OK`). 올바른 키로 물으니 30초 만에 세 워커의 실패 원인이 로그로 나왔다 — muje-portal 트리거 부재 ·
+> dle-desk 워크스페이스 부품 미빌드 + KV 10014 · munseo 워크스페이스 부품 미빌드. **한 키만 시험하고 «권한 부족» 으로 일반화하지 않는다.**
+> 플릿 상태는 `athsra run modfolio-ecosystem -- bun run builds:sweep` 한 명령이 낸다(트리거 유무 · 최근 빌드 결과 · 실패 로그 좌표).
+> 배포 검증의 정본은 이제 **Builds 로그(ground truth) + Version ID** 이고, 「빌드 기록 0건」을 내는 스크립트(pay `verify-deploy.ts`)는 읽기 실패를
+> `exit 2` 로 갈라야 한다는 규칙은 그대로다.
 
 ## TL;DR (가장 흔한 실패 시나리오 + 복구)
 

@@ -25,11 +25,12 @@
 		"heavy": "bash node_modules/@modfolio/harness/scripts/ops/heavy.sh",
 		"verify:supply-chain": "bun node_modules/@modfolio/harness/scripts/ci/supply-chain-gate.ts",
 		"atlas:adopt-plainly": "bun node_modules/@modfolio/harness/scripts/atlas/adopt-plainly.ts",
-		"verify:bunx-leak": "bun node_modules/@modfolio/harness/scripts/ci/bunx-leak-gate.ts"
+		"verify:bunx-leak": "bun node_modules/@modfolio/harness/scripts/ci/bunx-leak-gate.ts",
+		"modfolio:compass": "bun node_modules/@modfolio/harness/scripts/modfolio/compass.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.12",
-		"@modfolio/harness": "^3.83.2",
+		"@modfolio/harness": "^3.83.3",
 		"typescript": "^6.0.3",
 		"wrangler": "^4.129.0"
 	},
