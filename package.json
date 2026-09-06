@@ -4,7 +4,7 @@
 	"workspaces": [
 		"apps/*"
 	],
-	"packageManager": "bun@1.2.4",
+	"packageManager": "bun@1.4.2",
 	"scripts": {
 		"dev:landing": "cd apps/landing && bun run dev",
 		"dev:app": "cd apps/app && bun run dev",
@@ -28,16 +28,16 @@
 		"verify:bunx-leak": "bun node_modules/@modfolio/harness/scripts/ci/bunx-leak-gate.ts"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.2",
+		"@biomejs/biome": "^2.5.12",
 		"@modfolio/harness": "^3.82.0",
 		"typescript": "^6.0.3",
-		"wrangler": "~4.115.0"
+		"wrangler": "^4.129.0"
 	},
 	"overrides": {
 		"@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@^2.5.2"
 	},
 	"dependencies": {
-		"@modfolio/connect-sdk": "^10.6.0",
-		"@modfolio/contracts": "^1.23.0"
+		"@modfolio/connect-sdk": "^10.7.0",
+		"@modfolio/contracts": "^1.28.0"
 	}
 }
