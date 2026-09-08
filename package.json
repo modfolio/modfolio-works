@@ -39,7 +39,7 @@
 		"@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@^2.5.12"
 	},
 	"dependencies": {
-		"@modfolio/connect-sdk": "^10.7.0",
+		"@modfolio/connect-sdk": "^10.8.0",
 		"@modfolio/contracts": "^1.28.0"
 	}
 }
