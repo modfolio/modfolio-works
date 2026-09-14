@@ -333,8 +333,14 @@ bun run <gate>; echo exit=$?      # ← 'landed: True' 를 본 뒤에만 이 값
 
 전제가 안 걸려도 «위반 0», 걸려도 «위반 0» — **두 0 이 구분되지 않는다.**
 → **결과가 아니라 조건을 잰다**(페이지 안에서 `matchMedia(...).matches` 를 읽는 식).
-실측: Playwright 의 평평한 `use: { reducedMotion }` 은 컨텍스트에 **도달하지 않고**
-중첩 `contextOptions` 는 도달한다 — 같은 객체의 `colorScheme` 은 정상 적용된다.
+실측(**Playwright ≤1.62**): 평평한 `use: { reducedMotion }` 이 컨텍스트에 **도달하지 않고**
+중첩 `contextOptions` 는 도달했다 — 같은 객체의 `colorScheme` 은 정상 적용됐다.
+⚠ **1.63 에서 상류가 고쳤다** — `testOptions.reducedMotion` 이 독립 옵션이 됐다. 즉 이 줄은
+**결론이 아니라 버전이 붙은 관측**이다. 지금 이 처방을 따라 옮기면 1.63+ 에서는 평평한
+`test.use` 재정의와 컨텍스트 옵션이 겨루게 된다(modfolio-pay 2026-09-14 — 이 줄을 근거로
+옮길 뻔했고 릴리스 노트를 보고 취소했다).
+→ **버전 없이 무조건형으로 적은 실측은 상류가 고친 뒤 처방을 반대로 만든다.** 도구 동작에
+  대한 실측에는 **잰 버전**을 함께 적는다. 전문 = `knowledge/canon/evidence-cases-gates.md`.
 
 ### ⑤ **실행 형태**와 **환경 상수**까지 재현한다
 
