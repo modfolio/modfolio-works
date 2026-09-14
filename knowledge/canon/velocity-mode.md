@@ -31,7 +31,12 @@ consumers: [harness-pull, ops, release]
 훅의 실제 비용은 **지연(wall-clock)** 이다:
 
 - `post-biome-check` 가 **편집마다** `bun run check` (2~10초) — fast-MVP 편집 루프의 최대 마찰.
-- SessionStart drift pickup (세션 열 때마다), `pre-push-guard` 의 `quality:all` (push마다 5~60초).
+- SessionStart drift pickup (세션 열 때마다), `pre-push-guard` 의 `quality:all`.
+  ⚠ **«push마다 5~60초» 는 허브 수치였다** (2026-09-15 정정). atelier-and-folio 실측은
+  `quality:all` **~40분**인데 훅 예산이 **60초**라 매 `git push` 가 60초를 태우고
+  **«판정 불능»** 으로 끝난다 — 아무것도 말해 주지 않으면서 비용만 낸다. 그런 훅은
+  «무시하도록 훈련»시킨다. 자기 repo 의 값을 직접 재고, push 훅이 무는 것은
+  **좁은 검사**(`gate:quick`)나 완주 영수증이어야 한다.
 - PreToolUse(Bash) 6-hook 체인 — 명령마다 bun 프로세스 startup ~수백 ms.
 
 토큰을 진짜 많이 쓰는 주체는 hook 이 아니라 **(1) reasoning effort, (2) 매 턴 고정 컨텍스트, (3) 서브에이전트/스킬 호출**이다. velocity 는 **지연을 제거**하고, 토큰은 effort·context 로 별도 관리한다.

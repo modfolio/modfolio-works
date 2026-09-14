@@ -246,6 +246,19 @@ if (import.meta.main) {
 		if (scripts.has("typecheck")) steps.push(["bun", "run", "typecheck"]);
 	}
 
+	// 하네스 기본 게이트 세트 — `quality:all` 이 없는 repo 에서 특히 중요하다.
+	//
+	// 2026-09-09 실측: `quality:all` 을 가진 repo 는 **13/33** 뿐이고, velocity(기본) 프로필은
+	// 이 훅조차 배선하지 않는다(PreToolUse 는 pre-destructive·pre-payment 둘뿐). 그래서
+	// dle-desk 는 `verify:*` 5개를 배선해 두고도 **자동으로는 한 번도 돌리지 않았다**.
+	// 배선은 실행이 아니다 — 「돌 수 있게 만드는 것」과 「도는 것」은 다른 문장이다.
+	//
+	// ⚠ `quality:all` 이 이미 이걸 포함하면 두 번 돌게 된다. 허브가 그 경우라 자기 체인에는
+	//   넣지 않았다(`unwired-gates.ts` INTENTIONALLY_MANUAL 참조) — 여기서도 중복을 피한다.
+	if (scripts.has("verify:gates") && !scripts.has("quality:all")) {
+		steps.push(["bun", "run", "verify:gates"]);
+	}
+
 	// 검사 대상 0건은 "통과"가 아니다 (`agent-evidence.md` — 빈 대상은 통과가 아니라
 	// 실패다). 이 훅이 배선돼 있다는 것은 이 repo 가 push 게이트를 원한다는 뜻인데
 	// 돌릴 게이트가 없으면 그건 green 이 아니라 **판정 불능**이다.

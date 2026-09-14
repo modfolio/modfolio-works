@@ -208,13 +208,17 @@ try {
 		DEBRIEF_SUCCESS_MARKERS.some((marker) => transcript.includes(marker));
 	if (debriefed) process.exit(0);
 
-	console.log(
-		JSON.stringify({
-			decision: "block",
-			reason:
-				"frontier 모델을 사용한 세션인데 /debrief 카드가 없습니다 — escalation 비용을 영속 자산으로 바꾸는 마지막 단계입니다. `/debrief` 로 카드 1장(escalation 블록 포함)을 남기고 종료하세요. 규범: knowledge/canon/debrief-format.md (1회 안내 — 다음 종료는 차단하지 않음).",
-		}),
-	);
+	// ⚠ **발동한 가지를 그대로 말한다.** 종전 문구는 조건과 무관하게 언제나
+	//   *"frontier 모델을 사용한 세션인데…(escalation 블록 포함)"* 이었다. 그런데 위 조건은
+	//   2026-08 에 «비싼 모델을 썼나» → «무언가를 했나(편집 수)» 로 **바뀌었고 문구만 남았다.**
+	//   실측 2026-09-07: `claude-opus-5` 단독 세션(assistant 623턴 · frontier id 0)에서 발동해
+	//   「frontier 를 썼다」고 단언했다 — 조건이 재지 않은 사실이다.
+	//   대가가 크다: 없는 escalation 블록을 **지어내도록** 유도한다(카드 오염 = 코퍼스 오염).
+	//   게이트의 빨간불도 초록불과 같은 규율을 진다 — **잰 것만 말한다.**
+	const reason = frontierUsed
+		? "frontier 모델을 사용한 세션인데 /debrief 카드가 없습니다 — escalation 비용을 영속 자산으로 바꾸는 마지막 단계입니다. `/debrief` 로 카드 1장(**escalation 블록 포함**)을 남기고 종료하세요. 규범: knowledge/canon/debrief-format.md (1회 안내 — 다음 종료는 차단하지 않음)."
+		: `편집 ${editCount(transcript)}건의 세션인데 /debrief 카드가 없습니다 — 배운 것을 영속 자산으로 바꾸는 마지막 단계입니다. \`/debrief\` 로 카드 1장을 남기고 종료하세요. ⚠ 이 세션에서 frontier 모델은 감지되지 않았습니다 — **escalation 블록은 실제 escalation 이 있었을 때만** 채우십시오(없는 것을 지어내면 코퍼스가 오염됩니다). 규범: knowledge/canon/debrief-format.md (1회 안내 — 다음 종료는 차단하지 않음).`;
+	console.log(JSON.stringify({ decision: "block", reason }));
 	process.exit(0);
 } catch {
 	// 어떤 이상 경로도 세션 종료를 막지 않는다.

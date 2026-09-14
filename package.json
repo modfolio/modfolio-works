@@ -27,11 +27,21 @@
 		"atlas:adopt-plainly": "bun node_modules/@modfolio/harness/scripts/atlas/adopt-plainly.ts",
 		"verify:bunx-leak": "bun node_modules/@modfolio/harness/scripts/ci/bunx-leak-gate.ts",
 		"modfolio:compass": "bun node_modules/@modfolio/harness/scripts/modfolio/compass.ts",
-		"modfolio:nonstop": "bun node_modules/@modfolio/harness/scripts/ops/modfolio-nonstop.ts"
+		"modfolio:nonstop": "bun node_modules/@modfolio/harness/scripts/ops/modfolio-nonstop.ts",
+		"verify:gates": "bun node_modules/@modfolio/harness/scripts/ci/gates-run.ts",
+		"gate:quick": "bun node_modules/@modfolio/harness/scripts/ci/gate-run.ts quick",
+		"gate:full": "bun node_modules/@modfolio/harness/scripts/ci/gate-run.ts full",
+		"gate:release": "bun node_modules/@modfolio/harness/scripts/ci/gate-run.ts release",
+		"gate:weekly": "bun node_modules/@modfolio/harness/scripts/ci/gate-run.ts weekly",
+		"verify:gate-tiers": "bun node_modules/@modfolio/harness/scripts/ci/gate-run.ts --audit",
+		"feedback-send": "bun node_modules/@modfolio/harness/scripts/feedback-send.ts",
+		"debrief:curate": "bun node_modules/@modfolio/harness/scripts/debrief/curate.ts",
+		"handoff:prepare:apply": "bash node_modules/@modfolio/harness/scripts/ops/handoff-prepare.sh --apply-commit-push",
+		"handoff:restore": "bash node_modules/@modfolio/harness/scripts/ops/handoff-restore.sh"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.12",
-		"@modfolio/harness": "^3.83.4",
+		"@modfolio/harness": "^3.85.0",
 		"typescript": "^6.0.3",
 		"wrangler": "^4.129.0"
 	},
