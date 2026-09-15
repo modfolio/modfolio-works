@@ -78,12 +78,7 @@
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import {
-	headSha,
-	judgeReceipt,
-	readReceipt,
-	treeFingerprint,
-} from "../lib/gate-receipt.ts";
+import { contentTree, judgeReceipt, readReceipt } from "../lib/gate-receipt.ts";
 import {
 	bashCommand,
 	isSvelteKitProject,
@@ -295,10 +290,8 @@ if (import.meta.main) {
 	const PUSH_GRADE_SUITES = ["gate:release", "gate:full"] as const;
 	{
 		const receipt = readReceipt(projectRoot);
-		const now = {
-			head: headSha(projectRoot),
-			dirty: treeFingerprint(projectRoot),
-		};
+		// 정체는 HEAD 가 아니라 **내용**이다 — 같은 내용을 커밋한 뒤의 push 도 같은 영수증으로 통과한다.
+		const now = { tree: contentTree(projectRoot) };
 		let accepted: ReturnType<typeof judgeReceipt> | null = null;
 		let lastWhy = "영수증이 없다 — 아직 완주한 적이 없다";
 		for (const suite of PUSH_GRADE_SUITES) {
@@ -313,7 +306,7 @@ if (import.meta.main) {
 			const r = accepted.receipt;
 			console.error(
 				`[pre-push-guard] ✓ 영수증 인정 — \`${r.suite}\` 가 ${r.stepCount}단계를 완주했고 ` +
-					`트리가 그대로다 (head ${r.head.slice(0, 8)} · ${r.at}). 게이트를 다시 돌지 않는다.`,
+					`내용이 그대로다 (tree ${(r.tree ?? "").slice(0, 8)} · ${r.at}). 게이트를 다시 돌지 않는다.`,
 			);
 			if (r.skipped.length > 0) {
 				// 침묵한 스킵은 「전부 검사됨」으로 읽힌다 — 영수증을 쓸 때도 그대로 말한다.
@@ -323,6 +316,19 @@ if (import.meta.main) {
 				);
 			}
 			process.exit(0);
+		}
+		// ── 게이트 어휘가 있는 repo 는 훅 안에서 돌리지 **않는다** (계획 A4 · 3.88.8) ─────────
+		//
+		// 영수증이 안 맞으면 «판정 불능» 으로 60초를 태우고 통과시키는 것이 아니라, **명시적으로
+		// 재실행을 요구**한다(exit 2). 40분짜리를 60초 예산으로 부르는 구조가 여기서 사라진다 —
+		// 판정은 러너가 하고 훅은 그 영수증만 본다. `gate:full` 이 없는 repo 만 아래 예산 경로를 탄다.
+		if (scripts.has("gate:full")) {
+			console.error(
+				`[pre-push-guard] ⛔ 영수증 미인정 — ${lastWhy}.\n` +
+					"   → `bun run gate:full` (또는 `gate:release`) 을 완주하고 다시 push 한다. " +
+					"훅 안에서는 돌리지 않는다 — 판정은 러너의 것이고 훅은 영수증(밀리초)만 본다.",
+			);
+			process.exit(2);
 		}
 		console.error(
 			`[pre-push-guard] 영수증 미인정 — ${lastWhy}. 게이트를 돌린다.`,

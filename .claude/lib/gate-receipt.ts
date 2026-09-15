@@ -35,7 +35,15 @@
 
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 export const RECEIPT_RELPATH = join(".claude", "gate-receipt.json");
@@ -52,6 +60,16 @@ export const FINGERPRINT_EXCLUDE = [
 	"memory/debriefs/",
 	".claude/debriefs/",
 	".claude/.playbook-injections.jsonl",
+	// 러너가 매 실행 뒤에 쓰는 소요 이력 — `.gitignore` 안 된 멤버에서 `gate:quick` 한 번이
+	// 영수증을 무효화하지 않도록 정체에서 뺀다(`TIMINGS_RELPATH` 와 같은 값 · 테스트가 잠근다).
+	".claude/gate-timings.json",
+	// ── 허브 트리에 **다른 프로세스**가 쓰는 기록 (2026-09-15 실측 — 게이트 507초 동안 형제의 pull 이
+	//    `feedback/modfolio-admin/pull-manifest.json` 을, 전파의 Writ 가 `memory/orbit/*` 를 바꿔 영수증이 죽었다).
+	//    셋 다 quick/full tier 34단계 중 어느 스크립트도 읽지 않는다(`gate-receipt.test.ts` 가 grep 으로 잠근다).
+	//    ⚠ `scripts/knowledge/.rag-manifest.json` 은 `push-judgment-gate.ts`(full) 가 읽으므로 **제외하지 않는다.**
+	"**/pull-manifest.json", // 멤버 harness-pull 이 허브 sink 에 남기는 보고 — 허브의 산출물이 아니다
+	"memory/orbit/", // Orbit Writ 원장(current.json · writ-audit.jsonl) — 전파가 repo 마다 쓴다
+	"knowledge/playbooks/", // Muse 코퍼스 카운터 — Stop 훅이 매 턴 갱신한다 (release tier 만 읽는다)
 ] as const;
 
 export interface GateReceipt {
@@ -61,8 +79,10 @@ export interface GateReceipt {
 	/** 건너뛴 단계 — 침묵한 스킵은 「전부 검사됨」으로 읽힌다. */
 	readonly skipped: readonly string[];
 	readonly head: string;
-	/** 워킹트리 지문(제외 목록 반영). 트리가 깨끗하면 `clean`. */
+	/** 워킹트리 지문(제외 목록 반영). 트리가 깨끗하면 `clean`. 표시·진단용 — 판정 축이 아니다. */
 	readonly dirty: string;
+	/** **판정 축** — 내용 트리 OID(`contentTree`). 옛 영수증(3.88.7 이전)엔 없다 → 인정하지 않는다. */
+	readonly tree?: string;
 	readonly at: string;
 }
 
@@ -71,10 +91,91 @@ function git(root: string, args: string[]): string {
 	return r.status === 0 ? r.stdout : "";
 }
 
+/**
+ * 제외 항목의 네 형태: `dir/`(디렉터리 접두) · `…-`(파일명 접두 — 멤버 원장 `plans/modfolio-nonstop-*`) ·
+ * `**\/name`(어느 깊이든 그 파일명) · 그 밖(정확히 그 파일).
+ * ⚠ 초판은 접두형을 정확 일치로 읽어 멤버 원장이 **한 번도 제외되지 않았다.**
+ */
 export function isExcluded(path: string): boolean {
-	return FINGERPRINT_EXCLUDE.some((p) =>
-		p.endsWith("/") ? path.startsWith(p) : path === p,
+	return FINGERPRINT_EXCLUDE.some((p) => {
+		if (p.startsWith("**/")) {
+			const base = p.slice(3);
+			return path === base || path.endsWith(`/${base}`);
+		}
+		return p.endsWith("/") || p.endsWith("-") ? path.startsWith(p) : path === p;
+	});
+}
+
+/** 같은 네 형태를 git pathspec 으로 (`**\/` 형태는 glob 매직이 필요하다). */
+function excludePathspecs(): string[] {
+	return FINGERPRINT_EXCLUDE.map((p) =>
+		p.startsWith("**/")
+			? `:(glob)${p}`
+			: p.endsWith("/")
+				? `${p}**`
+				: p.endsWith("-")
+					? `${p}*`
+					: p,
 	);
+}
+
+/** `add -A` 의 제외 pathspec — glob 매직이 붙은 항목은 `:(exclude,glob)` 로 합친다. */
+function addExcludePathspecs(): string[] {
+	return excludePathspecs().map((p) =>
+		p.startsWith(":(glob)")
+			? `:(exclude,glob)${p.slice(":(glob)".length)}`
+			: `:(exclude)${p}`,
+	);
+}
+
+/**
+ * **내용의 정체** — 워킹트리(추적 변경 + 미추적 · `.gitignore` 존중 · 제외 경로 제거)를 임시
+ * 인덱스에 얹어 `write-tree` 한 트리 OID. HEAD 와 무관하다.
+ *
+ * 왜 HEAD 가 아니라 내용인가(허브 2026-09-15): 영수증이 HEAD 를 축으로 삼으면 «게이트 → 커밋 →
+ * push» 에서 커밋이 HEAD 를 바꿔 영수증이 죽고, 훅이 배선된 repo 는 **같은 내용에 게이트를 두 번**
+ * 돌린다 — 사람이 훅을 끄게 만드는 정확한 형태다. 같은 내용을 커밋해도 트리 OID 는 같고, 한
+ * 글자를 고치면 달라진다. 그것이 «게이트가 잰 것이 지금 push 되는 것인가» 의 옳은 축이다.
+ *
+ * 임시 인덱스는 **실제 인덱스를 복사**해 시작한다 — stat 캐시가 있어야 `add -A` 가 바뀐 파일만
+ * 다시 해시한다(`read-tree HEAD` 로 시작하면 만 개를 전부 읽는다). 실제 인덱스가 없으면 HEAD,
+ * 그것도 없으면 빈 인덱스.
+ */
+export function contentTree(root: string): string {
+	const tmpIndex = join(
+		tmpdir(),
+		`gate-receipt-index-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+	);
+	const env = { ...process.env, GIT_INDEX_FILE: tmpIndex };
+	const g = (args: string[]) =>
+		spawnSync("git", args, { cwd: root, encoding: "utf8", env });
+	try {
+		const realIndex = spawnSync("git", ["rev-parse", "--git-path", "index"], {
+			cwd: root,
+			encoding: "utf8",
+		});
+		const realPath =
+			realIndex.status === 0 ? join(root, realIndex.stdout.trim()) : "";
+		if (realPath && existsSync(realPath)) copyFileSync(realPath, tmpIndex);
+		else if (g(["read-tree", "HEAD"]).status !== 0) g(["read-tree", "--empty"]);
+		// 제외 경로는 정체에서 **뺀다** — HEAD 에 있어도, 워킹트리에 있어도. 안 빼면 커밋으로
+		// HEAD 에 들어간 원장이 다음 push 의 트리를 바꾼다.
+		g([
+			"rm",
+			"-r",
+			"--cached",
+			"-q",
+			"--ignore-unmatch",
+			"--",
+			...excludePathspecs(),
+		]);
+		g(["add", "-A", "--", ".", ...addExcludePathspecs()]);
+		const tree = g(["write-tree"]);
+		return tree.status === 0 ? tree.stdout.trim() : "";
+	} finally {
+		rmSync(tmpIndex, { force: true });
+		rmSync(`${tmpIndex}.lock`, { force: true });
+	}
 }
 
 /**
@@ -134,6 +235,7 @@ export function writeReceipt(
 		...r,
 		head: headSha(root),
 		dirty: treeFingerprint(root),
+		tree: contentTree(root),
 		at: new Date().toISOString(),
 	};
 	const abs = join(root, RECEIPT_RELPATH);
@@ -165,7 +267,7 @@ export type ReceiptVerdict =
  */
 export function judgeReceipt(
 	receipt: GateReceipt | null,
-	now: { head: string; dirty: string; suite: string },
+	now: { tree: string; suite: string },
 ): ReceiptVerdict {
 	if (receipt === null)
 		return { usable: false, why: "영수증이 없다 — 아직 완주한 적이 없다" };
@@ -175,19 +277,22 @@ export function judgeReceipt(
 			why: `영수증은 \`${receipt.suite}\` 의 것이고 지금 필요한 것은 \`${now.suite}\` 다 — 좁은 수트를 풀게이트로 인정하지 않는다`,
 		};
 	}
-	if (receipt.head !== now.head) {
+	if (typeof receipt.tree !== "string" || receipt.tree.length === 0) {
 		return {
 			usable: false,
-			why: `영수증의 HEAD(${receipt.head.slice(0, 8)}) 가 지금(${now.head.slice(0, 8)}) 과 다르다`,
+			why: "영수증이 옛 형식이다(내용 트리 OID 없음) — 게이트를 한 번 완주하면 새 형식이 된다",
 		};
 	}
-	if (receipt.dirty !== now.dirty) {
+	if (now.tree.length === 0) {
 		return {
 			usable: false,
-			why:
-				receipt.dirty === "clean" || now.dirty === "clean"
-					? "영수증을 낸 뒤 워킹트리가 바뀌었다"
-					: `워킹트리 지문이 다르다 (${receipt.dirty} → ${now.dirty})`,
+			why: "지금 트리의 내용 정체를 못 구했다(git 실패) — 판정 불능이지 통과가 아니다",
+		};
+	}
+	if (receipt.tree !== now.tree) {
+		return {
+			usable: false,
+			why: `영수증을 낸 뒤 내용이 바뀌었다 (tree ${receipt.tree.slice(0, 8)} → ${now.tree.slice(0, 8)})`,
 		};
 	}
 	return { usable: true, receipt };
