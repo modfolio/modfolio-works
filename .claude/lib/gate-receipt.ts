@@ -36,7 +36,6 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
-	copyFileSync,
 	existsSync,
 	mkdirSync,
 	readFileSync,
@@ -137,9 +136,12 @@ function addExcludePathspecs(): string[] {
  * 돌린다 — 사람이 훅을 끄게 만드는 정확한 형태다. 같은 내용을 커밋해도 트리 OID 는 같고, 한
  * 글자를 고치면 달라진다. 그것이 «게이트가 잰 것이 지금 push 되는 것인가» 의 옳은 축이다.
  *
- * 임시 인덱스는 **실제 인덱스를 복사**해 시작한다 — stat 캐시가 있어야 `add -A` 가 바뀐 파일만
- * 다시 해시한다(`read-tree HEAD` 로 시작하면 만 개를 전부 읽는다). 실제 인덱스가 없으면 HEAD,
- * 그것도 없으면 빈 인덱스.
+ * 임시 인덱스는 **`read-tree HEAD` 로 시작한다 — stat 캐시를 믿지 않는다.** 초판은 실제 인덱스를 복사해
+ * (stat 캐시로 바뀐 파일만 해시 · 148ms) 빨랐지만, 부하 속 실측(2026-09-15 · gate:full 4샤드 동시)에서
+ * 영수증 뒤 **같은 크기·같은 초**의 편집을 «내용 그대로» 로 읽어 push 훅이 exit 0 을 냈다 — racy-git 창의
+ * **거짓 초록**이고 이 장치의 존재 이유를 정확히 뒤집는 결함이다. 전부 재해시하면 3,135 파일에 589ms
+ * (실측) — push 훅·게이트 끝에 붙어도 되는 값이다. `--renormalize` 는 clean 필터를 다시 적용해 트리가
+ * HEAD 내용과 달라지므로 쓰지 않는다. HEAD 가 없으면 빈 인덱스.
  */
 export function contentTree(root: string): string {
 	const tmpIndex = join(
@@ -150,14 +152,8 @@ export function contentTree(root: string): string {
 	const g = (args: string[]) =>
 		spawnSync("git", args, { cwd: root, encoding: "utf8", env });
 	try {
-		const realIndex = spawnSync("git", ["rev-parse", "--git-path", "index"], {
-			cwd: root,
-			encoding: "utf8",
-		});
-		const realPath =
-			realIndex.status === 0 ? join(root, realIndex.stdout.trim()) : "";
-		if (realPath && existsSync(realPath)) copyFileSync(realPath, tmpIndex);
-		else if (g(["read-tree", "HEAD"]).status !== 0) g(["read-tree", "--empty"]);
+		// stat 없는 인덱스 → `add -A` 가 모든 추적 파일의 내용을 다시 해시한다(위 머리말).
+		if (g(["read-tree", "HEAD"]).status !== 0) g(["read-tree", "--empty"]);
 		// 제외 경로는 정체에서 **뺀다** — HEAD 에 있어도, 워킹트리에 있어도. 안 빼면 커밋으로
 		// HEAD 에 들어간 원장이 다음 push 의 트리를 바꾼다.
 		g([

@@ -16,7 +16,6 @@ tools:
   - Read
   - Glob
   - Grep
-  - TodoWrite
 disallowedTools:
   - WebFetch
   - WebSearch

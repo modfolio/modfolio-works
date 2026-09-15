@@ -76,7 +76,7 @@
  */
 
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { contentTree, judgeReceipt, readReceipt } from "../lib/gate-receipt.ts";
 import {
@@ -110,7 +110,56 @@ const cmd = bashCommand(input);
 if (import.meta.main) {
 	if (!cmd || !/\bgit\s+push\b/i.test(cmd)) process.exit(EXIT_GREEN);
 
-	const projectRoot = process.cwd();
+	/**
+	 * 이 훅이 읽는 모든 것 — `package.json` 의 게이트 스크립트, `.claude/harness-lock.json`,
+	 * `.claude/settings*.json` 의 timeout, **그리고 완주 영수증** — 은 이 한 경로에 달려 있다.
+	 *
+	 * ⚠ **정박점은 «지금 밀어 올리는 트리»이지 «세션의 프로젝트»가 아니다.** 둘은 갈린다:
+	 * 허브 세션이 sibling 디렉터리 안에서 원격 전송 명령을 내면 `CLAUDE_PROJECT_DIR` 는
+	 * **허브**를 가리킨다. 그걸 먼저 믿으면 sibling 의 전송이 **허브의 영수증**으로 통과한다 —
+	 * 전파가 32 repo 에 밀어 올리는 이 저장소에서는 이론이 아니라 일상 경로다.
+	 * (첫 수정판이 `CLAUDE_PROJECT_DIR` 를 먼저 봤고, 훅 스위트 10건이 그것을 잡았다.)
+	 *
+	 * 그래서 순서는 git 최상위(cwd 기준) → cwd → `CLAUDE_PROJECT_DIR` 다.
+	 * 예전에는 `process.cwd()` 한 줄이었고 **틀렸을 때 그렇게 말하지 않았다**: 엉뚱한
+	 * 루트를 잡으면 `package.json` 이 없어 판정 불능(비차단)으로 새거나, 영수증이 없어
+	 * 「게이트를 안 돌렸다」로 보인다. 둘 다 **전송을 통과시키는 방향**이다.
+	 * 이제 마지막 후보까지 실패하면 추측 대신 **판정 불능**을 말한다.
+	 */
+	function hasManifest(dir: string | undefined): dir is string {
+		return (
+			dir !== undefined &&
+			dir.length > 0 &&
+			existsSync(join(dir, "package.json"))
+		);
+	}
+
+	function resolveProjectRoot(): string | undefined {
+		const top = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+			encoding: "utf-8",
+			stdio: ["ignore", "pipe", "ignore"],
+		});
+		const gitTop = top.status === 0 ? (top.stdout ?? "").trim() : "";
+		for (const candidate of [
+			gitTop,
+			process.cwd(),
+			process.env.CLAUDE_PROJECT_DIR,
+		]) {
+			if (hasManifest(candidate)) return candidate;
+		}
+		return undefined;
+	}
+
+	const resolvedRoot = resolveProjectRoot();
+	if (resolvedRoot === undefined) {
+		console.error(
+			"[pre-push-guard] ⚠ 판정 불능 — 프로젝트 루트를 정하지 못했다 " +
+				"(git 최상위·cwd·CLAUDE_PROJECT_DIR 어디에도 package.json 이 없다). " +
+				"추측해서 영수증을 읽지 않는다 — 잘못 읽으면 통과로 보인다. 전송은 진행(비차단).",
+		);
+		process.exit(EXIT_INDETERMINATE);
+	}
+	const projectRoot: string = resolvedRoot;
 
 	function readJsonSafe(path: string): unknown {
 		try {
