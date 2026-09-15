@@ -79,6 +79,12 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+	headSha,
+	judgeReceipt,
+	readReceipt,
+	treeFingerprint,
+} from "../lib/gate-receipt.ts";
+import {
 	bashCommand,
 	isSvelteKitProject,
 	readHookInput,
@@ -269,6 +275,58 @@ if (import.meta.main) {
 				"검사 대상 0건을 green 으로 읽지 않는다. push 는 진행(비차단).",
 		);
 		process.exit(EXIT_INDETERMINATE);
+	}
+
+	// ── 완주 영수증 — 게이트를 두 번 돌지 않는다 (atelier-and-folio 2026-09-15) ──────
+	//
+	// 그쪽 실측: `quality:all` 이 **~40분**인데 훅 러너 예산은 **60초**다. 40분짜리를 60초
+	// 예산으로 부르니 **매 `git push` 가 60초를 태우고 «판정 불능»** 으로 끝난다 —
+	// 아무것도 말해 주지 않으면서 비용만 낸다. 그리고 그런 훅은 «무시하도록 훈련»시킨다.
+	//
+	// ⚠ 제공된 레버(`extraHooks.timeout`)로는 못 푼다 — 예산을 40분으로 올리면 push 마다
+	// 40분이다. 「좁은 게이트 + push 직전 1회」 정책과 정면으로 어긋난다.
+	//
+	// → 러너(`gate:full`·`gate:release`)가 완주하면 영수증을 남긴다. 여기서는 그 지문이
+	//   **지금 push 하는 트리와 같은지만** 본다(밀리초). 그러면 ① 타임아웃이 초록을 위장할
+	//   수 없고 ② 무엇이 검사됐는지가 기록에 남는다.
+	//
+	// ⚠ **좁은 수트의 영수증은 인정하지 않는다** — `gate:quick` 은 여기 없다. 그것을 받으면
+	//   그게 바로 초록의 위장이다.
+	const PUSH_GRADE_SUITES = ["gate:release", "gate:full"] as const;
+	{
+		const receipt = readReceipt(projectRoot);
+		const now = {
+			head: headSha(projectRoot),
+			dirty: treeFingerprint(projectRoot),
+		};
+		let accepted: ReturnType<typeof judgeReceipt> | null = null;
+		let lastWhy = "영수증이 없다 — 아직 완주한 적이 없다";
+		for (const suite of PUSH_GRADE_SUITES) {
+			const v = judgeReceipt(receipt, { ...now, suite });
+			if (v.usable) {
+				accepted = v;
+				break;
+			}
+			lastWhy = v.why;
+		}
+		if (accepted?.usable === true) {
+			const r = accepted.receipt;
+			console.error(
+				`[pre-push-guard] ✓ 영수증 인정 — \`${r.suite}\` 가 ${r.stepCount}단계를 완주했고 ` +
+					`트리가 그대로다 (head ${r.head.slice(0, 8)} · ${r.at}). 게이트를 다시 돌지 않는다.`,
+			);
+			if (r.skipped.length > 0) {
+				// 침묵한 스킵은 「전부 검사됨」으로 읽힌다 — 영수증을 쓸 때도 그대로 말한다.
+				console.error(
+					`[pre-push-guard]   ⊘ 그 실행이 검사하지 않은 ${r.skipped.length}단계: ${r.skipped.slice(0, 8).join(" · ")}` +
+						(r.skipped.length > 8 ? ` … (+${r.skipped.length - 8})` : ""),
+				);
+			}
+			process.exit(0);
+		}
+		console.error(
+			`[pre-push-guard] 영수증 미인정 — ${lastWhy}. 게이트를 돌린다.`,
+		);
 	}
 
 	// WSL 호스트의 PATH 에서 Windows mount (`/mnt/c/...`) 항목 제거 — `bun run`
