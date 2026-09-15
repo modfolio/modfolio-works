@@ -33,6 +33,12 @@ bun run modfolio:nonstop -- tick "<매듭 요약> (<커밋>)"                # �
 4. **매듭 5개마다 재계획.** `bun run modfolio:nonstop -- status` 가 «재계획 예정» 을 내면: 계획 파일을 다시 읽고 · 허브면 `plan:build`/`currency:probe`, 어디서든 WebSearch 로 그 항목의 최신 1차 출처를 확인하고 · TODO 를 고쳐 쓰고 · `## 결정` 에 «무엇이 바뀌었나» 한 줄. 재계획이 «변경 없음» 이어도 그 사실을 적는다.
 5. **게이트 초록 뒤에만 커밋 · 커밋 뒤에만 매듭.** 결과 판정은 exit code(파이프 뒤 `$?` 금지). 커밋은 내가 만진 경로만 스테이징(`add -A` 금지 — 남의 미완성 작업을 섞지 않는다).
 6. 이 repo 밖은 **읽기만**. 허브에서만 Orbit Writ 로 한 repo 씩. 파괴 명령(`--force`·`--no-verify`·`reset --hard`·`rm -rf`)·지출은 이 스킬 안에서도 오너 대기.
+   ⚙ **무인 구간에서는 «창이 뜨면 대응한다» 가 아니라 «뜰 수 없게 한다»** — 승인 창이
+   뜨는 순간 무인은 끝나고, 오너는 폰이라 그 창을 누를 수 없다. 무인 명령은
+   `DISPLAY`·`WAYLAND_DISPLAY`·`DBUS_SESSION_BUS_ADDRESS`·askpass 를 **해제**하고
+   `GIT_TERMINAL_PROMPT=0` · ssh `BatchMode=yes` · `ATHSRA_TOKEN` 주입으로 돌린다
+   (modfolio-pay 2026-09-14 실측 — keyring 없이 athsra 주입 성공. 원인은 WSLg
+   gnome-keyring 으로 **추정**이며 미확정이지만, 처방은 원인 확정을 기다리지 않는다).
 7. **0건·무반응·판정 불능은 결론이 아니다** — probe·키·전제부터 의심하고(양성 대조), 그래도 안 되면 원장에 «미검사» 로 적고 다음으로.
 8. 하루에 한 번 이상 `/debrief`(원칙 캡처) · 끝나면 `/session-handoff`.
 
