@@ -99,13 +99,26 @@ ADR-009 (자회사 합류 advisory) 참조. 아래는 참고 순서일 뿐 — �
   "repo": "{repo-name}",
   "domain": "{domain}",
   "framework": "{Framework}",
-  "db": "{DB}",
+  "db": "mfdb Postgres (NAS mf-kr-1 · DB {repo-name})",
+  "dataSubstrate": "self-hosted",
   "deployment": "cf-workers",
   "cfProject": "{cf-project-name}",
   "version": "0.1.0",
   "status": "planned"
 }
 ```
+
+⚠ **`dataSubstrate` 는 선택이 아니다.** `data:substrate` 게이트가 `db` 를 가진 항목 전부에
+이 필드를 요구하고, `verify:substrate-truth` 가 **실물 배선과 대조**한다(선언만 맞추고
+실제로는 Neon 에 붙어 있으면 잡힌다).
+
+기본값이 `self-hosted` 인 이유: **오너 결정(2026-09-14 · 2026-09-16 재확인)으로 mfdb 가
+모든 앱의 메인·프로덕션이다.** 예외 없다 — 금융(pay)도 인증(connect)도 포함이다.
+근거는 비용이다: 사용자 10명 미만이라 유료 클라우드를 쓰지 않는다.
+전문 = canon `modfolio-db.md` v2.0.0 §법.
+
+→ **새 앱은 Neon 프로젝트를 만들지 않는다.** 만드는 순간 그 계량기를 다시 켜는 것이고,
+   나중에 옮길 일이 하나 늘어난다. 처음부터 mfdb 로 시작하는 것이 가장 싼 경로다.
 
 주의: `appDomain` 필드는 ADR-008이 `app.{외부도메인}` 패턴을 폐기 대상으로 정함.
 `*.modfolio.io` 인프라 서브도메인은 허용. 외부 브랜드 앱은 생략 권장.
@@ -158,8 +171,42 @@ ADR-009 (자회사 합류 advisory) 참조. 아래는 참고 순서일 뿐 — �
 3. 가입했으면 **`capability-ledger.md` 에 그 역량이 있는지** 본다 —
    없으면 허브에 제보(`feedback/modfolio-ecosystem/`). 두 번째 앱이 또 가입하지 않도록.
 
-⚠ prod DB 는 별개 판단이다. `mfdb` 경로 B 는 **아직 «prod-ready» 가 아니다**(ADR-022 §6 미완).
-   dev 를 계량기에서 떼는 것이 지금의 목적이다.
+⚠ **prod DB 는 더 이상 «별개 판단» 이 아니다** (2026-09-16 갱신).
+
+이 자리에는 *"prod DB 는 별개 판단이다 · mfdb 는 아직 prod-ready 가 아니다 · dev 를
+계량기에서 떼는 것이 지금의 목적"* 이 적혀 있었다. **목적지는 정해졌다** — 오너 결정으로
+mfdb 가 모든 앱의 프로덕션이다(canon `modfolio-db.md` v2.0.0 §법).
+
+정해지지 않은 것은 **경로**이고, 둘 중 하나는 이미 라이브로 증명됐다:
+
+| 경로 | 상태 |
+|---|---|
+| **A** Worker → Hyperdrive → Workers VPC → Tunnel → mfdb | **프로덕션 실증됨** — `modfolio-pay` 가 2026-09-14 부터 실결제 원장을 이 경로로 돌린다 |
+| B Worker → Tunnel 공개 HTTPS + Access → mfdb-neon-http | dev 에서 쓴다. prod 실증 없음 |
+
+→ 새 앱은 **A 를 기본으로 계획**하고, dev 는 지금처럼 B(프록시)로 붙는다.
+   드라이버(`@neondatabase/serverless`)는 양쪽에서 같다 — 그래서 dev/prod 의미론이 안 갈린다.
+
+### DB 를 실제로 받는 법 (이 스킬이 오래 빠뜨렸던 칸)
+
+«Neon 을 만들지 마라» 만 적고 «그럼 어디서 받나» 를 안 적으면, 다음 사람은 결국 Neon 을 만든다.
+
+1. **`modfolio-infra` 에 요청한다** — 제어 평면 `mfdb` CLI 의 `provision` 이 그 주인이다
+   (canon `modfolio-db.md` §구조 ②). 요청에 담을 것: repo 이름 · 예상 데이터 계급
+   (`durability`/`kind`/`sensitivity`) · RPO/RTO 희망값.
+2. **좌표는 athsra 로 온다** — `DEV_DATABASE_URL` (+ `DEV_DB_TOKEN`). 코드에 적지 않는다.
+   받는 형태와 절차는 canon `modfolio-db.md` MUST 2.
+3. **드라이버는 그대로** — `@neondatabase/serverless`. dev 는 `neonConfig.fetchEndpoint`
+   (mfdb 프록시) + `authToken` 만 설정한다. **postgres-js 등으로 갈아타지 않는다** —
+   갈아타는 순간 dev 가 prod 와 다른 의미론(`db.batch()`·무트랜잭션)으로 돌아
+   dev-green/prod-red 가 된다(canon MUST 3).
+4. **격리는 DB-per-service 다** — 한 인스턴스 안에서 `CREATE DATABASE <repo>` +
+   `OWNER app_<repo>` + `REVOKE CONNECT … FROM PUBLIC`. **통합 DB 가 아니다.**
+
+⚠ 안전 요건은 **면제되지 않는다** — canonical 데이터는 PITR + **복원 drill**이 필요하다
+(ADR-010a 게이트 3 · 허브 `drill:restore`). self-host 로 가면 복원이 벤더의 일이 아니라
+**우리 일**이 되므로 managed 시절보다 이 요건이 더 무겁다. 2026-09-16 실측으로 fleet 에
+유효한 drill 이 0건이다 — 새 앱이 그 숫자를 늘리지 않게 한다.
 
 ### 6. knowledge 파일 생성
 
