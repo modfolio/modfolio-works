@@ -43,13 +43,13 @@
 		"@biomejs/biome": "^2.5.12",
 		"@modfolio/harness": "^3.88.2",
 		"typescript": "^6.0.3",
-		"wrangler": "^4.129.0"
+		"wrangler": "^4.131.2"
 	},
 	"overrides": {
 		"@biomejs/cli-linux-x64-musl": "npm:@biomejs/cli-linux-x64@^2.5.12"
 	},
 	"dependencies": {
-		"@modfolio/connect-sdk": "^10.8.0",
+		"@modfolio/connect-sdk": "^10.10.0",
 		"@modfolio/contracts": "^1.28.0"
 	}
 }
