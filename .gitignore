@@ -19,3 +19,6 @@ memory/dream-report*.md
 .claude/harness-feedback/
 # @modfolio/harness runtime — regenerated/per-machine, do not commit
 .claude/.playbook-injections.jsonl
+# @modfolio/harness runtime — regenerated/per-machine, do not commit
+.claude/gate-receipt.json
+.claude/gate-timings.json

@@ -32,7 +32,9 @@
 			"!.claude/harness-feedback",
 			"!.claude/harness-state.json",
 			"!**/fonts.css",
-			"!**/coverage"
+			"!**/coverage",
+			"!.claude/gate-receipt.json",
+			"!.claude/gate-timings.json"
 		]
 	},
 	"overrides": [
