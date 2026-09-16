@@ -1,6 +1,6 @@
 ---
 title: modfolio-db — Modfolio DB 시스템 (self-host 본진 · NAS mf-kr-1)
-version: 2.0.0
+version: 2.1.0
 last_updated: 2026-09-16
 source: [ADR-022 (2026-08-23 오너 승인, 외부 AI 검토 v1 반영), **오너 결정 2026-09-16 (mfdb = 메인·프로덕션 · 모든 앱)**, 2026-08-23 Neon API 전수 실측 + NAS 69 컨테이너 실측, 2026-09-16 data:substrate 실측(24/14/10/0), 상세 설계서 modfolio_db_system_plan_2026-08-23.md]
 sync_to_siblings: true
@@ -95,6 +95,31 @@ canon 만 읽고 ADR 을 안 봐서 «미해결 경계» 로 오판했고, 그 �
 
 ⚠ **C 를 B 처럼 견적 내지 않는다.** connect 는 소스 7,082 파일에 Neon 드라이버 참조가
 **0건**이다 — 순수 D1 이다. 「모든 앱」에 포함되지만 **일정은 A·B 와 다른 단위**다.
+
+### 왜 DB 를 나누는가 — 그리고 그 대가는 무엇인가 (ADR-023 · 2026-09-16)
+
+오너가 물었다: *"통합 느낌이어야 하는 것 아닌가? 사본을 만들고 동기화하는 게…"*
+정확한 질문이고, 답은 실측에 있다:
+
+```
+mfdb=# SELECT count(*) FROM modfolio_connect.public.users;
+ERROR: cross-database references are not implemented
+```
+
+**PostgreSQL 은 DB 를 건너뛰는 질의를 못 한다.** 그래서 DB-per-service 는 «남의 엔티티를
+쓰려면 사본(읽기 모델)을 가져라» 를 강제한다. 그 사본이 낡지 않으려면 **전파 계층**이 있어야
+하고, 그것이 ADR-022 D10 의 outbox 다 — 2026-09-16 실측: **설계만 있고 어느 DB 에도 없었다.**
+
+그래도 DB 를 나누는 이유는 **성장**이다(ADR-023 D1): 독립 배포·마이그레이션·복원·이전.
+«한 DB · 앱별 스키마» 는 지금 규모에 더 편하지만 **되돌리기 어려운 방향**이라 기각했다
+(ADR-023 D2 — 숨은 DDL 결합 · 한 앱만 복원 불가 · 클라우드 이전이 big-bang).
+
+멤버가 지킬 것 둘:
+- **사본은 갱신 경로를 가진다.** 세션 있는 경로는 SSO 토큰이 갱신한다. **세션 없는 경로**
+  (뒤늦은 영수증 · 예약 알림 · 관리자 목록)가 있으면 `user.updated` 를 `subscribesTo` 로
+  선언한다. 갱신 경로 없는 사본은 캐시가 아니라 조용히 낡는 데이터다.
+- **상태를 바꾸는 트랜잭션은 outbox 행을 같이 쓴다.** 모양은 `contracts/events/outbox.ts`.
+  `user.deleted` 처럼 «세션이 없어진 뒤 해야 할 일» 은 이 경로 말고는 전달될 수 없다.
 
 ## 왜 (실측 2026-08-23)
 

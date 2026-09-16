@@ -118,15 +118,6 @@ function excludePathspecs(): string[] {
 	);
 }
 
-/** `add -A` 의 제외 pathspec — glob 매직이 붙은 항목은 `:(exclude,glob)` 로 합친다. */
-function addExcludePathspecs(): string[] {
-	return excludePathspecs().map((p) =>
-		p.startsWith(":(glob)")
-			? `:(exclude,glob)${p.slice(":(glob)".length)}`
-			: `:(exclude)${p}`,
-	);
-}
-
 /**
  * **내용의 정체** — 워킹트리(추적 변경 + 미추적 · `.gitignore` 존중 · 제외 경로 제거)를 임시
  * 인덱스에 얹어 `write-tree` 한 트리 OID. HEAD 와 무관하다.
@@ -154,9 +145,20 @@ export function contentTree(root: string): string {
 	try {
 		// stat 없는 인덱스 → `add -A` 가 모든 추적 파일의 내용을 다시 해시한다(위 머리말).
 		if (g(["read-tree", "HEAD"]).status !== 0) g(["read-tree", "--empty"]);
+		// **먼저 담고 나중에 뺀다** — 그리고 두 호출의 종료코드를 읽는다.
+		//
+		// 초판은 `rm --cached <제외>` 뒤 `add -A -- . :(exclude)<제외>` 였고 반환값을 버렸다. atelier
+		// 실측(2026-09-16): 제외 경로가 그 repo 의 `.gitignore` 에 있으면 git 이 «ignored 경로를 명시했다»
+		// 고 **exit 1** 을 낸다 — 트리는 맞았지만 그 침묵이 `add` 의 **다른 실패**(권한·손상)도 똑같이
+		// 삼킨다. 그때 트리는 조용히 «HEAD 그대로» 가 되고, 영수증은 **바뀐 내용을 안 바뀐 것으로
+		// 증명**한다 — 이 장치의 존재 이유를 정확히 뒤집는 형태다. 허브 트리에는 그 경로들이 추적돼 있어
+		// 원리적으로 안 보였다. 제외 pathspec 을 `add` 에 주지 않으면 그 경고 자체가 없고, 남는 실패는
+		// 전부 진짜다 → 빈 문자열(판정 불능 · `judgeReceipt` 가 «못 구했다» 로 거절한다).
+		const add = g(["add", "-A", "--", "."]);
+		if (add.status !== 0) return "";
 		// 제외 경로는 정체에서 **뺀다** — HEAD 에 있어도, 워킹트리에 있어도. 안 빼면 커밋으로
 		// HEAD 에 들어간 원장이 다음 push 의 트리를 바꾼다.
-		g([
+		const rm = g([
 			"rm",
 			"-r",
 			"--cached",
@@ -165,7 +167,7 @@ export function contentTree(root: string): string {
 			"--",
 			...excludePathspecs(),
 		]);
-		g(["add", "-A", "--", ".", ...addExcludePathspecs()]);
+		if (rm.status !== 0) return "";
 		const tree = g(["write-tree"]);
 		return tree.status === 0 ? tree.stdout.trim() : "";
 	} finally {

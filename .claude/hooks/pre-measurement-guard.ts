@@ -40,6 +40,7 @@ export interface MeasurementFinding {
 		| "zsh-pipestatus"
 		| "rg-bundled-r"
 		| "pgrep-self-count"
+		| "pkill-self-kill"
 		| "zsh-word-split";
 	readonly why: string;
 	readonly fix: string;
@@ -287,6 +288,25 @@ function pgrepSelfCount(cmd: string): boolean {
 }
 
 /**
+ * ④′ `pkill -f <패턴>` — **그 패턴을 담은 이 셸 자신을 죽인다.** `-c` 유무와 무관하다.
+ *
+ * 위 주석이 그 사건(2026-08-25 · exit 143)을 이미 알고 있었는데 매처는 **세는 형태만** 물었다.
+ * atelier 실측(2026-09-16 · 두 번, 한 번은 일부러 재현): `pkill -f "<패턴>"` 은 세지 않고
+ * **죽이며**, `-f` 를 쓴 이상 항상 자기 cmdline 을 매치한다 — 래퍼가 exit 144 로 끝나고
+ * **그 뒤 명령은 아예 실행되지 않는다.** 「목록 조회는 자기 줄이 눈에 보이니 다르다」는
+ * 논거가 여기엔 안 맞는다(죽은 뒤엔 볼 것이 없다). 그리고 더 나쁜 것은 그 다음이다 —
+ * 게이트가 시작도 못 했는데 **이전 실행이 남긴 같은 이름의 로그**를 읽으면 초록으로 위장된다.
+ */
+function pkillSelf(cmd: string): boolean {
+	// `pkill` 뒤 0개 이상의 단어, 그 다음 `f` 를 품은 짧은 옵션 묶음(`-f` · `-cf` · `-fx`).
+	// ⚠ 첫 판은 `pkill\s[^;&|]*\s-…f` 였다 — `-f` 가 **첫 옵션**이면 앞 공백을 `pkill\s` 가 먹어
+	// 원 사건 그대로(`pkill -f "vitest run"`)를 못 잡았다. 대조쌍이 그것을 잡았다.
+	return /(^|[;&|(\s])pkill(?:\s+[^;&|\s]+)*\s+-[a-eg-z]*f[a-z]*(?=\s|$)/.test(
+		stripQuoted(cmd),
+	);
+}
+
+/**
  * ⑤ `X=$(...)` 로 담아 놓고 `for y in $X` — **zsh 는 스칼라를 쪼개지 않는다.**
  *
  * 실측 (zsh 5.9, 2026-08-30):
@@ -361,7 +381,13 @@ export function judgeMeasurement(raw: string): MeasurementFinding[] {
 			fix: "rg 는 기본 재귀다. 행번호는 `-n` · 파일명만 `-l` · 개수는 `-c`.",
 		});
 	}
-	if (pgrepSelfCount(cmd)) {
+	if (pkillSelf(cmd)) {
+		out.push({
+			id: "pkill-self-kill",
+			why: "`pkill -f <패턴>` 은 **그 패턴을 담은 이 셸 자신**을 매치해 죽인다 — 래퍼가 exit 144 로 끝나고 뒤 명령은 실행되지 않는다(-c 유무 무관).",
+			fix: "PID 로 죽여라: `pgrep -af <패턴>` 으로 목록을 **보고** 자기 줄을 뺀 뒤 `kill <pid>`. 정말 패턴이어야 하면 스크립트 파일에서 돌리거나 `# measure-ok`.",
+		});
+	} else if (pgrepSelfCount(cmd)) {
 		out.push({
 			id: "pgrep-self-count",
 			why: "`pgrep -c -f` 는 **그 패턴을 담은 이 셸 자신**을 함께 센다 — 「0인가」가 영원히 거짓이 된다.",

@@ -1,6 +1,6 @@
 ---
 tier: reference
-version: 1.0.0
+version: 1.1.0
 status: active
 applicability: always
 consumers: [new-app, plan, atlas, ops]
@@ -150,10 +150,15 @@ granularity 로 **내려서** 유지한다.
 | 환불·취소 | | open |
 | 구독 관리 | | open |
 | 알림 설정·선호 | | open |
+| 사이트 운영 모니터링(uptime·SSL·DNS drift·배포·웹훅) | modfolio-operator | claimed |
+| 프로바이더 어댑터(Cloudflare DNS/배포/SaaS hostname · GitHub App) | modfolio-operator | claimed |
+| 변경 파이프라인(계획→diff→승인→적용→검증→감사→롤백) | modfolio-operator | claimed |
+| 인프라 선언 스키마(modfolio.config.ts) · 프로젝트 스캐너 | modfolio-operator | claimed |
+| PG 준비·법정 표시 점검(전자상거래법 §10·통신판매업 신고 · 고지 판정은 pay `@modfolio/tax-disclosure` 소비) | modfolio-operator | claimed |
 <!-- ledger:end -->
 
 <!-- totals:begin -->
-역량 63 · parts 48 · claimed 5 · open 10 · 주인 repo 27
+역량 68 · parts 48 · claimed 10 · open 10 · 주인 repo 28
 <!-- totals:end -->
 
 ## 제품 표면 축 10 — 2026-08-30 신설 (전부 `open`)

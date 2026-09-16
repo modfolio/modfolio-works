@@ -79,6 +79,7 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { contentTree, judgeReceipt, readReceipt } from "../lib/gate-receipt.ts";
+import { isGitPushCommand } from "./_git-push-detect.ts";
 import {
 	bashCommand,
 	isSvelteKitProject,
@@ -102,13 +103,16 @@ const MIN_BUDGET_MS = 1_000;
 
 const input = await readHookInput();
 const cmd = bashCommand(input);
-// Only act on a real `git push`. `git push --help`, `git push-something`, etc.
-// fall through untouched.
+// Only act on a command that **executes** `git push`. `git push --help`, `git push-something`,
+// a `grep` pattern that contains the words, a heredoc body that mentions them — fall through
+// untouched. 3.89.0 and earlier used a substring regex here and blocked four non-transfers on
+// 2026-09-16 alone (`_git-push-detect.ts` header) — the exact shape that gets a hook switched off.
+// ⚠ Still unseen by design: `G=git; $G push`, aliases, scripts on disk (values unknown before run).
 // CLI 동작 불변 — `bun run <file>` 은 `import.meta.main` 이 참이다.
 // 가드가 없으면 이 모듈을 **import 하는 테스트가 프로세스째 종료**된다
 // (2026-08-25 실측: `payment-ledger-clean` 을 import 하자 훅 스위트 15개가 돌았다).
 if (import.meta.main) {
-	if (!cmd || !/\bgit\s+push\b/i.test(cmd)) process.exit(EXIT_GREEN);
+	if (!cmd || !isGitPushCommand(cmd)) process.exit(EXIT_GREEN);
 
 	/**
 	 * 이 훅이 읽는 모든 것 — `package.json` 의 게이트 스크립트, `.claude/harness-lock.json`,

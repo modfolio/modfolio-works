@@ -1,7 +1,7 @@
 ---
 title: Velocity 모드 — fast-MVP hook 프로필 (lean 기본 / strict opt-in)
-version: 1.1.0
-last_updated: 2026-07-28
+version: 1.2.0
+last_updated: 2026-09-16
 source: [2026-06-18 v3.13 세션, 사용자 명시 결정 (fast-MVP ZERO 오버헤드)]
 sync_to_siblings: true
 applicability: conditional
@@ -11,6 +11,10 @@ consumers: [harness-pull, ops, release]
 # Velocity 모드 — hook 프로필
 
 > **무사용자 fast-MVP 단계: harness 가 wiring 하는 hook 을 결정적 안전 가드 2개 + debrief nudge 1개로 축소(`velocity`, 기본). 전체 set 은 `harness-lock.json {"profile":"strict"}` opt-in. velocity 가 없애는 건 토큰이 아니라 지연(latency)이다.**
+>
+> **v1.2.0 (2026-09-16, atelier 실측 «strict 인데 PreToolUse 가 안 도는 세션»)** — «안전망 2개» 는
+> **훅 층이 실행되는 세션에 한한다.** 배선은 존재의 증거이지 실행의 증거가 아니다 — 세션 첫머리에
+> `true # hook-probe` 로 잰다(§«velocity 가 그대로 유지하는 것»). 허브 반례: SDK 호스팅 세션에서도 훅은 돈다.
 >
 > **v1.1.0 (2026-07-28, 오너 결정 "전부 제대로 작동하고 에러·워닝 없도록 정공법으로")** —
 > `stop-debrief-check` 가 velocity 기본에 편입됐다. 근거: opt-in(`autoDebrief:true`) 상태로
@@ -78,6 +82,10 @@ ecosystem 은 sibling 을 직접 수정하지 않는다(Hub-not-enforcer). sibli
 ## velocity 가 그대로 유지하는 것
 
 - **안전망 2개** — `pre-destructive-guard`(rm -rf /·force-push)·`pre-payment-guard`(지출+`mcp__.*`). 0 토큰·<5ms. 'security' 가 아니라 무료 사고방지망.
+  ⚠ **훅 층이 실행되는 세션에 한해서다.** atelier 실측(2026-09-16): `profile: "strict"` 인데 PreToolUse 가 한 건도
+  안 도는 세션이 있었다(SessionStart 는 돌았다). 배선은 존재의 증거이지 실행의 증거가 아니다 — 세션 첫머리에
+  **`true # hook-probe`** 를 한 번 실행한다: `pre-destructive-guard` 가 exit 2 로 막으며 «돈다» 를 내면 살아 있고,
+  그냥 실행됐으면 이 세션에 안전망은 **없다** — 지출·파괴·전송은 스스로 멈추고 오너에게 확인한다.
 - `permissions.deny`(payment-approval 토큰 보호)·`defaultMode: bypassPermissions`·`fallbackModel`.
 - **`/release`(release:gate) 하드 게이트** — 코드품질 정공법은 폐기가 아니라 시점 이동. ship 전 전부 green 필수.
 

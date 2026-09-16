@@ -38,6 +38,23 @@ if (import.meta.main) {
 	const cmd = bashCommand(input);
 	if (!cmd) process.exit(0);
 
+	// 0. 훅 층 **생존 probe** — 0 토큰·결정적. atelier 실측(2026-09-16): `profile: "strict"` 인데
+	//    PreToolUse·PostToolUse 가 한 건도 안 도는 세션이 있었다(SessionStart 는 돌았다). 「가드가 있다」
+	//    를 전제로 행동하는 에이전트 + 실제로는 없는 가드 = 처음부터 없던 것보다 나쁘다. 훅 층은 훅
+	//    바깥에서 잴 수 없으므로(스크립트는 Claude 의 훅 체계를 못 부른다) **실제 도구 호출 하나**로 잰다:
+	//    `true  # hook-probe` 를 실행하면 이 가드가 exit 2 로 막으며 아래 문장을 낸다. 문장이 안 보이고
+	//    명령이 그냥 실행됐으면 이 세션의 훅 층은 죽은 것이다 — 그때 지출·파괴·전송은 스스로 멈춘다.
+	//    이 가드에 두는 이유: velocity 프로필이 **모든 멤버에 배선하는** 두 안전망 중 하나라서다.
+	//    ⚠ probe 는 **명령 전체**가 그 한 줄일 때만이다 — 커밋 메시지·편지 heredoc 이 그 표식을 «언급» 하는
+	//    것은 probe 가 아니다(첫 판이 부분문자열이라 이 파일을 커밋하는 명령을 막았다).
+	if (/^\s*(?:true|:)\s+#\s*hook-probe\s*$/.test(cmd)) {
+		console.error(
+			"[hook-probe] ✓ PreToolUse 훅 층이 이 세션에서 돈다 (pre-destructive-guard). " +
+				"이 명령은 probe 라 의도적으로 막았다(exit 2) — 계속 진행하면 된다.",
+		);
+		process.exit(2);
+	}
+
 	const CATASTROPHIC: ReadonlyArray<{ re: RegExp; why: string }> = [
 		// 1a. rm with -r and -f (either order, combined or split) targeting a
 		//     catastrophic path. `rm -rf node_modules` / `rm -rf dist` are NOT
