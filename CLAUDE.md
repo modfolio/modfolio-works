@@ -1,7 +1,7 @@
 <!-- MODFOLIO_ADAPTER: 1 -->
 # modfolio-works — agent entry point
 
-Policy source: @modfolio/harness@3.91.4 with the local neutral migration; runtime readiness is separate.
+Policy source: @modfolio/harness@3.91.5 with the local neutral migration; runtime readiness is separate.
 
 Read `MODFOLIO.md` before planning or editing. It owns the current shared rules.
 Read the active task contract and relevant project context before implementation.
