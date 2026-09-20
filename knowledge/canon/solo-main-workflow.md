@@ -1,7 +1,7 @@
 ---
 title: Solo main 워크플로 — 무사용자 pre-production ceremony 폐기
-version: 1.1.0
-last_updated: 2026-06-18
+version: 1.2.0
+last_updated: 2026-09-21
 source: [2026-05-18 속도회복 세션 §C, 사용자 명시 결정, 2026-06-18 v3.13 velocity hook 프로필]
 sync_to_siblings: true
 applicability: conditional
@@ -9,6 +9,8 @@ consumers: [deploy, ops, release, session-handoff]
 ---
 
 # Solo main 워크플로
+
+> **2026-09-21 적용 범위 개정:** 사용자 승인 ADR-027의 관리형 멀티 에이전트 개발에는 아래의 직접 main 작업·비차단 통합 규칙을 적용하지 않는다. `/home/mod/code` 등록 프로젝트의 관리 실행은 작업별 격리 공간 → 독립 리뷰 → 현재 기준 코드 검증 → 저장소별 직렬 통합을 따른다. 역할은 공급자와 분리한다. 기존 단독 수동 개발 결정과 당시 근거는 이 문서에 보존하며, 신환경의 권한 원본은 `MODFOLIO.md`와 신뢰된 작업/통합 정책이다.
 
 > **무사용자 pre-production 1인 개발: main 직접 commit + push. branch/PR/merge ceremony 폐기. 문제 시 `git revert`. 앱에 실사용자 생기면 그 앱만 PR 흐름 재도입.**
 

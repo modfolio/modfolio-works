@@ -32,7 +32,8 @@
  * (절대 세션을 막는 원인이 되지 않는다).
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { findEcosystemRoot, gitRoot, readHookInput } from "./_lib.ts";
 
@@ -75,19 +76,77 @@ function debriefedByArtifact(
 /**
  * 편집 도구 호출 수 — «이 세션이 실제로 무언가를 했는가» 의 결정적 대리 지표.
  *
- * transcript 문자열 계수라 **0 토큰·LLM 없음**(velocity 정합). 정확한 도구명만 센다 —
- * 넓은 매칭은 위 헤더의 `modfolio-debrief` 사고와 같은 부류를 만든다.
+ * **0 토큰·LLM 없음**(velocity 정합). 세는 것은 *assistant 메시지의 `tool_use` 블록*이다.
+ *
+ * ## 문자열 계수에서 구조 파싱으로 바꾼 이유 (2026-09-18 실측)
+ *
+ * 종전 구현은 전사록 전체에서 `"name":"Edit"` 같은 **문자열**을 셌다. 그런데 Claude Code 는
+ * 전사록에 `type:"attachment"` · `attachment.type:"prompt_snapshot"` 행을 남기고, 그 안의
+ * `tools[]` 가 도구 **스키마**(`{name:"Edit", description, schema}`)를 통째로 담는다. 그래서
+ * 편집 도구를 **한 번도 호출하지 않은** 세션이 «편집 4건» 으로 집계돼 발동했다 — 위 헤더의
+ * `modfolio-debrief` 사고와 같은 부류다(관측자가 자기 소음을 신호로 셌다). 그 세션의 실제
+ * 호출은 Bash 8 · MCP 3 · ToolSearch 1 · Workflow 1 이었다.
+ *
+ * ⚠ «정확한 도구명만 센다» 로는 부족했다 — 이름은 정확했고 **자리가 틀렸다.**
  */
+const EDIT_TOOLS = new Set(["Edit", "Write", "NotebookEdit", "MultiEdit"]);
+
 function editCount(transcript: string): number {
 	let n = 0;
-	for (const name of [
-		'"name":"Edit"',
-		'"name":"Write"',
-		'"name":"NotebookEdit"',
-	]) {
-		n += transcript.split(name).length - 1;
+	for (const line of transcript.split("\n")) {
+		// 값싼 사전 필터 — `tool_use` 가 없는 줄은 파싱하지 않는다(수백 MB 전사록 대비).
+		if (!line.includes('"tool_use"')) continue;
+		let row: { type?: unknown; message?: { content?: unknown } };
+		try {
+			row = JSON.parse(line) as typeof row;
+		} catch {
+			continue; // 깨진 줄은 «편집» 의 증거가 아니다
+		}
+		if (row.type !== "assistant") continue;
+		const content = row.message?.content;
+		if (!Array.isArray(content)) continue;
+		for (const block of content as { type?: unknown; name?: unknown }[]) {
+			if (
+				block?.type === "tool_use" &&
+				typeof block.name === "string" &&
+				EDIT_TOOLS.has(block.name)
+			)
+				n++;
+		}
 	}
 	return n;
+}
+
+/**
+ * 세션당 1회 — 안내 문구가 약속한 계약(«1회 안내 — 다음 종료는 차단하지 않음»)의 집행.
+ *
+ * `stop_hook_active` 는 **한 번의 종료 시도 안에서만** 참이다. 사용자가 다음 메시지를 보내면
+ * 다시 거짓이 되므로, 그것만으로는 대화형 세션의 **매 턴**이 한 번씩 차단됐다(2026-09-18 실측:
+ * 같은 세션에서 4턴 연속). 매 턴 울리는 안내는 세리머니이고, 무시하도록 훈련시킨다.
+ *
+ * 표식은 저장소가 아니라 **임시 디렉터리**에 둔다 — 세션 수명의 상태이고, 멤버 repo 의
+ * .gitignore 에 기대지 않으며, 재부팅으로 사라져도 안내가 한 번 더 나갈 뿐이다.
+ */
+function nudgeMarker(sessionId: string): string {
+	const dir =
+		process.env.MODFOLIO_DEBRIEF_NUDGE_DIR ??
+		join(tmpdir(), "modfolio-debrief-nudged");
+	return join(dir, sessionId.replace(/[^A-Za-z0-9_-]/g, "_"));
+}
+
+function alreadyNudged(sessionId: string | undefined): boolean {
+	return sessionId !== undefined && existsSync(nudgeMarker(sessionId));
+}
+
+function recordNudge(sessionId: string | undefined): void {
+	if (sessionId === undefined) return;
+	try {
+		const path = nudgeMarker(sessionId);
+		mkdirSync(join(path, ".."), { recursive: true });
+		writeFileSync(path, `${new Date().toISOString()}\n`);
+	} catch {
+		// 표식을 못 남겨도 안내는 나간다 — 다음 턴에 한 번 더 울릴 뿐이다.
+	}
 }
 
 /**
@@ -208,6 +267,13 @@ try {
 		DEBRIEF_SUCCESS_MARKERS.some((marker) => transcript.includes(marker));
 	if (debriefed) process.exit(0);
 
+	// 세션당 1회 — 이미 안내한 세션은 다시 막지 않는다(위 `nudgeMarker` 주석).
+	const sessionId =
+		typeof input.session_id === "string" && input.session_id.length > 0
+			? input.session_id
+			: undefined;
+	if (alreadyNudged(sessionId)) process.exit(0);
+
 	// ⚠ **발동한 가지를 그대로 말한다.** 종전 문구는 조건과 무관하게 언제나
 	//   *"frontier 모델을 사용한 세션인데…(escalation 블록 포함)"* 이었다. 그런데 위 조건은
 	//   2026-08 에 «비싼 모델을 썼나» → «무언가를 했나(편집 수)» 로 **바뀌었고 문구만 남았다.**
@@ -218,6 +284,7 @@ try {
 	const reason = frontierUsed
 		? "frontier 모델을 사용한 세션인데 /debrief 카드가 없습니다 — escalation 비용을 영속 자산으로 바꾸는 마지막 단계입니다. `/debrief` 로 카드 1장(**escalation 블록 포함**)을 남기고 종료하세요. 규범: knowledge/canon/debrief-format.md (1회 안내 — 다음 종료는 차단하지 않음)."
 		: `편집 ${editCount(transcript)}건의 세션인데 /debrief 카드가 없습니다 — 배운 것을 영속 자산으로 바꾸는 마지막 단계입니다. \`/debrief\` 로 카드 1장을 남기고 종료하세요. ⚠ 이 세션에서 frontier 모델은 감지되지 않았습니다 — **escalation 블록은 실제 escalation 이 있었을 때만** 채우십시오(없는 것을 지어내면 코퍼스가 오염됩니다). 규범: knowledge/canon/debrief-format.md (1회 안내 — 다음 종료는 차단하지 않음).`;
+	recordNudge(sessionId);
 	console.log(JSON.stringify({ decision: "block", reason }));
 	process.exit(0);
 } catch {

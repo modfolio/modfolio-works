@@ -1,0 +1,79 @@
+{
+	"schemaVersion": 1,
+	"owner": "modfolio-ecosystem",
+	"revision": "2026-09-20.1",
+	"maxConcurrentSessions": 3,
+	"maxHeavyChecks": 1,
+	"maxSnapshotAgeSeconds": 900,
+	"paidFallback": false,
+	"providers": {
+		"claude": {
+			"subscription": "Max 20x",
+			"reservePercent": 30,
+			"maxConcurrent": 2,
+			"requiredWindows": ["short", "weekly"]
+		},
+		"codex": {
+			"subscription": "ChatGPT Pro 5x",
+			"reservePercent": 30,
+			"maxConcurrent": 2,
+			"requiredWindows": ["short", "weekly"]
+		},
+		"gemini": {
+			"subscription": "Google AI Pro",
+			"reservePercent": 40,
+			"maxConcurrent": 1,
+			"requiredWindows": ["short", "weekly"]
+		}
+	},
+	"routes": {
+		"triage": [
+			{ "provider": "claude", "model": "claude-sonnet-5", "effort": "medium" },
+			{ "provider": "codex", "model": "gpt-5.6-luna", "effort": "medium" }
+		],
+		"implementation": [
+			{ "provider": "claude", "model": "claude-opus-5", "effort": "xhigh" },
+			{ "provider": "codex", "model": "gpt-5.6-terra", "effort": "high" }
+		],
+		"review": [
+			{ "provider": "codex", "model": "gpt-5.6-terra", "effort": "high" },
+			{ "provider": "claude", "model": "claude-opus-5", "effort": "xhigh" },
+			{
+				"provider": "gemini",
+				"model": "gemini-3.8-flash-medium",
+				"effort": "medium"
+			}
+		],
+		"second-opinion": [
+			{
+				"provider": "gemini",
+				"model": "gemini-3.8-flash-medium",
+				"effort": "medium"
+			},
+			{ "provider": "codex", "model": "gpt-5.6-terra", "effort": "high" }
+		],
+		"critical-design": [
+			{ "provider": "codex", "model": "gpt-6-astra", "effort": "high" },
+			{ "provider": "claude", "model": "claude-opus-5", "effort": "xhigh" }
+		],
+		"critical-implementation": [
+			{ "provider": "claude", "model": "claude-opus-5", "effort": "xhigh" },
+			{ "provider": "codex", "model": "gpt-6-astra", "effort": "high" }
+		],
+		"critical-review": [
+			{ "provider": "codex", "model": "gpt-6-astra", "effort": "high" },
+			{ "provider": "claude", "model": "claude-opus-5", "effort": "max" }
+		]
+	},
+	"escalation": {
+		"requiresEvidence": true,
+		"triggers": [
+			"two-failed-approaches",
+			"ownership-or-contract-conflict",
+			"security-or-data-loss-risk"
+		],
+		"geminiOptIn": { "model": "gemini-3.1-pro-high", "effort": "high" },
+		"codexOptIn": { "model": "gpt-6-astra", "effort": "xhigh" },
+		"claudeOptIn": { "model": "claude-opus-5", "effort": "max" }
+	}
+}

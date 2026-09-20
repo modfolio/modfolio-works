@@ -1,0 +1,51 @@
+{
+	"schemaVersion": 1,
+	"repo": "modfolio-works",
+	"constitution": "MODFOLIO.md",
+	"policyDigest": "1036672a4bf9c718fd9ce732609063f638737b2706b02d0f47d3f23a3bf70151",
+	"gates": {
+		"quick": "gate:quick",
+		"full": "gate:full",
+		"release": "gate:release"
+	},
+	"providers": ["claude", "codex", "gemini"],
+	"providerAdapters": {
+		"claude": "claude",
+		"codex": "codex",
+		"gemini": "agy"
+	},
+	"modelRouting": {
+		"owner": "modfolio-ecosystem",
+		"policy": ".modfolio/ai-routing.json",
+		"canonicalPolicy": "config/ai-routing.json",
+		"digest": "0d5591d8203b880da93b9cfbe87d8d45bc29a7e28c57e0cb02db885e585ecaff",
+		"digestEncoding": "sha256-json-stringify",
+		"enforcedByManagedExecutor": false
+	},
+	"knowledge": {
+		"ownership": "knowledge/canon/atlas.md",
+		"registry": "knowledge/canon/registry-redundancy.md",
+		"decisions": "knowledge/voice/",
+		"currentDecisions": "scripts/knowledge/voice-current.ts",
+		"fallbackRoot": "node_modules/@modfolio/harness/",
+		"freshness": "release-snapshot-unless-authoritative-source-verified",
+		"providerCaptureVerified": false
+	},
+	"ownership": {
+		"manifest": "platform-adapter.json",
+		"resolver": "plan:build"
+	},
+	"coordination": {
+		"service": "loom",
+		"writer": "task-workspace",
+		"integration": "repository"
+	},
+	"requiredChecks": [
+		"policy",
+		"scope",
+		"independent-review",
+		"clean-verification",
+		"current-base"
+	],
+	"enrollment": "configured"
+}

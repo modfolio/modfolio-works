@@ -225,6 +225,42 @@ export function headSha(root: string): string {
 	return git(root, ["rev-parse", "HEAD"]).trim();
 }
 
+/**
+ * 수트의 폭 — 넓을수록 크다. 모르는 수트는 0 이다(넓은 영수증을 **덮지 못하는** 쪽이 안전하다).
+ * `gate:full` ⊂ `gate:release` 는 `gate-tiers` 가 보증한다(quick ⊂ full ⊂ release).
+ */
+export function suiteRank(suite: string): number {
+	if (suite === "gate:release") return 3;
+	if (suite === "gate:full") return 2;
+	if (suite === "gate:quick") return 1;
+	return 0;
+}
+
+/**
+ * 새 영수증을 쓰지 말고 **있는 것을 그대로 둬야 하는가.**
+ *
+ * ## 원 사건 (2026-09-18 실측)
+ *
+ * 영수증 파일은 하나인데 러너는 **완주한 모든 tier** 에 영수증을 쓴다. 그래서 `gate:full` 을
+ * 완주한 뒤 «몇 줄 확인» 으로 `gate:quick` 을 돌리면 같은 내용 트리인데도 영수증이
+ * `gate:quick` 으로 바뀌고, push 훅이 *"좁은 수트를 풀게이트로 인정하지 않는다"* 로 막는다 —
+ * 방금 통과한 30초~8분짜리 게이트를 다시 돌려야 한다. 읽기 전용 점검이 증거를 지운 것이다.
+ *
+ * → **같은 내용 트리**에 대해 **더 넓은** 수트가 이미 완주했으면 그 영수증이 더 많은 것을
+ *   증명한다. 좁은 실행은 그것을 덮지 않는다. 트리가 다르면 옛 영수증은 어차피 무효이므로 덮는다.
+ */
+export function shouldKeepExisting(
+	existing: GateReceipt | null,
+	next: { suite: string; tree: string },
+): boolean {
+	if (existing === null) return false;
+	if (typeof existing.tree !== "string" || existing.tree.length === 0)
+		return false;
+	if (next.tree.length === 0) return false; // 지금 정체를 못 구했으면 비교 자체가 성립하지 않는다
+	if (existing.tree !== next.tree) return false;
+	return suiteRank(existing.suite) > suiteRank(next.suite);
+}
+
 export function writeReceipt(
 	root: string,
 	r: Omit<GateReceipt, "head" | "dirty" | "at">,
@@ -236,6 +272,17 @@ export function writeReceipt(
 		tree: contentTree(root),
 		at: new Date().toISOString(),
 	};
+	// 같은 트리의 더 넓은 영수증은 덮지 않는다 — 호출자는 반환값의 `suite` 로 «유지됐다» 를 안다.
+	const existing = readReceipt(root);
+	if (
+		existing !== null &&
+		shouldKeepExisting(existing, {
+			suite: receipt.suite,
+			tree: receipt.tree ?? "",
+		})
+	) {
+		return existing;
+	}
 	const abs = join(root, RECEIPT_RELPATH);
 	mkdirSync(dirname(abs), { recursive: true });
 	writeFileSync(abs, `${JSON.stringify(receipt, null, 2)}\n`);

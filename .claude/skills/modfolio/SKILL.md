@@ -16,7 +16,7 @@ bun run modfolio:compass                       # 허브
 bun node_modules/@modfolio/harness/scripts/modfolio/compass.ts   # 멤버 (harness-pull 이 `modfolio:compass` 로 배선한다)
 ```
 
-카드 한 장: 법 4편 · 조합 규약 1줄 · 지시 3줄(고정, 짧다) + **실측** — 하네스 버전 · lock 추적/packageManager · 게이트 배선 · **다른 앱 코드 직접 import**(위반이면 파일:줄) · 제공/소비 부품 · 트리 상태 · (허브) 활성 Writ. 종료 코드 0 규약 안 · 1 위반 · 2 판정 불능.
+카드 한 장: 법(`tier: law` 전부) · 조합 규약 1줄 · 지시 3줄(고정, 짧다) + **실측** — 하네스 버전 · lock 추적/packageManager · 게이트 배선 · **다른 앱 코드 직접 import**(위반이면 파일:줄) · 제공/소비 부품 · 트리 상태 · (허브) 활성 Writ. 종료 코드 0 규약 안 · 1 위반 · 2 판정 불능.
 
 **언제**: 세션 시작에 한 번 · 사용자가 «새 기능» 을 말한 직후 · 커밋 전에 찜찜할 때. 카드가 ✗ 를 내면 그 줄부터 고치고 계속한다.
 
@@ -67,5 +67,5 @@ plan mode 안에서 `--deep` 을 부르면 plan 파일에 수정 절차를 자�
 
 ## 관련
 
-- canon `assembly-law` · `atlas` · `registry-redundancy` · `knowledge-sovereignty`(법 4편) · `instruction-drift`
+- canon `assembly-law` · `atlas` · `registry-redundancy` · `knowledge-sovereignty` · `account-projection`(법 — `tier: law` 전부) · `instruction-drift`
 - `/plan`(plan:build) · `/adopt-laws`(법 자가 진단) · `/contracts`(계약 변경) · `/orbit`(허브의 cross-repo 순회)

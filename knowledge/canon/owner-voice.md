@@ -1,7 +1,7 @@
 ---
 title: Owner Voice — 발화에서 성향을 만든다 (canon 이 실측이면 voice 는 발화다)
-version: 1.0.0
-last_updated: 2026-08-05
+version: 1.1.0
+last_updated: 2026-09-21
 source: [2026-08-05 오너 지시 "내가 채팅 치면서 주는 정보들을 매번 우리 Modfolio universe 자체의 말뭉치 구축에 다 쌓아 갔으면 좋겠어 … 내가 원하는 방식, 스타일 등이 우리 하네스나 ai의 특색, 성향이 되도록", modfolio-notify docs/voice/ 형식 제안(2026-08-05, 관측 9건 + gate:voice), atelier-and-folio knowledge/voice/ 초판(cf90c4d), 실측 2026-08-05 (global.md 30행 위치 절단·voice sync 미배선·Stop 훅 입력 불가)] [분류]
 sync_to_siblings: true
 tier: standard
@@ -137,6 +137,23 @@ notify 의 V-001(*"내가 웹에서 확인할 수 있어야해"*)이 `applies` �
   것은 **«미승인 후보 N건» 리마인드 1회**까지다
 - 미승인 후보 파일은 `_` 접두(`knowledge/voice/_candidates.md`)이고 **동기화 제외**다.
   승인 전 발화가 30 repo 로 나가면 그것이 곧 게이트 없는 승격이다
+
+### 명시적 기록 지시와 공급자 중립 진입 (2026-09-21)
+
+오너가 해당 판단을 공통 규칙으로 기록·적용하라고 이미 지시했다면 그 범위의 승인은
+이미 받은 것이다. 같은 기록에 다시 승인을 요구하지 않는다. 에이전트의 해석이나
+미래의 모든 대화까지 승인된 것으로 확대하지 않는다. 비밀·개인정보 등 등재 금지는 유지한다.
+
+현행 판단의 정본은 계속 `knowledge/voice/`다. `MODFOLIO.md`와 모든 공급자 진입 문서는
+같은 정본으로 연결한다. `bun scripts/knowledge/voice-current.ts --repo <repo>`는 기존
+본문과 `contracts/voice`를 검증해서 active 항목·출처·digest를 읽기 전용으로 반환한다.
+추론·원시 대화는 이 명령으로 승격되지 않는다. 설치 패키지의 결과는 그 릴리스의
+스냅샷이다. 최신 판단이 필요하면 권위 있는 체크아웃을 `--source <ecosystem-root>`로
+명시하고 revision을 기록한다. 업데이트되지 않은 설치본을 «항상 최신»으로 보고하지 않는다.
+
+Claude의 캡처 훅, Visualize의 적재 원장, infra의 RAG 런타임은 기존 소유권을 유지한다.
+Codex·Gemini에서 같은 수집 계약을 실제 연결하기 전에는 자동 수집 지원으로 표시하지 않는다.
+원시 발화 스풀, 승인된 판단 본문, 실행 작업 원장은 서로의 완료를 대신 증명하지 않는다.
 
 ## 배선 — 어디에 두면 실제로 읽히는가
 

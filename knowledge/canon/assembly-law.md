@@ -1,7 +1,7 @@
 ---
 title: Assembly Law — 조립은 복사가 아니다 (재사용 3표면 + provider 선언 의무)
-version: 1.0.0
-last_updated: 2026-07-26
+version: 1.1.0
+last_updated: 2026-09-21
 source: [2026-07-26 오너 세션 "이미 만들어진 그 기술을 그 프로젝트에서 복사 해오는게 아니라, 끌어다가 사용하는거지. api?같이", 실측 2026-07-26 (28/29 repo 가 platform-adapter.json 보유하나 provides/produces/exposes grep 0 hits · 26 event 중 선언된 구독 2건 = 24 갭 · capability 라는 이름이 서로 무관하게 3개), productization-roadmap.md §3.1]
 sync_to_siblings: true
 tier: law
@@ -20,6 +20,13 @@ related_rules: [import-boundaries, fundamentals-first]
 `tier` 축의 계약은 하나다 — **무엇(what)은 예외 없음, 언제·어떻게(when/how)는 그 repo 자율.**
 
 hub 는 법칙을 진술하고 진단 도구를 배포한다. **일정을 잡지 않고, PR 을 열지 않고, sibling 파일에 쓰지 않는다.** 적용 순서·시점·구현 방식은 전부 그 repo 가 정한다. 이 분리가 Hub-not-enforcer(`evergreen-principle.md`)와 충돌하지 않는 지점이다.
+
+### 승인된 목표의 실행 경계 (ADR-027 · 2026-09-21)
+
+위의 허브 자율 개입 금지는 사용자 승인 없이 소유자를 대신해 결정하는 행위를 막는다.
+사용자가 교차 프로젝트 목표·공통 환경 전환을 명시적으로 승인한 경우, 그 범위의 작업은
+소유 프로젝트의 작업 공간·규칙·검증으로 수행한다. A 대화에서 시작된 B 확장도 가능하다.
+재사용 3표면과 기능 소유권은 그대로이며, 이 예외가 소스 복제나 무제한 형제 쓰기를 허용하지 않는다.
 
 ## 1. 재사용의 3표면 (이 밖은 없다)
 

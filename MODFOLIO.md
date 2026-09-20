@@ -1,12 +1,6 @@
-<!-- MODFOLIO_ADAPTER: 1 -->
-# modfolio-works — agent entry point
+# modfolio-works — Modfolio project constitution
 
-Policy source: @modfolio/harness@3.91.4 with the local neutral migration; runtime readiness is separate.
-
-Read `MODFOLIO.md` before planning or editing. It owns the current shared rules.
-Read the active task contract and relevant project context before implementation.
-Do not infer role, permissions or completion from the provider name.
-Preserved project documents are in `.modfolio/context/`; their old workflow rules are superseded.
+<!-- MODFOLIO_POLICY: 1 -->
 
 ## Authority and ownership
 
@@ -91,3 +85,17 @@ timeout or unavailable service is not a pass. Report the executed scope and exit
 Do not bypass failures with `--no-verify`, force pushes, suppressions or fabricated receipts.
 Never include credentials in source, prompts, logs or artifacts; use scoped runtime injection.
 Report implemented, verified, integrated, published and deployed as separate states.
+
+## Context map
+
+- `platform-adapter.json`: this repository's provides/consumes declarations, when present.
+- `knowledge/canon/`: applicable laws and shared knowledge, when present.
+- `docs/adr/`, `docs/specs/`: accepted architecture and specifications, when present.
+- `knowledge/HANDOFF.md`: continuation context, when present; verify against actual code.
+- `.modfolio/project.json`: machine-readable local harness profile and readiness requirements.
+- `.modfolio/context/`: preserved provider-era documents; historical context, not authority
+  for permissions, vendor roles, direct-main writes or superseded integration policy.
+- Loom: authoritative live tasks, dependencies, execution ownership and events.
+
+The harness enforces measurable permissions and integration conditions. Semantic reuse
+also requires an explicit ownership decision and independent review; prose is not a sandbox.

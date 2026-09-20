@@ -39,6 +39,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [atlas.md](atlas.md) v1.0 (신설 2026-08-15) — **재사용의 주인.** 7 법칙(얇은 바탕 · 소유는 소비에서 · 설명 가능성 · 첫 소비자와 함께 · 처음부터 외부 공개 가능 · 얇게 관통 · 이름은 판정식) + **5 위치**(`substrate`/`universal`/`owner`/`consumer`/`harbor`) + 메타인지 조항(법을 쓰는 자가 첫 피험자). `assembly-law` 의 짝. ADR-017. `applicability: always`.
 - [registry-redundancy.md](registry-redundancy.md) — **소비 좌표는 하나다.** 제1조 pkg.modfolio.io 단일·anon-read · 제2조 퍼블리셔 예외 · 제3조 lockfile 은 .npmrc 의 그림자가 아니다. `applicability: always`.
 - [knowledge-sovereignty.md](knowledge-sovereignty.md) — **consent 는 메타데이터가 아니라 게이트.** 자동 승격 없음 · 격리는 구조로 · ingest 를 MCP 에 노출 금지. `applicability: always`.
+- [account-projection.md](account-projection.md) v1.0 (신설 2026-09-19 · 오너 결정 «다섯 번째 법») — **계정의 주인은 하나, 쓰는 방식은 하나가 아니다.** 네 불변식: 열쇠는 connect 의 `sub`(email 조인 금지 — OIDC Core §5.7) · 계정 속성의 쓰기는 connect 만 · 투영에는 `user.updated`+`user.deleted` 가 닿아야 한다(삭제의 기본형은 익명화 tombstone) · mfdb 를 같이 써도 원장은 섞지 않는다. 소비 방식(참조/투영/ACL)은 강제하지 않는다. ADR-025. `applicability: always`.
 
 ## 원칙 / 거버넌스
 

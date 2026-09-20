@@ -1,7 +1,7 @@
 ---
-title: Evergreen Principle — 권고 + 정보 공유 (+ 절대 불변: no direct sibling edit)
-version: 2.6.0
-last_updated: 2026-07-28
+title: Evergreen Principle — 권고·정보 공유와 승인된 교차 프로젝트 작업
+version: 2.7.0
+last_updated: 2026-09-21
 source: [knowledge/canon/evergreen-principle.md, v2.10 reference-only 재정립, v2.3 drift 재정의 2026-05-18, v2.4 절대불변 'ecosystem 은 다른 repo 직접 수정 X' cement 2026-06-09 사용자 명시, v2.5 session-open = 기본 advisory·자동 pull 은 opt-in 2026-06-18 (harness v3.12), v2.5.1 자매 canon fact-ownership 연결 2026-07-04 (ADR-014)]
 sync_to_siblings: true
 applicability: always
@@ -9,6 +9,20 @@ consumers: [preflight, harness-pull, sso-integrate, ecosystem]
 ---
 
 # Evergreen Principle — 권고 + 정보 공유
+
+## 현행 적용 범위 — ADR-027 (2026-09-21)
+
+사용자가 명시적으로 승인한 교차 프로젝트 목표와 공통 개발 환경 전환에는 ADR-027을 적용한다.
+대상 저장소·기능 소유자·허용 경로·인수 조건이 정해진 범위의 호환 확장은 재승인 없이
+소유 프로젝트의 작업 공간·규칙·검증으로 진행한다. 이번 `/home/mod/code` 34개 저장소의
+공통 환경 전환·커밋·푸시는 그 승인된 캠페인이다. 기능 소유권을 소비자로 이전하는 허가는 아니다.
+범위를 벗어나는 제품 결정·파괴적 변경·새 지출에는 별도 결정이 필요하다.
+
+아래의 과거 «행위별 건별 허가»와 «직접 수정 금지»는 **승인된 캠페인 밖의 기본 경계**다.
+이미 승인받은 범위에도 매 파일 재승인을 요구하라는 뜻으로 적용하지 않는다.
+새 작업은 MODFOLIO.md, ADR-027, 기존 WIP와 통합 보호를 함께 확인한다.
+
+## 이전 운영 규약 — 승인 범위 밖의 기본값과 도입 이력
 
 > **이 캐논은 권고 (recommendation)이지 강제(enforcement)가 아니다.**
 > universe는 modfolio-connect의 최신 버전을 **기록·공유**하며,
