@@ -1,7 +1,7 @@
 <!-- MODFOLIO_ADAPTER: 1 -->
 # modfolio-works — agent entry point
 
-Policy source: @modfolio/harness@3.91.5 with the local neutral migration; runtime readiness is separate.
+Policy source: @modfolio/harness@3.91.6 with the local neutral migration; runtime readiness is separate.
 
 Read `MODFOLIO.md` before planning or editing. It owns the current shared rules.
 Read the active task contract and relevant project context before implementation.
@@ -79,6 +79,16 @@ Use verified adapter capabilities and fresh provider quota readings. Missing usa
 is unknown, never zero. Preserve reserved capacity and independent review executions.
 Do not silently spend API credits, redeem reset credits, upgrade plans, or weaken
 critical-task quality to evade subscription limits. Escalate with failure evidence.
+
+Delegated analysis stays inside the delegated provider's execution. Send a bounded,
+manifested packet; store its raw transcript and tool trace as a private artifact. Return
+only the configured summary receipt, finding references, artifact digest and usage facts
+to the supervising agent. Never inject the raw delegated transcript, repository snapshot
+or full artifact into the supervisor context. Retrieve only the cited evidence needed to
+judge a finding. The routing policy limits input files, input bytes, result bytes and
+finding count; an executor must reject an oversized or unmanifested packet before launch
+and an oversized result before delivery. Provider usage and supervisor usage are separate
+meters: delegation does not make orchestration free.
 
 ## Verification and evidence
 

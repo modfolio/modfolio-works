@@ -74,6 +74,16 @@ is unknown, never zero. Preserve reserved capacity and independent review execut
 Do not silently spend API credits, redeem reset credits, upgrade plans, or weaken
 critical-task quality to evade subscription limits. Escalate with failure evidence.
 
+Delegated analysis stays inside the delegated provider's execution. Send a bounded,
+manifested packet; store its raw transcript and tool trace as a private artifact. Return
+only the configured summary receipt, finding references, artifact digest and usage facts
+to the supervising agent. Never inject the raw delegated transcript, repository snapshot
+or full artifact into the supervisor context. Retrieve only the cited evidence needed to
+judge a finding. The routing policy limits input files, input bytes, result bytes and
+finding count; an executor must reject an oversized or unmanifested packet before launch
+and an oversized result before delivery. Provider usage and supervisor usage are separate
+meters: delegation does not make orchestration free.
+
 ## Verification and evidence
 
 - quick: `bun run gate:quick`
