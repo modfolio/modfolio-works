@@ -70,14 +70,14 @@ git diff --cached --stat
 **Q1 (free-text 1줄)**: "주제 슬러그 (kebab-case, 비워두면 자동 추론)"
 
 **Q2 (single)**: "WIP 처리 방식?" (WIP > 0 일 때만)
-- a. **journal+handoff+WIP 같은 commit → main** (기본 — 무사용자 solo-main-workflow.md 표준)
-- b. **WIP 별도 commit** (`wip: snapshot {slug}`) → journal+handoff commit (둘 다 main)
+- a. **journal+handoff+본인 WIP → 현재 작업 브랜치 commit** (승인된 범위만)
+- b. **본인 WIP 별도 commit** (`wip: snapshot {slug}`) → journal+handoff commit (작업 브랜치)
 - c. **WIP stash** → journal+handoff only commit (다음 세션 stash pop)
-- d. **branch 분기** (`git switch -c handoff/{date}-{slug}`) — **실사용자 앱에서만** 권고 (solo-main 트리거 도래 시). 무사용자는 기본 a (main 직접이 표준 — 회피 대상 아님)
+- d. **격리 작업 브랜치 준비** — 사용 중인 다른 세션의 checkout을 전환하지 않는다.
 
 **Q3 (single)**: "push 여부?"
-- a. **Yes — 다른 머신에서 이어가기** (기본). 무사용자=main 일반 push. 실사용자 앱 분기 시 `-u origin {branch}`
-- b. **Branch only** — 실사용자 앱 분기 push (다음 머신 fetch)
+- a. **Yes — 다른 머신에서 이어가기** (기본). 현재 작업 브랜치를 일반 push한다.
+- b. **Branch only** — 작업 브랜치 push (다음 머신 fetch)
 - c. **No — 같은 머신만** (다른 머신 이어가기 불가 명시 후 진행)
 
 ### Phase 3 — 산출물 작성 (Gate 1: 1번 confirm)
@@ -230,7 +230,7 @@ esac
 | pre-commit (v3.1) | 비차단 — 커밋이 quality 로 막히지 않음. 핸드오프 commit 즉시 진행 |
 | `quality:all` 상태 | pre-push 가 **비차단** 표시만. 하드 게이트는 `/release`. 핸드오프는 push 막지 않되, quality 미green 이면 journal 에 명시 기록(은폐 X) |
 | main branch force push | 절대 거부 (`pre-destructive-guard` 가 차단). 사용자 명시해도 거부 |
-| main branch + WIP > 0 | **main 직접 commit 이 기본** (무사용자 solo-main-workflow.md 표준). 분기는 실사용자 앱에서만 |
+| main branch + WIP > 0 | 다른 세션 WIP를 보존하고 본인 후보를 격리 작업 공간에 준비한다. 독립 리뷰·검증 전 main 통합 금지 |
 | WIP 누락 파일 | Phase 1 에서 `git status --porcelain` 전수 검사, Gate 2 stage list preview |
 | Gate 1/2 거부 (`n`) | mutation 0건, 종료 |
 | 자동 mutation (Gate 외) | 절대 없음 (Hub-not-enforcer + 정공법) |
@@ -287,6 +287,8 @@ canon `long-running-harness.md` 정합. task root 또는 `.claude/progress.txt` 
 2. 부재 시: 이번 task 가 multi-session 이면 progress.txt 생성 권고 (Q2-after-Q1 선택지)
 3. 단일 cycle task 는 progress.txt 불필요 — journal + git log 충분
 
-다음 세션 시작 시 `.claude/agents/initializer.md` (Haiku, read-only) 가 progress.txt + git status + recent plans 읽어 3-line summary 제공 — main thread cold-start 비용 흡수.
+다음 세션에서는 `.claude/agents/initializer.md`의 읽기 전용 재개 절차로
+progress.txt·git status·관련 계획을 확인한다. 별도 실행이 필요하면 현행 역할 프리셋과
+사용량으로 배정하고 요약만 반환한다. 특정 모델을 고정하거나 자동 실행됐다고 가정하지 않는다.
 
 source: canon `long-running-harness.md`, `~/.claude/plans/20260513-evolve-progress-txt-pattern.md`

@@ -19,7 +19,8 @@ Modfolio 생태계 규칙 기반 코드 리뷰 에이전트.
 1. 오류 우회 (`@ts-ignore`, `biome-ignore`, `any` 남용)
 2. 하드코딩 시크릿 (API 키, 토큰) + **시크릿 값-출력 경로**: 진단 shell 의 secret env 값 interpolation(`echo $VAR`, `${VAR:-MISSING}` — presence 확인은 `[ -n "$VAR" ] && echo SET` 만), CI/빌드 env 토큰의 plain_text 타입(secret/`is_secret` 이어야), `wrangler secret put` 값 args 전달(stdin 이어야). 검출 신호: 출력에 `://` 나 key prefix(`ghp_`, `napi_`, `sk-`, `postgres://`)가 실릴 수 있는 명령
 3. House of Brands 위반 (앱 간 UI 공유)
-4. Zero Physical Sharing 위반 (앱 간 직접 DB/API)
+4. Zero Physical Sharing 위반 (앱 간 직접 DB 접근·소스 공유). Assembly Law가 허용한
+   공개 계약·MCP·서비스 API 소비 자체를 위반으로 판정하지 않는다.
 5. 플랫폼 위반 (Vercel/AWS/GCP 의존성)
 
 ## 추가 검사

@@ -41,7 +41,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.12",
-		"@modfolio/harness": "^3.91.6",
+		"@modfolio/harness": "^3.91.7",
 		"typescript": "^6.0.3",
 		"wrangler": "^4.131.2"
 	},

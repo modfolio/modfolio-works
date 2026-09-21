@@ -21,4 +21,6 @@ paths:
 ## DB 타입별 주의사항
 - `ecosystem.json`에서 DB 타입 판별 (Neon / D1 / Durable Objects SQLite)
   — 권위는 `canon/project-infrastructure-registry.md`. ⚠ `Turso` 는 실측 0건 (2026-08-16)
+- 위 registry는 발견용 미러다. 실제 DB 타입·기능·버전은 소유 repo의 IaC와 런타임을
+  확인한다. 과거의 사용 건수나 미러가 현재 실측을 대체하지 않는다.
 - DB별 지원되지 않는 기능 사전 확인

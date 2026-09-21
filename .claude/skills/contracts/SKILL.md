@@ -17,8 +17,9 @@ disable-model-invocation: true
 
 ## 패키지
 
-- **이름**: `@modfolio/contracts` (GitHub Packages)
-- **레지스트리**: `https://npm.pkg.github.com`
+- **이름**: `@modfolio/contracts` (게시된 계약 패키지)
+- **레지스트리**: infra 소유 `https://pkg.modfolio.io` — 현행 `.npmrc`와
+  `knowledge/canon/registry-redundancy.md`가 소비 기준이다. GitHub Packages는 미러다.
 - **소스**: `modfolio-ecosystem/contracts/`
 
 ## 기본 구조

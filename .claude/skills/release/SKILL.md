@@ -1,7 +1,7 @@
 ---
 name: release
 disable-model-invocation: true
-description: 릴리즈 파이프라인. 테스트 실행 → P0/P1 triage → 분할 커밋 → 체인지로그 → main 직접 push (무사용자) / PR (실사용자 앱)
+description: 릴리즈 파이프라인. 테스트 → 독립 리뷰 → 작업 브랜치 커밋 → 현재 기준 검증 → 직렬 통합 → 게시 확인
 user-invocable: true
 ---
 
@@ -10,10 +10,10 @@ user-invocable: true
 
 테스트 → 품질 검증(하드 게이트) → 분할 커밋 → 체인지로그 → 게시까지의 통합 릴리즈 프로세스.
 
-> **게시 경로는 앱 lifecycle 에 따른다** (`knowledge/canon/solo-main-workflow.md`):
-> - **무사용자 pre-production (기본)**: `main` 직접 push. branch/PR 없음.
-> - **실사용자 앱 (트리거 도래 시)**: 그 앱만 feature branch + `gh pr create`.
-> `/release` 는 무사용자 단계에서도 **하드 품질 게이트**다 (커밋 핫패스에서 뺀 quality:all 이 여기서 강제됨 — 정공법 코드품질은 시점만 이동, 폐기 아님).
+> **통합 경로는 MODFOLIO.md와 ADR-027을 따른다.** 작업 브랜치의 정확한 후보를
+> 독립 리뷰·검증한 뒤 저장소별로 직렬 통합한다. 사용자 수는 main 직접 쓰기 권한이 아니다.
+> Forgejo 전환이 검증되지 않은 저장소는 기록된 현재 통합 기준을 유지한다.
+> 구현 워커는 main push·게시·배포 자격 증명을 받지 않는다.
 
 ## 7단계 프로세스
 
@@ -63,21 +63,14 @@ quality-fixer의 P0-P3 기준으로 검사:
 
 의존성 순서 보장: Schema → API → UI → Test
 
-### 6. 게시 (lifecycle 분기)
+### 6. 후보 제출·통합·게시
 
-**무사용자 pre-production (기본)** — branch/PR ceremony 없음:
-```
-git push origin main
-```
-
-**실사용자 앱** (`solo-main-workflow.md` 트리거 도래: 외부 트래픽 / 결제·PII·인증 회귀 즉시 피해 / 협업자 2인+ / 사용자 명시 요청) — 그 앱만:
-```
-git switch -c release/{date}-{slug}
-git push -u origin release/{date}-{slug}
-gh pr create --title "{type}: {summary}" \
-  --body "## Changes\n{changelog}\n\n## Triage\n{P2/P3 items if any}"
-```
-판단 불명확하면 사용자에게 질문(침묵 가정 금지).
+현재 작업 브랜치를 일반 push하고 정확한 후보·기준·정책 digest에 대한 독립 리뷰와
+clean 검증을 연결한다. 변경된 기준에는 필요한 검사를 다시 수행한다. 승인된 통합자가
+저장소별 직렬 큐로 통합한 뒤 소유 프로젝트의 게시·배포 절차를 실행한다.
+GitHub 또는 Forgejo 선택은 그 저장소의 검증된 cutover 기록을 따르며 main 이중 쓰기나
+force push는 하지 않는다. PR 본문은 파일 또는 구조화 입력으로 전달해 실제 개행을 보존한다.
+후보 push, main 통합, 패키지 설치 가능, 배포 Version ID/동작 확인을 각각 보고한다.
 
 ### 7. 최종 검증
 
@@ -94,13 +87,16 @@ bun run quality:all
 
 ## /goal 통합 (2026-05+, v2.0 dogfood Adopt P0 #6)
 
-verifiable end-state 가 명확한 release 후처리 (예: release-gate 30 체크 통과) 는 Claude Code `/goal` 명령으로 자율 반복 가능:
+사용자가 목표 추적을 명시적으로 요청하고 현재 도구가 지원하는 경우에만, 명확한
+release 완료 조건을 해당 도구의 목표 기능에 연결한다. 일반 릴리스 요청만으로 새 목표나
+자동화를 만들지 않으며 중단된 목표를 다시 열지 않는다. 아래는 Claude 어댑터의 예시다:
 
 ```
 /goal release-gate 30 체크 모두 PASS (bun run release:gate 통과)
 ```
 
-Haiku 평가기가 매 turn 의 `release-gate.ts` 출력을 평가 → 위반 발견 시 Opus 가 fix → 다시 평가 반복. Haiku 평가 비용 ~$0.001/turn 으로 거의 무료.
+검사 명령은 모델 없이 실행한다. 해석·수정·독립 리뷰가 필요한 경우 역할 프리셋과
+확인된 구독 사용량으로 별도 실행을 배정한다. 특정 모델 이름이나 추정 비용은 실행 허가가 아니다.
 
 권고 use case:
 - `bun run release:gate` 가 1-3 위반만 있는 가벼운 상태 (정공법 quick-fix cycle)

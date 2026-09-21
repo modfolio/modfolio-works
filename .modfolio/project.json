@@ -2,7 +2,7 @@
 	"schemaVersion": 1,
 	"repo": "modfolio-works",
 	"constitution": "MODFOLIO.md",
-	"policyDigest": "6407f0a334d53433993fb42957ba8e0e658091eedbbe75c86860d1a95298230b",
+	"policyDigest": "54226ee1eba6e4fc4b806466b1f786c1bde99eb083daf3460fa42798b624a05c",
 	"gates": {
 		"quick": "gate:quick",
 		"full": "gate:full",
@@ -18,7 +18,7 @@
 		"owner": "modfolio-ecosystem",
 		"policy": ".modfolio/ai-routing.json",
 		"canonicalPolicy": "config/ai-routing.json",
-		"digest": "f4a9ceec320fee97ec8ed267a16f83edc54c9e25181f9ebd0eadd87558a7078e",
+		"digest": "4cfbdc6f5e825626d6bbbdc72fb783626ade4882bf7e586b8d57f963c7825f14",
 		"digestEncoding": "sha256-json-stringify",
 		"enforcedByManagedExecutor": false
 	},
