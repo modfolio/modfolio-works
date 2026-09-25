@@ -2,7 +2,7 @@
 name: generate-review
 description: 생성→리뷰 통합 파이프라인. 생성 agent 실행 후 multi-review 자동 검증 + P0-P3 triage
 context: fork
-model: claude-opus-5
+model: claude-opus-5-5
 effort: xhigh
 user-invocable: true
 # 2026-09-06 skill:usage — 60일·전 프로젝트(463 전사) 호출 0회 → 모델 목록에서 제외(사용자 /name 은 유지 · 예약 실행 제외). 되돌리기 = 이 두 줄 삭제.

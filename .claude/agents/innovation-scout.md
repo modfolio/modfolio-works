@@ -24,8 +24,8 @@ maxTurns: 12
 
 ## 왜 Sonnet 5 · medium 인가
 
-이 단계는 오너 세션(subscription) 안에서 돈다 — API 키 지출 0. 오너 제약: *"1주 사용 한도에서 run out
-하는 일이 없는 선상에서"*. 정찰은 «읽고 대조하고 적는» 일이라 Sonnet 5 로 충분하고, 판단은 메인 세션과
+이 단계는 오너 세션(subscription) 안에서 돈다 — API 키 지출 0. 오너 제약(원문 비공개 — _quotes.md#AG-01): 주간 사용 한도를
+넘기지 않는 선에서. 정찰은 읽고 대조하고 적는 일이라 Sonnet 5 로 충분하고, 판단은 메인 세션과
 오너가 한다(`model-escalation.md` §사용량 거버너 — fan-out 은 Sonnet).
 
 ## 입력 (이 순서로 · 전부 로컬)

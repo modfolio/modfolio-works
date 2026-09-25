@@ -12,7 +12,7 @@ Opus 5 (2026-07-24 릴리즈) 는 Opus 4.8 과 **행동이 다르다**. 아래�
 
 적용 대상: `.claude/agents/*`, `.claude/skills/*`, 그리고 이 repo 에서 프롬프트를 작성하는 모든 지점.
 
-**적용 모델 범위 (2026-09-02)**: `claude-opus-5` 로 실행되는 컨텍스트 — 24 agent 서브에이전트 전부와 Opus 5 메인 세션. **메인 세션이 `claude-fable-5-1` 이면 §1·§2·§5 는 `fable-5-1-behavior.md` 가 대체한다**(공식 가이드가 그 셋을 반대 방향으로 권한다). §3·§4 는 두 모델 공통. 이 파일은 UNIVERSAL 이라 모델을 가리지 않고 주입된다 — 읽는 쪽이 자기 모델로 가른다.
+**적용 모델 범위 (2026-09-23 갱신)**: Opus 5 계열 컨텍스트 — `claude-opus-5-5`(2026-09-23 부터 하네스 기본: Opus 고정 agent 21편 · Opus 5.5 메인 세션)와 `claude-opus-5`. **Opus 5.5 는 §1~§5 를 출발점으로 쓰고 §6 의 차이를 얹는다**(공식 이관 가이드: Opus 5 프롬프팅이 출발점으로 유효). **메인 세션이 `claude-fable-5-1` 이면 §1·§2·§5 는 `fable-5-1-behavior.md` 가 대체한다**(공식 가이드가 그 셋을 반대 방향으로 권한다). §3·§4 는 모든 모델 공통. 이 파일은 UNIVERSAL 이라 모델을 가리지 않고 주입된다 — 읽는 쪽이 자기 모델로 가른다.
 
 ---
 
@@ -27,7 +27,7 @@ Opus 5 는 **시키지 않아도 자기 작업을 검증한다.** "최종 검증
 이 규칙은 **모델에게 스스로를 검증시키는 프롬프트 문구**만 대상으로 한다. 아래는 전부 유지한다 — 혼동하면 우리 증거 규율이 무너진다.
 
 - **결정적 게이트**: `bun run gate:quick` / `gate:full` / `gate:release`(= 그 repo 의 최종 게이트 · 없으면 `quality:all`), `bun run check`, 테스트 스위트, lint/typecheck
-  ⚠ `release:gate` 는 **허브에만 있다** — 멤버에서 그 이름을 처방하면 `Script not found` 로 죽고, 그걸 본 세션은 «게이트가 깨졌다» 로 오진하거나 조용히 건너뛴다(atelier 2026-09-15 보고). 멤버의 최종 게이트 이름은 `gate:full` 이다.
+  ⚠ **최종 게이트의 이름은 repo 마다 다르다 — 그 repo 의 `package.json` 과 pre-push 훅을 본다.** 하네스가 배선하는 이름은 `gate:quick`·`gate:full`·`gate:release` 이고, `release:gate`(= `quality:all`)는 **있는 repo 도 없는 repo 도 있다**(허브·modfolio-pay 는 있고 pay 의 pre-push 훅이 그것을 돌린다 · atelier 에는 없어 `Script not found` 로 죽었다 — 2026-09-15). 이름을 기억으로 처방하면 없는 스크립트를 부르거나, 훅과 **다른 범위**를 초록으로 보고한다(pay 2026-09-23).
 - **도구 기반 검증**: `mcp__svelte__svelte-autofixer`, 빌드, **배포 Version ID 변화 확인**(⚠ 라이브 200 은 배포 확인이 **아니다** — 배포 실패는 사이트를 안 죽이고 안 바꾼다. canon `cf-deploy.md` v1.4.0 §검증)
 - **증거 규율** (`agent-evidence.md`): "주장 전 명령 실행 결과를 인용한다", "subagent 의 green claim 은 증거가 아니다 — 메인이 게이트를 직접 재실행한다". 이건 자기검증이 아니라 **환각 방지**이며 Opus 5 에서도 그대로 필요하다.
 - **리뷰의 coverage-first 2단 분리** (§4) — 이건 검증이 아니라 보고 정책이다.
@@ -74,6 +74,9 @@ Opus 5 는 Opus 4.8 과 **반대 방향**이다 — 4.8 은 위임을 꺼려 "�
 - **위임하지 말 것**: 직접 몇 번의 도구 호출로 끝나는 일 (파일 몇 개 읽기, 단순 검색, 간단한 수정). **검증 목적의 위임은 특히 금지** — §1 과 같은 뿌리다
 - 하나로 되면 하나만 쓴다. 여러 개를 띄울 땐 한 메시지에 담아 동시 실행시킨다
 - 위임했으면 그 결과를 신뢰한다 — 다시 하지 않는다 (단, 게이트 재실행은 §1 의 증거 규율이라 예외)
+- 여기서 고르는 모델은 **세션 안 비관리형 서브에이전트**(Explore/Plan/general-purpose)의 것이다 — 대량 검색·기계적
+  fan-out 만 `model: "sonnet"` 으로 낮춘다. **별도 worker 실행**(관리형·다른 공급자 리뷰)의 모델·effort 는
+  `.modfolio/ai-routing.json` 프리셋이 정한다(pdgd 2026-09-23 — 리뷰가 범위 없는 «sonnet 하향» 을 라우팅 우회로 읽었다)
 
 ## 3. 요청 범위를 임의로 넓히지 않는다
 
@@ -97,9 +100,18 @@ Opus 5 는 기본 응답과 **디스크에 쓰는 산출물**(리포트·마크�
 - 파일을 생성하는 skill (`journal`, `session-handoff`, `feedback-send`, 리포트류) 은 분량 지침을 명시한다: 실질을 담되 채우기 섹션·중복 요약·보일러플레이트로 늘리지 않는다
 - 자기 정정을 길게 서술하지 않는다 — 사용자의 코드·결론·판단을 바꾸는 오류만 정정하고 넘어간다
 
+## 6. Opus 5.5 — §1~§5 위에 얹는 차이 (2026-09-23)
+
+근거: `claude-api` 스킬 번들(Claude Code 2.1.280) `shared/model-migration.md` §Migrating to Claude Opus 5.5.
+
+- **effort 라벨은 모델 사이에서 같은 양이 아니다.** 5.5 의 API 기본은 `medium`(Opus 5 는 `high`)이고 5.5 의 `medium` 이 5 의 `high` 를 넘는다. 같은 라벨에서는 5 보다 **더 오래** 생각한다(특히 `xhigh`·`max`). 하네스는 처음에 라벨을 그대로 옮겼고, 같은 날 실사건 재측정(high 위 이득 미측정 · max 시간 초과) 뒤 오너 결정으로 agent 라벨을 한 칸 내렸다(canon `opus-4-7-effort-policy.md` v2.5.0 — 비가역 7 = xhigh · 나머지 코딩·리뷰 = high · frontmatter max 없음). 덜 생각하게 하려면 **프롬프트가 아니라 effort 를 낮춘다**(가이드: effort 가 더 확실하다).
+- **가이드가 재검증 대상으로 이름을 든 것은 verbosity·over-verification·scope — 이 파일의 §5·§1·§3 이다.** 그대로 옮기지 말고 다시 재라고 한다. §2(위임 상한)·§4(severity 필터)는 5.5 절에 언급이 없다 — 풀렸다는 근거가 없다. 전부 수치 없이 뒤집지 않는다 — 재측정 전까지 유지(`model-escalation.md` rule (e) 와 같은 원칙).
+- **UI 지시에서 «generic 한 느낌을 피하라»는 한 기본 스타일을 다른 기본으로 바꿀 뿐이다.** 피할 패턴을 **이름으로** 적는다 — 크림·오프화이트 배경 · 헤드라인 이탤릭 강조어 · «01/02/03» 섹션 번호 · monospace 라벨 · pill 버튼. 첫 결과가 고른 기본을 보고 목록을 늘린다.
+- **차트·도표·스크린샷을 도구 없이 더 정확히 읽는다**(낮은 effort 에서도). 이전 모델용 crop·zoom 보조 절차는 재검증 대상 — 가장 조밀한 입력에는 고해상도 이미지와 이미지 처리 도구가 여전히 정확도를 올린다.
+
 ## 관련
 
-- `knowledge/canon/opus-4-7-effort-policy.md` v2.0.0 — 모델·effort 프로파일 (파일명 동결, 내용은 현행)
-- `knowledge/canon/model-escalation.md` v2.0.0 — rung 사다리
+- `knowledge/canon/opus-4-7-effort-policy.md` v2.5.0 — 모델·effort 프로파일 (파일명 동결, 내용은 현행)
+- `knowledge/canon/model-escalation.md` v2.3.1 — rung 사다리
 - `.claude/rules/agent-evidence.md` — 증거 규율 (§1 의 유지 대상)
 - `.claude/rules/fundamentals-first.md` — 정공법

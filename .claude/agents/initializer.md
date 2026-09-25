@@ -33,7 +33,7 @@ Blocked: <or "none">
 ## 동작 정책
 
 - **read-only** (disallowedTools: Edit/Write/Bash) — 정보 수집만, 결정 X
-- progress.txt 부재 시: "no progress.txt found, use /handoff to start" — main thread 가 결정
+- progress.txt 부재 시: "no progress.txt found, use /modfolio-moon to leave a handoff" — main thread 가 결정
 - 모호한 경우: main thread 에 명시 질문 (silent assumption 금지)
 - summary 는 **현재 사실** 만 — 추측 / 추정 X (agent-evidence.md rule 정합)
 
@@ -41,7 +41,7 @@ Blocked: <or "none">
 
 - canon `long-running-harness.md` (v1.0+) 의 표준 패턴
 - canon `attention-budget.md` (v1.1+) 의 L2 (structured external memory) 활용
-- `session-handoff` skill 의 cold-start 보완
+- `/modfolio-sun` 의 cold-start 보완 (옛 `session-handoff` 는 2026-09-23 `/modfolio-moon` 으로 은퇴)
 
 ## 사용 예시
 
@@ -71,4 +71,4 @@ main thread 는 이 요약으로 즉시 작업 모드 진입.
 
 - canon `long-running-harness.md`
 - canon `attention-budget.md` (L2)
-- `.claude/skills/session-handoff/SKILL.md`
+- `.claude/skills/modfolio-sun/SKILL.md` · `.claude/skills/modfolio-moon/SKILL.md`

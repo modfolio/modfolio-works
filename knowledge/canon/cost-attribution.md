@@ -1,7 +1,7 @@
 ---
 title: Cost Attribution — LiteLLM + Langfuse + CF Workers + Excel monthly dashboard
-version: 1.2.0
-last_updated: 2026-07-09
+version: 1.3.0
+last_updated: 2026-09-23
 source: [Harness v2.4 Tier 1, LiteLLM spend API, Langfuse datasets, OTel GenAI semconv v1.37+, Phase 3 B-5 Excel cost dashboard 자동화 2026-04-27]
 sync_to_siblings: true
 applicability: always
@@ -85,7 +85,7 @@ LLM 호출 span 에 다음을 반드시 부착 — 출처: [gen-ai-spans.md](htt
 
 > **v1.37 breaking**: `gen_ai.system` 은 `gen_ai.provider.name` 으로 이름 변경됨. `gen_ai.usage.prompt_tokens` / `completion_tokens` 는 `input_tokens` / `output_tokens` 로. 옛 이름 잔존 금지 — 정공법으로 맞춘다. 출처: [v1.37.0 릴리즈노트](https://github.com/open-telemetry/semantic-conventions/releases/tag/v1.37.0).
 
-### 단가표 (2026-09-02 기준, USD per 1M tokens)
+### 단가표 (2026-09-23 기준, USD per 1M tokens)
 
 > 단가는 제공사 공식 발표 기준. `gen_ai.provider.name` + `gen_ai.request.model` 조합으로 lookup.
 
@@ -96,13 +96,14 @@ LLM 호출 span 에 다음을 반드시 부착 — 출처: [gen-ai-spans.md](htt
 | anthropic | claude-fable-5 | $10 | $12.50 | $1.00 | $50 |
 | anthropic | claude-fable-5-1 | $10 | $12.50 | **$0.25** (0.025×) | $50 |
 | anthropic | claude-mythos-5-1 | $10 | $12.50 | **$0.25** (0.025×) | $50 |
+| anthropic | claude-opus-5-5 | $4 | $5.00 | **$0.20** (0.05×) | $20 |
 | anthropic | claude-opus-5 | $5 | $6.25 | $0.50 | $25 |
 | anthropic | claude-sonnet-5 | $2 | $2.50 | $0.20 | $10 |
 | anthropic | claude-haiku-4-5 | $1 | $1.25 | $0.10 | $5 |
 | openai | gpt-5 | $2.50 | — | — | $10 |
 | openai | gpt-5-mini | $0.25 | — | — | $2 |
 
-**권위 단가 SoT = `ecosystem.json` `pricing.genai`** — 위 표는 사람용 미러다. 단가 변동 시 SoT 를 갱신하고 스크립트/cost 계산은 SoT 를 읽는다(하드코딩 금지). Sonnet 5 는 도입가 $2/$10 이 **표준가로 확정**(2026-09-01 예정이던 $3/$15 인상 취소 — pricing 페이지 2026-09-02 fetch). Fable 5.1·Mythos 5.1 의 cache read 는 0.025×(다른 모델 0.1×) — SoT 는 `genai[<id>].cacheReadMultiplier`. Opus 4.7($5/$25)·이하는 LEGACY (구 표의 opus-4-7 $15/$75 는 당시에도 오기 — 실단가 $5/$25).
+**권위 단가 SoT = `ecosystem.json` `pricing.genai`** — 위 표는 사람용 미러다. 단가 변동 시 SoT 를 갱신하고 스크립트/cost 계산은 SoT 를 읽는다(하드코딩 금지). Sonnet 5 는 도입가 $2/$10 이 **표준가로 확정**(2026-09-01 예정이던 $3/$15 인상 취소 — pricing 페이지 2026-09-02 fetch). Fable 5.1·Mythos 5.1 의 cache read 는 0.025× · Opus 5.5 는 0.05×(다른 모델 0.1× · pricing 페이지 각주 1·2, 2026-09-23 fetch) — SoT 는 `genai[<id>].cacheReadMultiplier`. Opus 4.7($5/$25)·이하는 LEGACY (구 표의 opus-4-7 $15/$75 는 당시에도 오기 — 실단가 $5/$25).
 
 ### Cost 계산 함수 (TypeScript, Worker 호환)
 

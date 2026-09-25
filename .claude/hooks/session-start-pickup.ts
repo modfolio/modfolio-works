@@ -71,21 +71,125 @@ function compareSemver(a: string, b: string): number {
 	return 0;
 }
 
+/** 멤버가 보내는 편지의 이름 — `<repo>-<종류>-…` (feedback-send 규약 · 허브 feedback/ 실측 종류). */
+const OWN_LETTER_KIND =
+	/^(?:findings?|reply|request|opinion|note|data|correction|debrief|question|report)\b/;
+
 /**
- * 첫 줄(`# <보낸이> → <받는이>`)이 우리를 가리키는가. 읽지 못하면 **보수적으로 포함**한다 —
+ * 이 편지가 **우리 앞으로 온 것**인가. 읽지 못하면 **보수적으로 포함**한다 —
  * 안내 훅이라 놓치는 쪽이 잘못 보여주는 쪽보다 나쁘다.
+ *
+ * ⚠ 2026-09-23 pay·pdgd 실측 — **우리가 보낸 편지가 수신함으로 떴다.** `feedback/<repo>/` 에는 두
+ * 방향이 같이 있는데 이 판정은 첫 줄 화살표만 봤다: ① 1행에 화자가 없는 편지(pay 는 «보내는 곳» 이
+ * 3행)는 «못 읽음 → 포함» 이 됐고 ② `# modfolio-pay → modfolio-ecosystem …` 은 화살표 **뒤 줄 전체**
+ * 에서 `pay` 를 부분문자열로 찾아 제목 속 단어에 걸렸다. 그래서 순서대로 본다(pay 리뷰 반영 2026-09-23 —
+ * **본문이 먼저, 이름은 마지막**): ① 제목 화살표의 양쪽이 **저장소 이름**이면 라우팅(보낸이가 우리면 발신 ·
+ * 받는이는 첫 토큰만 정확히 비교) ② 발신 줄 ③ 파일 이름 규약 ④ 그래도 모르면 포함.
  */
-function addressedToUs(file: string, ownRepoName: string): boolean {
-	let head = "";
-	try {
-		head = readFileSync(file, "utf-8").slice(0, 400).split("\n")[0] ?? "";
-	} catch {
-		return true;
-	}
-	if (!head.startsWith("#") || !head.includes("→")) return true;
-	const target = head.split("→")[1] ?? "";
+/** 허브를 가리키는 이름 — 알려진 저장소 목록에 없어도 라우팅 토큰으로 인정한다. */
+const HUB_ALIASES = new Set(["ecosystem", "modfolio-ecosystem", "hub", "허브"]);
+/**
+ * 목록이 없을 때(테스트·허브 밖)의 저장소 토큰 모양 — **영소문자로 시작하는** 영소문자·숫자·하이픈 한 단어.
+ * 숫자로 시작하는 토큰(날짜 `2026-09-23`)은 저장소가 아니다 — 받아들이면 «# <날짜> → <낱말>» 제목이 라우팅으로 읽혀
+ * 편지가 빠졌다(pdgd 리뷰 2026-09-23). 버전 모양(`v1`·`v2`)도 저장소가 아니다 — «# 서명 v1 → v2 이관» 제목이 목록 없이
+ * 라우팅으로 읽혀 빠졌다(리뷰 A14).
+ */
+const REPO_TOKEN = /^(?!v\d)[a-z][a-z0-9-]*$/;
+
+function isRepoToken(t: string, known?: ReadonlySet<string>): boolean {
+	if (HUB_ALIASES.has(t)) return true;
+	// 접두는 양방향이다 — 폴더가 `pdgd` 인 저장소를 제목에 `modfolio-pdgd` 로 적어도 같은 저장소다(pdgd 리뷰 2026-09-23).
+	if (known)
+		return (
+			known.has(t) ||
+			known.has(`modfolio-${t}`) ||
+			(t.startsWith("modfolio-") && known.has(t.slice("modfolio-".length)))
+		);
+	return REPO_TOKEN.test(t);
+}
+
+export function addressedToUs(
+	fileName: string,
+	head: string,
+	ownRepoName: string,
+	knownRepos?: ReadonlySet<string>,
+): boolean {
 	const short = ownRepoName.replace(/^modfolio-/, "");
-	return target.includes(ownRepoName) || target.includes(short);
+	const us = new Set([
+		ownRepoName.toLowerCase(),
+		short.toLowerCase(),
+		`modfolio-${short.toLowerCase()}`,
+	]);
+	const bare = (t: string) =>
+		t
+			.replace(/[*`[\]]/g, "")
+			.trim()
+			.toLowerCase();
+	// ① 제목(첫 H1)의 라우팅 줄 — **양쪽이 저장소 이름일 때만** 라우팅으로 읽는다. 본문 절 제목의 화살표
+	//    («## 2. 플래그 → exit 2»)도, 제목 속 일반 화살표(«# 웹훅 서명 v1 → v2 이관 요청» — pay 2026-09-23 리뷰)도
+	//    화자가 아니다. 그걸 화자로 읽으면 수신처가 «v2» 가 되어 진짜 편지가 **조용히 빠진다.**
+	const title =
+		head
+			.split("\n")
+			.find((l) => /^#\s/.test(l.trim()))
+			?.trim() ?? "";
+	const m = /^#\s*(.+?)\s*(?:→|->)\s*(.+)$/.exec(title);
+	if (m) {
+		const from = bare(m[1] ?? "");
+		// 받는이는 **이어지는 저장소 토큰 전부** — «# ecosystem → connect · pay · 날짜 · 요지» 는 pay 에게도 온 편지다
+		// (pay 리뷰 2026-09-23 · 종전엔 첫 토큰만 비교). 저장소가 아닌 조각(날짜·요지)에서 멈춘다.
+		const to: string[] = [];
+		for (const piece of (m[2] ?? "").split(/\s*[·,]\s*/)) {
+			const t = bare(piece.split(/[\s:(—]/)[0] ?? "");
+			if (!t || !isRepoToken(t, knownRepos)) break;
+			to.push(t);
+		}
+		if (isRepoToken(from, knownRepos) && to.length > 0) {
+			if (us.has(from)) return false;
+			return to.some((t) => us.has(t));
+		}
+	}
+	// ② 발신 줄 — 본문이 화자를 말하면 그것이 파일 이름보다 앞선다.
+	const sender =
+		/^\s*(?:[-*]\s*)?\**\s*(?:발신|보낸 곳|보내는 곳|from)\s*\**\s*[:：]\s*(.+)$/im.exec(
+			head,
+		);
+	if (sender?.[1]) return !us.has(bare(sender[1].split(/[\s(·,]/)[0] ?? ""));
+	// ③ 본문이 말하지 않을 때만 파일 이름 규약(`<repo>-<종류>-…` = 우리가 보낸 것). 이름을 먼저 보면
+	//    `pay-request-…` 로 **이름 붙은 받은 편지**가 발신으로 분류돼 사라졌다(pay 2026-09-23 리뷰).
+	// 파일 이름 규약은 **자기 이름 둘**(ownRepoName · short)만 본다 — 라우팅용 별칭 `modfolio-<short>` 까지 넣으면 그 이름으로
+	// 시작하는 **받은** 편지가 보낸 편지로 분류돼 숨는다(리뷰 A14 · 2026-09-23).
+	for (const prefix of new Set([
+		ownRepoName.toLowerCase(),
+		short.toLowerCase(),
+	]))
+		if (
+			fileName.toLowerCase().startsWith(`${prefix}-`) &&
+			OWN_LETTER_KIND.test(fileName.slice(prefix.length + 1))
+		)
+			return false;
+	return true;
+}
+
+/** 허브 `feedback/` 의 폴더 이름 = 편지를 주고받는 저장소들. 못 읽으면 `undefined`(모양 판정으로 물러난다). */
+export function knownRepoNames(ecoRoot: string): Set<string> | undefined {
+	try {
+		return new Set(
+			readdirSync(join(ecoRoot, "feedback"), { withFileTypes: true })
+				.filter((d) => d.isDirectory())
+				.map((d) => d.name.toLowerCase()),
+		);
+	} catch {
+		return undefined;
+	}
+}
+
+function readLetterHead(file: string): string | null {
+	try {
+		return readFileSync(file, "utf-8").slice(0, 1200);
+	} catch {
+		return null;
+	}
 }
 
 /**
@@ -103,10 +207,15 @@ function addressedToUs(file: string, ownRepoName: string): boolean {
  * 소음이 된다 — 그래서 첫 줄 화자를 읽어 **자기 앞으로 온 것만** 남긴다(경로가 아니라
  * 내용으로 판정 — 허브 분류기와 같은 원칙).
  */
-function recentInboxMessages(repoRoot: string, ownRepoName: string): string[] {
-	const ownInbox = join(repoRoot, "feedback", ownRepoName, "inbox");
-	const ownRoot = join(repoRoot, "feedback", ownRepoName);
-	const sibInbox = join(repoRoot, "feedback-incoming"); // sibling-side mirror 후보 (향후)
+/** `ecoRoot` = **허브 체크아웃** 루트다(멤버 루트가 아니다 — 이름이 `repoRoot` 이던 때 리뷰가 «멤버의 feedback/ 을 읽는다» 로 오독했다 · pdgd 2026-09-23). */
+export function recentInboxMessages(
+	ecoRoot: string,
+	ownRepoName: string,
+): string[] {
+	const known = knownRepoNames(ecoRoot);
+	const ownInbox = join(ecoRoot, "feedback", ownRepoName, "inbox");
+	const ownRoot = join(ecoRoot, "feedback", ownRepoName);
+	const sibInbox = join(ecoRoot, "feedback-incoming"); // sibling-side mirror 후보 (향후)
 	const candidates = [ownInbox, ownRoot, sibInbox];
 	const messages: string[] = [];
 	for (const dir of candidates) {
@@ -117,9 +226,11 @@ function recentInboxMessages(repoRoot: string, ownRepoName: string): string[] {
 		} catch {
 			continue;
 		}
-		const md = entries.filter(
-			(f) => f.endsWith(".md") && addressedToUs(join(dir, f), ownRepoName),
-		);
+		const md = entries.filter((f) => {
+			if (!f.endsWith(".md")) return false;
+			const head = readLetterHead(join(dir, f));
+			return head === null || addressedToUs(f, head, ownRepoName, known);
+		});
 		md.sort();
 		// 최근 3 entries
 		for (const f of md.slice(-3)) {

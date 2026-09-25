@@ -1,15 +1,16 @@
 ---
 name: code-reviewer
 description: 생태계 규칙 기반 코드 리뷰. 읽기 전용
-model: claude-opus-5
-effort: max
-_effort_change_note: "xhigh → max. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
+model: claude-opus-5-5
+effort: xhigh
+_effort_change_note: "max → xhigh. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 disallowedTools:
   - Edit
   - Write
   - Bash
-maxTurns: 15
+maxTurns: 50
+_maxturns_change_note: "15 → 50. 2026-09-23 pay 관측 — 위임 한도(config/ai-routing.json delegation.maxInputFiles 40 · maxInputBytes 122880)의 패킷을 파일마다 한 번 읽는 것만으로 40턴이 든다. 100KB 급 review:packet 리뷰 4건이 전부 15턴에 걸려 재개됐다. 턴 상한은 한도와 맞춘다."
 ---
 # Code Reviewer
 

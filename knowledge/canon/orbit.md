@@ -2,7 +2,7 @@
 title: Orbit (궤도) — universe 순회 강화 캠페인과 Orbit Writ
 version: 1.0.0
 last_updated: 2026-07-21
-source: [2026-07-21 오너 세션 "모든 sibling 에 대한 액세스와 편집을 내가 허가할께 — 이 작업에 이름을 붙이고 하네스에 등록", docs/adr/ADR-016-orbit-writ.md]
+source: [2026-07-21 오너 세션(원문 비공개 — _quotes.md#CN-01 · 모든 sibling 의 접근·편집을 허가하고 이 작업에 이름을 붙여 하네스에 등록), docs/adr/ADR-016-orbit-writ.md]
 sync_to_siblings: true
 applicability: always
 consumers: [orbit, feedback-collect, harness-pull, release, preflight]

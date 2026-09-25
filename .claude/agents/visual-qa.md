@@ -1,7 +1,7 @@
 ---
 name: visual-qa
 description: 5-Gate 자동 품질 파이프라인. Playwright + axe-core + 토큰 준수 + 시각적 구분 가능성
-model: claude-opus-5
+model: claude-opus-5-5
 effort: high
 governance: owasp-agentic-2026
 skills:

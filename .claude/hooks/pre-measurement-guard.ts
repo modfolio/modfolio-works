@@ -41,6 +41,7 @@ export interface MeasurementFinding {
 		| "rg-bundled-r"
 		| "pgrep-self-count"
 		| "pkill-self-kill"
+		| "symlink-false-zero"
 		| "zsh-word-split";
 	readonly why: string;
 	readonly fix: string;
@@ -297,6 +298,30 @@ function pgrepSelfCount(cmd: string): boolean {
  * 논거가 여기엔 안 맞는다(죽은 뒤엔 볼 것이 없다). 그리고 더 나쁜 것은 그 다음이다 —
  * 게이트가 시작도 못 했는데 **이전 실행이 남긴 같은 이름의 로그**를 읽으면 초록으로 위장된다.
  */
+/**
+ * `node_modules/@modfolio/...` 를 심링크 미추적 도구로 훑는가.
+ *
+ * pdgd 실측(2026-09-22): `find node_modules/@modfolio/harness -name '*.ts' | wc -l` → **0**,
+ * 같은 명령에 `-L` 을 붙이면 **457**. `rg` 는 거기에 더해 `node_modules` 를 ignore 로도 거른다.
+ * 「0건」이 「없다」로 읽히는 축이라 침묵하면 조사 결론이 통째로 뒤집힌다.
+ */
+export function symlinkFalseZero(cmd: string): boolean {
+	if (!/node_modules\/@modfolio/.test(cmd)) return false;
+	for (const seg of cmd.split(/&&|\|\||[;|\n]/)) {
+		const t = seg.trim();
+		const tool = /^(?:\S+=\S+\s+)*(rg|grep|find)\b/.exec(t)?.[1];
+		if (!tool) continue;
+		if (!/node_modules\/@modfolio/.test(t)) continue;
+		// `-L`(심링크 추적) 이 있으면 의도한 형태다. rg 는 `--follow` 도 같은 뜻.
+		if (
+			/(^|\s)-{1,2}[A-Za-z-]*\bL\b|(^|\s)--follow(\s|$)|(^|\s)-L(\s|$)/.test(t)
+		)
+			continue;
+		return true;
+	}
+	return false;
+}
+
 function pkillSelf(cmd: string): boolean {
 	// `pkill` 뒤 0개 이상의 단어, 그 다음 `f` 를 품은 짧은 옵션 묶음(`-f` · `-cf` · `-fx`).
 	// ⚠ 첫 판은 `pkill\s[^;&|]*\s-…f` 였다 — `-f` 가 **첫 옵션**이면 앞 공백을 `pkill\s` 가 먹어
@@ -339,7 +364,23 @@ function zshWordSplit(cmd: string): boolean {
 		const name = m[2];
 		if (name) assigned.add(name);
 	}
+	// ⑤-b **공백을 품은 따옴표 리터럴** 로 할당된 이름 — `FILES="a b c"; for f in $FILES`.
+	//   atelier-and-folio 2026-09-23 실측: 옛 소스로 바꾸는 교체와 «landed» 확인이 같은 변수를 써서 **함께**
+	//   실패했고, 새 코드 그대로 «52 pass» 가 나와 대조가 성립한 것처럼 보였다(배열로 고치자 exit 1 · 6 fail).
+	//   공백을 품은 따옴표 리터럴은 반드시 스칼라다(배열은 `=(`) — 이 형태도 오탐이 원리적으로 없다.
+	//   ⚠ 인자 자리(`git diff -- $FILES`)의 같은 결함은 **미검사**다 — 여기는 for·set 만 문다.
+	//   원문(`cmd`)에서 찾는다: `bare` 는 홑따옴표 내용을 지워 `FILES='a b'` 를 못 본다.
+	for (const m of cmd.matchAll(
+		/(^|[;&|(\s])([A-Za-z_][A-Za-z0-9_]*)=("(?:[^"\\]|\\.)*"|'[^']*')/g,
+	)) {
+		const name = m[2];
+		const literal = m[3] ?? "";
+		if (name && /\s/.test(literal.slice(1, -1))) assigned.add(name);
+	}
 	if (assigned.size === 0) return false;
+	// 목록 자리는 **따옴표 밖의** `$NAME` 만 본다 — `for d in "$H" "$C"` 는 각 원소가 한 값이라 zsh 에서도 정확히 두 번
+	// 돈다(atelier-and-folio 2026-09-24 오탐 제보). 할당 탐지는 위의 `bare`(큰따옴표 유지)로 하고 목록 판정만 두 따옴표를 비운다.
+	const listView = stripQuoted(cmd, "both");
 	for (const name of assigned) {
 		// for y in $NAME / ${NAME}   ·  set -- $NAME
 		const forRe = new RegExp(
@@ -348,7 +389,7 @@ function zshWordSplit(cmd: string): boolean {
 		const setRe = new RegExp(
 			`\\bset\\s+--\\s+\\$\\{?${name}\\}?(?![A-Za-z0-9_({=+:\\[])`,
 		);
-		if (forRe.test(bare) || setRe.test(bare)) return true;
+		if (forRe.test(listView) || setRe.test(listView)) return true;
 	}
 	return false;
 }
@@ -374,6 +415,13 @@ export function judgeMeasurement(raw: string): MeasurementFinding[] {
 			fix: "zsh 는 `$pipestatus[1]` (소문자 · 1-indexed). 또는 파이프를 쓰지 말고 종료코드를 변수에 받아라.",
 		});
 	}
+	if (symlinkFalseZero(cmd)) {
+		out.push({
+			id: "symlink-false-zero",
+			why: "`node_modules/@modfolio/harness` 는 `.bun/` 스토어로 가는 **심링크**다 — `rg`·`grep`·`find` 는 기본적으로 따라가지 않아 **전부 0건**이 나온다. 그 0 은 「배선 없음」과 구분되지 않는다(pdgd 2026-09-22: 같은 0 을 세 번 받고 «reader 없음» 을 확정할 뻔했다 · `find` 0 vs `find -L` **457**).",
+			fix: "`find -L …` · `rg -L …`(+ `--no-ignore` — rg 는 node_modules 를 ignore 로도 거른다) · 또는 `realpath` 로 실경로를 먼저 푼다. 0건을 결론으로 쓰기 전에 **알려진 양성 하나**로 probe 를 통과시켜라.",
+		});
+	}
 	if (rgBundledR(cmd)) {
 		out.push({
 			id: "rg-bundled-r",
@@ -397,8 +445,8 @@ export function judgeMeasurement(raw: string): MeasurementFinding[] {
 	if (zshWordSplit(cmd)) {
 		out.push({
 			id: "zsh-word-split",
-			why: "zsh 는 `$VAR` 를 **워드 스플리팅 하지 않는다** — `X=$(...)` 를 `for y in $X` 로 돌리면 루프가 **1회만** 돈다(실측 zsh 5.9).",
-			fix: `\`printf '%s\\n' "$X" | while IFS= read -r y; do …\` · 또는 \`for y in \${=X}\` · 또는 애초에 \`$(...)\` 를 for 목록에 직접 둔다(명령 치환은 쪼개진다).`,
+			why: 'zsh 는 `$VAR` 를 **워드 스플리팅 하지 않는다** — `X=$(...)` 나 `X="a b c"` 를 `for y in $X` 로 돌리면 루프가 **1회만** 돈다(실측 zsh 5.9).',
+			fix: `\`printf '%s\\n' "$X" | while IFS= read -r y; do …\` · 또는 \`for y in \${=X}\` · 또는 애초에 \`$(...)\` 를 for 목록에 직접 둔다(명령 치환은 쪼개진다) · 목록이면 배열 \`X=(a b c)\`.`,
 		});
 	}
 	return out;

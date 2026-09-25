@@ -2,7 +2,7 @@
 title: Fact Ownership — 사실의 소유권과 동기화 방향
 version: 1.1.0
 last_updated: 2026-07-04
-source: [2026-07-04 오너 결정 "ecosystem 은 참고서, 대장 아님 — sibling 이 hub 가 정한 것 때문에 불이익 보면 안 된다", feedback/athsra/2026-07-04_registry-currency-ask.md (소유권 역전 사건), docs/adr/ADR-014-fact-ownership.md, knowledge/journal/20260704-fact-ownership-session.md]
+source: [2026-07-04 오너 결정(원문 비공개 — _quotes.md#CN-17 · 허브는 참조 원본이지 지휘자가 아니다 — 허브의 결정 때문에 형제가 손해를 보지 않는다), feedback/athsra/2026-07-04_registry-currency-ask.md (소유권 역전 사건), docs/adr/ADR-014-fact-ownership.md, knowledge/journal/20260704-fact-ownership-session.md]
 sync_to_siblings: true
 applicability: always
 consumers: [feedback-send, feedback-collect, harness-pull, preflight, ecosystem]

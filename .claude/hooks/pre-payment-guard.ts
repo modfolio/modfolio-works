@@ -158,7 +158,7 @@ const HIGH: Rule[] = [
 		// ⚠ 이 규칙의 `why` 는 **틀린 사실이었다** (modfolio-connect 제보 2026-07-31).
 		//
 		// `why` 는 장식이 아니다 — 에이전트가 읽고 **오너에게 옮기는 사실**이 된다. 실제로
-		// connect 가 `cf-paid-resource` 라벨을 읽고 오너에게 *"비용 때문에 막혔습니다"* 라고
+		// connect 가 `cf-paid-resource` 라벨을 읽고 오너에게 「비용 때문에 막혔습니다」 라고
 		// 보고했다. 측정한 적 없는 문장이었다.
 		//
 		// Cloudflare 공식 가격 문서로 7종 전부 확인(2026-07-31):
@@ -372,6 +372,23 @@ const ECOSYSTEM_STATE_SAFE_MCP = /^mcp__ecosystem-state__/;
 // vector search. Blocking a question about money protects no money; it blocks the investigation
 // that finds broken money paths (the ecosystem-state note above says the same thing).
 const KNOWLEDGE_RAG_SAFE_MCP = /^mcp__knowledge-rag__/;
+
+// Adobe for creativity connector — FILE TRANSFER and PREVIEW tools. They move no money: they
+// upload bytes to the user's Creative Cloud storage or render a preview. Observed 2026-09-24
+// (modfolio-design): `asset_finalize_file_upload` was HARD-BLOCKED because its required payload
+// echoes the upload's transfer document, whose link keys are `…/rel/block/transfer` — the
+// MCP_PAYMENT `transfer` read a byte-transfer link as a money transfer. The owner then had to
+// upload by hand through the picker. Exempted by EXACT TOOL NAME, not by server: claude.ai
+// connectors mount under a per-account UUID server name, so a namespace prefix is not stable.
+// NOT exempted: every generative/edit tool (their payload is checked as before) and Stock
+// licensing, which is a real spend and is matched explicitly below (ADOBE_STOCK_SPEND_MCP).
+const ADOBE_ASSET_SAFE_MCP =
+	/^mcp__[\w-]+__(asset_initialize_file_upload|asset_finalize_file_upload|asset_add_file|asset_add_file_check_status|asset_preview_file|asset_inline_preview)$/;
+
+// Adobe Stock licensing buys an asset (plan credits or money). Its name carries no MCP_PAYMENT
+// word, so without this line the guard passed it silently — found while fixing the false
+// positive above (2026-09-24). A spend must never depend on a word happening to appear.
+const ADOBE_STOCK_SPEND_MCP = /^mcp__[\w-]+__asset_license_and_download_stock$/;
 
 function resolveMode(): Mode {
 	const raw = (process.env.PAYMENT_GUARD_MODE ?? "block").toLowerCase();
@@ -608,14 +625,19 @@ function classify(
 			CF_READONLY_MCP.test(toolName) ||
 			SVELTE_SAFE_MCP.test(toolName) ||
 			ECOSYSTEM_STATE_SAFE_MCP.test(toolName) ||
-			KNOWLEDGE_RAG_SAFE_MCP.test(toolName)
+			KNOWLEDGE_RAG_SAFE_MCP.test(toolName) ||
+			ADOBE_ASSET_SAFE_MCP.test(toolName)
 		) {
 			// Claude Code environment / remote-scheduling / GitHub content / Svelte code-analysis /
 			// ecosystem-state contract-derivation tool — not a payment
 			// surface. Its payment-mentioning or command-describing args are TEXT, not an executed
 			// spend. Skip BOTH the MCP_PAYMENT match and the Bash-segment fallthrough (same as athsra).
 			return null;
-		} else if (MCP_PAYMENT.test(toolName) || MCP_PAYMENT.test(haystack)) {
+		} else if (
+			ADOBE_STOCK_SPEND_MCP.test(toolName) ||
+			MCP_PAYMENT.test(toolName) ||
+			MCP_PAYMENT.test(haystack)
+		) {
 			// Other MCP: name-based on the whole payload (not shell-segmentable).
 			return {
 				tier: "high",

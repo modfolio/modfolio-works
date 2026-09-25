@@ -79,13 +79,19 @@ import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { contentTree, judgeReceipt, readReceipt } from "../lib/gate-receipt.ts";
-import { isGitPushCommand } from "./_git-push-detect.ts";
+import { judgeL0Carry } from "../lib/l0-carry.ts";
+import {
+	isGitPushCommand,
+	plainPushTargetsAll,
+	pushWorkdir,
+} from "./_git-push-detect.ts";
 import {
 	bashCommand,
 	isSvelteKitProject,
 	readHookInput,
 	spawnSyncWithSvelteKitRetry,
 } from "./_lib.ts";
+import { gitPrePushMode, looksLikeWipPush } from "./_wip-push.ts";
 
 /** 판정 완료 · 게이트 green. */
 const EXIT_GREEN = 0;
@@ -125,6 +131,11 @@ if (import.meta.main) {
 	 * (첫 수정판이 `CLAUDE_PROJECT_DIR` 를 먼저 봤고, 훅 스위트 10건이 그것을 잡았다.)
 	 *
 	 * 그래서 순서는 git 최상위(cwd 기준) → cwd → `CLAUDE_PROJECT_DIR` 다.
+	 *
+	 * ⚠ 그 «cwd» 는 훅 프로세스의 것이 아니라 **명령이 push 하는 자리**다(`pushWorkdir`). PreToolUse 훅은 명령이
+	 * 돌기 전에 세션 cwd 에서 뜬다 — `cd <워크트리> && git push …` 를 훅의 cwd 로 읽으면 주 체크아웃의 영수증·트리로
+	 * 판정한다(2026-09-24 인계 지뢰: 워크트리 gate:full 영수증 tree 3eba7607 을 두고 메인 체크아웃 트리로 세 번 막았다).
+	 * 명령이 자리를 **바꿨는데** 그곳에 저장소가 없으면 세션 프로젝트로 물러서지 않는다 — 판정 불능.
 	 * 예전에는 `process.cwd()` 한 줄이었고 **틀렸을 때 그렇게 말하지 않았다**: 엉뚱한
 	 * 루트를 잡으면 `package.json` 이 없어 판정 불능(비차단)으로 새거나, 영수증이 없어
 	 * 「게이트를 안 돌렸다」로 보인다. 둘 다 **전송을 통과시키는 방향**이다.
@@ -138,17 +149,28 @@ if (import.meta.main) {
 		);
 	}
 
+	const where = pushWorkdir(cmd, input.cwd ?? process.cwd());
+	if (where.kind === "unknown") {
+		console.error(
+			`[pre-push-guard] ⚠ 판정 불능 — push 하는 자리를 정하지 못했다(${where.reason}). ` +
+				"추측해서 다른 저장소의 영수증을 읽지 않는다. 전송은 진행(비차단) — git pre-push 훅이 실제 저장소에서 다시 판정한다.",
+		);
+		process.exit(EXIT_INDETERMINATE);
+	}
+	const pushDir = where.dir;
+	const pushDirExplicit = where.explicit;
+
 	function resolveProjectRoot(): string | undefined {
 		const top = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+			cwd: pushDir,
 			encoding: "utf-8",
 			stdio: ["ignore", "pipe", "ignore"],
 		});
 		const gitTop = top.status === 0 ? (top.stdout ?? "").trim() : "";
-		for (const candidate of [
-			gitTop,
-			process.cwd(),
-			process.env.CLAUDE_PROJECT_DIR,
-		]) {
+		const candidates = pushDirExplicit
+			? [gitTop, pushDir]
+			: [gitTop, pushDir, process.env.CLAUDE_PROJECT_DIR];
+		for (const candidate of candidates) {
 			if (hasManifest(candidate)) return candidate;
 		}
 		return undefined;
@@ -164,6 +186,34 @@ if (import.meta.main) {
 		process.exit(EXIT_INDETERMINATE);
 	}
 	const projectRoot: string = resolvedRoot;
+
+	// ── `wip/*` push — 판정은 git pre-push 훅이 git 이 준 **실제 ref 목록**으로 한다 (ADR-029 §7) ──
+	// 명령줄은 실제 대상이 아니다(`push.default=upstream`·`remote.<n>.push`·`push.followTags`) — 여기서 판정하면 main 으로
+	// 가는 push 가 wip 로 통과한다(3.93.0 후보 리뷰 P1). 그래서 **보이면 넘기기만** 하고, 넘길 곳(우리 래퍼 훅)이 없으면
+	// 평소 규칙을 쓴다. 해석이 틀려도 git 훅이 실제 ref 로 다시 가르므로 틀림은 «넘길까 말까» 에만 영향을 준다.
+	{
+		// 한 명령에 push 가 여럿이어도(두 원격) 전부 wip 로 보이면 넘긴다 — 각 push 가 git 훅을 따로 거친다.
+		const all = plainPushTargetsAll(cmd);
+		if (all?.every((t) => looksLikeWipPush(projectRoot, t))) {
+			const targets = { verify: all.every((t) => t.verify) };
+			// `--no-verify` 면 git 이 그 훅을 건너뛴다 — 넘기면 아무도 스윕하지 않는다(리뷰 dA P2). 하나라도 그러면 넘기지 않는다.
+			const mode = targets.verify ? gitPrePushMode(projectRoot) : "none";
+			if (mode === "wrapper") {
+				console.error(
+					"[pre-push-guard] wip/* push 로 보인다 — 판정은 git pre-push 훅이 한다(git 이 준 ref 목록 · 원격에 없는 커밋의 추가 줄 비밀 스윕). " +
+						"다른 ref(main·태그)가 섞이면 그 훅이 풀 영수증을 요구한다.",
+				);
+				process.exit(EXIT_GREEN);
+			}
+			console.error(
+				`[pre-push-guard] wip/* push 로 보이지만 ${
+					!targets.verify
+						? "`--no-verify` 라 git pre-push 훅이 돌지 않는다"
+						: `git pre-push 훅이 ${mode === "chain" ? "체인 설치라 ref 목록을 못 받는다" : mode === "foreign" ? "우리 훅이 아니다" : "없다(또는 실행 비트가 없다)"}`
+				} — wip 규칙을 쓸 수 없어 풀 영수증 규칙을 쓴다${targets.verify ? " (`bun run modfolio:install-guards`)" : ""}.`,
+			);
+		}
+	}
 
 	function readJsonSafe(path: string): unknown {
 		try {
@@ -347,14 +397,21 @@ if (import.meta.main) {
 		const now = { tree: contentTree(projectRoot) };
 		let accepted: ReturnType<typeof judgeReceipt> | null = null;
 		let lastWhy = "영수증이 없다 — 아직 완주한 적이 없다";
+		const whyBySuite = new Map<string, string>();
 		for (const suite of PUSH_GRADE_SUITES) {
 			const v = judgeReceipt(receipt, { ...now, suite });
 			if (v.usable) {
 				accepted = v;
 				break;
 			}
+			whyBySuite.set(suite, v.why);
 			lastWhy = v.why;
 		}
+		// 사유는 **영수증 자신의 수트**로 판정한 것을 보인다. 마지막 수트의 사유만 보이면
+		// `gate:release` 영수증의 진짜 사유(내용이 바뀌었다) 대신 «수트가 다르다» 가 찍힌다(2026-09-23).
+		const ownSuite = receipt?.suite;
+		if (ownSuite && whyBySuite.has(ownSuite))
+			lastWhy = whyBySuite.get(ownSuite) ?? lastWhy;
 		if (accepted?.usable === true) {
 			const r = accepted.receipt;
 			console.error(
@@ -370,6 +427,16 @@ if (import.meta.main) {
 			}
 			process.exit(0);
 		}
+		// L0 이월 — 풀 영수증 뒤 바뀐 것이 전부 L0 문서(인계·원장·저널·계획)면 그 델타에만 비밀 스윕·NUL 을, 인계가 바뀌었으면
+		// 오너 원문 테스트까지 돌리고 영수증을 이어받는다(3.93.1 · 오너 결정 2026-09-24 — L0 이월 채택, 델타 검사 셋 유지). 아니면 아래 평소 규칙.
+		const carry = judgeL0Carry(projectRoot, receipt, now.tree);
+		if (carry.ok) {
+			console.error(
+				`[pre-push-guard] ✓ ${carry.message}. 게이트를 다시 돌지 않는다.`,
+			);
+			process.exit(0);
+		}
+		lastWhy = `${lastWhy} · L0 이월 불가: ${carry.reason}`;
 		// ── 게이트 어휘가 있는 repo 는 훅 안에서 돌리지 **않는다** (계획 A4 · 3.88.8) ─────────
 		//
 		// 영수증이 안 맞으면 «판정 불능» 으로 60초를 태우고 통과시키는 것이 아니라, **명시적으로
@@ -413,7 +480,7 @@ if (import.meta.main) {
 	// 게이트가 red 인지 green 인지 이 환경에서는 알 수 없다 — 그 사실을 그대로
 	// 말한다. 여전히 비차단.
 	const isWindowsWslRepo =
-		process.platform === "win32" && /^\\\\wsl/i.test(process.cwd());
+		process.platform === "win32" && /^\\\\wsl/i.test(projectRoot);
 	if (isWindowsWslRepo) {
 		console.error(
 			"[pre-push-guard] ⚠ 판정 불능 — Windows host + WSL UNC path 에서는 quality 를 실행할 수 없다(platform 한계). " +
@@ -480,6 +547,7 @@ if (import.meta.main) {
 			// sync 도 같은 예산에서 나간다 — 여기서 매달리면 게이트도 못 돈다.
 			const syncStarted = Date.now();
 			spawnSync(process.execPath, ["x", "svelte-kit", "sync"], {
+				cwd: projectRoot,
 				stdio: "ignore",
 				env: sanitizedEnv,
 				shell: process.platform === "win32",
@@ -500,6 +568,7 @@ if (import.meta.main) {
 
 		const started = Date.now();
 		const run = spawnSyncWithSvelteKitRetry(bin, step.slice(1), {
+			cwd: projectRoot,
 			encoding: "utf-8",
 			env: sanitizedEnv,
 			shell: process.platform === "win32",

@@ -5,7 +5,8 @@
 			"url": "https://api.githubcopilot.com/mcp/",
 			"headers": {
 				"Authorization": "Bearer ${GITHUB_TOKEN}"
-			}
+			},
+			"headersHelper": "bun node_modules/@modfolio/harness/scripts/mcp/headers-helper.ts"
 		},
 		"playwright": {
 			"type": "stdio",
@@ -38,7 +39,8 @@
 			"url": "https://loom.modfolio.io/mcp",
 			"headers": {
 				"Authorization": "Bearer ${LOOM_TOKEN}"
-			}
+			},
+			"headersHelper": "bun node_modules/@modfolio/harness/scripts/mcp/headers-helper.ts"
 		},
 		"astro": {
 			"type": "http",

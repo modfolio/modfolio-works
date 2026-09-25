@@ -1,9 +1,9 @@
 ---
 name: schema-builder
 description: Drizzle ORM 스키마/마이그레이션 생성기. 생태계 prefix + helper 준수
-model: claude-opus-5
-effort: xhigh
-_effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. Drizzle schema 정형 — overthinking 회피. 마이그 안전성은 migrations-auditor 가 별도 검증. quality regression 시 revert."
+model: claude-opus-5-5
+effort: high
+_effort_change_note: "xhigh → high. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - schema

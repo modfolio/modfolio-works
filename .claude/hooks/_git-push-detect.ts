@@ -28,6 +28,8 @@
  *   장치가 아니다(회피는 부분문자열로도 못 막았다). 그 한계는 `pre-push-guard` 헤더에도 적는다.
  */
 
+import { resolve as pathResolve } from "node:path";
+
 /** 인자를 받지 않는 껍데기 — 그대로 벗긴다. */
 const WRAPPERS_NOARG: ReadonlySet<string> = new Set([
 	"time",
@@ -285,6 +287,32 @@ export function isGitPushWords(w: readonly string[]): boolean {
 			}
 			continue;
 		}
+		/**
+		 * `wsl.exe -d ubuntu bash -c "…"` — Windows 호스트에서 WSL 저장소를 다루는 **정상 경로**다.
+		 *
+		 * pdgd 제보(2026-09-22): 그 호스트는 저장소가 `//wsl.localhost/...`(UNC)이고 셸이
+		 * Git Bash 라, Windows git 에 원격 자격이 없어 push 가 **반드시** `wsl.exe` 를 통과한다.
+		 * 그래서 이 껍데기가 목록에 없는 동안 `pre-push-guard` 는 그 호스트에서 **상시** 눈이 멀었고,
+		 * 게이트 빨강인 커밋이 main 에 올라갔다(`bfb9367e`).
+		 *
+		 * ⚠ 스크립트 **파일**을 넘기는 형태(`wsl.exe -d ubuntu bash /tmp/x.sh`)는 여전히 못 본다 —
+		 *   그건 이 매처의 선언된 한계이고 이 수정이 바꾸지 않는다. 바뀌는 것은 **본문이 명령문인데**
+		 *   바깥 `wsl.exe` 하나 때문에 못 보던 경우다.
+		 */
+		if (/^wsl(\.exe)?$/i.test(basename(h))) {
+			i++;
+			while (i < w.length) {
+				const a = w[i] ?? "";
+				if (/^(-d|--distribution|-u|--user|--cd|--shell-type)$/i.test(a))
+					i += 2;
+				else if (/^(-e|--exec)$/i.test(a)) {
+					i++;
+					break;
+				} else if (a.startsWith("-")) i++;
+				else break;
+			}
+			continue;
+		}
 		if (h === "stdbuf") {
 			i++;
 			while (i < w.length && (w[i] ?? "").startsWith("-")) {
@@ -343,4 +371,219 @@ export function isGitPushCommand(cmd: string): boolean {
 	for (const words of simpleCommands(cmd))
 		if (isGitPushWords(words)) return true;
 	return false;
+}
+
+/** `git push` 가 인자를 받는 옵션 — 다음 단어는 refspec 이 아니다. */
+const PUSH_OPT_WITH_ARG: ReadonlySet<string> = new Set([
+	"-o",
+	"--push-option",
+	"--repo",
+	"--receive-pack",
+	"--exec",
+]);
+/** 대상을 명령줄 밖에서 정하는 옵션 — 이 형태는 읽지 않는다(null). */
+const PUSH_OPT_UNREADABLE =
+	/^(--all|--mirror|--tags|--branches|--follow-tags|--prune)$/;
+
+/**
+ * 평범한 `git push [옵션] [<원격> [<refspec>…]]` **한 개**가 보내는 대상 — `wip/*` 판정용(ADR-029 §7).
+ *
+ * 읽지 못하는 형태는 전부 null 이다 — 껍데기(env·bash -c·eval…) · git 전역 옵션(`-C` 등) · 여러 push ·
+ * `--all`/`--tags` 류. null 을 받은 호출자는 **평소 규칙**(풀 영수증)을 쓴다 — 읽지 못한 것을 wip 로 접지 않는다.
+ * refspecs 가 빈 배열이면 «현재 브랜치» 다(호출자가 HEAD 로 푼다).
+ */
+export function plainPushTargets(cmd: string): PushTargets | null {
+	const all = plainPushTargetsAll(cmd);
+	return all !== null && all.length === 1 ? (all[0] ?? null) : null;
+}
+
+export interface PushTargets {
+	readonly remote: string | null;
+	readonly refspecs: readonly string[];
+	readonly deletion: boolean;
+	/** git pre-push 훅이 도는가 — `--no-verify` 면 거짓(마지막 `--verify`/`--no-verify` 가 이긴다). */
+	readonly verify: boolean;
+}
+
+/**
+ * 한 명령문의 `git push` **전부** — 하나라도 읽지 못하면 null(부분만 읽고 판정하지 않는다).
+ * `git push origin wip/x; git push forgejo wip/x` 처럼 두 원격에 같은 wip 를 보내는 형태가 흔하다 — 각 push 는
+ * git 훅을 따로 거치므로, 전부 wip 로 보이면 넘겨도 된다(2026-09-24 인계 지뢰: 이 형태가 풀 영수증 규칙으로 떨어졌다).
+ */
+export function plainPushTargetsAll(
+	cmd: string,
+): readonly PushTargets[] | null {
+	const pushes = simpleCommands(cmd).filter((w) => isGitPushWords(w));
+	if (pushes.length === 0) return null;
+	const out: PushTargets[] = [];
+	for (const w of pushes) {
+		const t = readPushWords(w);
+		if (t === null) return null;
+		out.push(t);
+	}
+	return out;
+}
+
+function readPushWords(w: readonly string[]): PushTargets | null {
+	if (w[0] !== "git" || w[1] !== "push") return null;
+	const positional: string[] = [];
+	let deletion = false;
+	let verify = true;
+	for (let i = 2; i < w.length; i++) {
+		const a = w[i] ?? "";
+		if (PUSH_OPT_UNREADABLE.test(a)) return null;
+		if (a === "-d" || a === "--delete") {
+			deletion = true;
+			continue;
+		}
+		if (a === "--no-verify" || a === "--verify") {
+			verify = a === "--verify";
+			continue;
+		}
+		if (PUSH_OPT_WITH_ARG.has(a)) {
+			i++;
+			continue;
+		}
+		// 리다이렉션(`2>&1` 은 `&` 에서 잘려 `2>` 가 남는다 · `>log` · `2>/dev/null`)은 인자가 아니다.
+		if (/^\d*[<>]{1,2}&?$/.test(a)) {
+			i++;
+			continue;
+		}
+		if (/^(\d*[<>]|&>)/.test(a)) continue;
+		if (a.startsWith("-")) continue;
+		positional.push(a);
+	}
+	return {
+		remote: positional[0] ?? null,
+		refspecs: positional.slice(1),
+		deletion,
+		verify,
+	};
+}
+
+export type PushWorkdir =
+	| { readonly kind: "dir"; readonly dir: string; readonly explicit: boolean }
+	| { readonly kind: "unknown"; readonly reason: string };
+
+/** 셸이 값으로 바꿀 단어 — 실행 전에는 모른다. */
+const DYNAMIC_WORD = /[$`*?[]|^~[^/]/;
+
+function resolveDir(base: string, word: string, home: string): string | null {
+	if (DYNAMIC_WORD.test(word)) return null;
+	const expanded =
+		word === "~"
+			? home
+			: word.startsWith("~/")
+				? `${home}${word.slice(1)}`
+				: word;
+	return pathResolve(base, expanded);
+}
+
+/**
+ * 이 명령문의 `git push` 가 **어느 디렉터리에서** 도는가 — 훅 프로세스의 cwd 가 아니라 명령 자신의 `cd` · `git -C`.
+ *
+ * 2026-09-24 인계 지뢰: 세션 cwd 가 주 체크아웃인 채로 `cd <워크트리> && git push origin HEAD:main` 을 내자
+ * `pre-push-guard` 가 **주 체크아웃의 영수증과 트리**로 판정해 세 번 막았다(main · wip 둘 다). PreToolUse 훅은
+ * 명령이 돌기 **전에** 세션 cwd 에서 뜨므로, 명령 안의 `cd` 는 훅이 직접 읽어야 한다.
+ *
+ * - push 앞의 `cd <경로>`(와 `pushd`)를 순서대로 따라가고, push 의 `git -C <경로>` 를 얹는다. `bash -c "…"` 는 재귀.
+ * - 모르는 것은 추측하지 않는다(`unknown`): 변수·글롭·`cd -`·`popd`·`--git-dir`/`--work-tree`·push 들이 서로 다른 곳.
+ * - `explicit` = 명령이 디렉터리를 **바꿨다** — 호출자는 그 자리에 저장소가 없을 때 세션 프로젝트로 물러서면 안 된다.
+ *
+ * ⚠ 서브셸 `( cd x && … )` 의 `cd` 도 뒤 명령에 이어진 것으로 읽는다(단순 명령 목록이 괄호를 평평하게 편다) —
+ * 그 뒤에 괄호 **밖**에서 push 하는 드문 형태만 틀리고, 틀려도 다른 저장소가 아니라 판정 불능/재판정 쪽이다.
+ */
+export function pushWorkdir(
+	cmd: string,
+	base: string,
+	home = process.env.HOME ?? "/",
+): PushWorkdir {
+	let cwd = base;
+	let changed = false;
+	let known = true;
+	/** push 시점에 자리가 바뀌어 있었나 — push 뒤의 `cd` 는 세지 않는다. */
+	let explicit = false;
+	const dirs = new Set<string>();
+	for (const w of simpleCommands(cmd)) {
+		const h = w[0];
+		if (h === "cd" || h === "pushd") {
+			const args = w.slice(1).filter((a) => !/^-[LPe@]+$/.test(a));
+			const target = args[0];
+			if (args.length > 1 || target === "-") known = false;
+			else {
+				const next =
+					target === undefined ? home : resolveDir(cwd, target, home);
+				if (next === null) known = false;
+				else cwd = next;
+			}
+			changed = true;
+			continue;
+		}
+		if (h === "popd") {
+			known = false;
+			changed = true;
+			continue;
+		}
+		if (!isGitPushWords(w)) continue;
+		if (!known)
+			return {
+				kind: "unknown",
+				reason: "push 앞의 `cd` 대상을 실행 전에 알 수 없다",
+			};
+		const gi = w.findIndex((a) => basename(a) === "git");
+		if (gi < 0) {
+			// `bash -c "…"` · `eval …` — 본문을 지금 cwd 에서 다시 읽는다.
+			const ci = w.findIndex((a) => /^-[A-Za-z]*c[A-Za-z]*$/.test(a));
+			const body =
+				ci >= 0
+					? w[ci + 1]
+					: w[0] === "eval"
+						? w.slice(1).join(" ")
+						: undefined;
+			if (body === undefined)
+				return { kind: "unknown", reason: "push 를 감싼 껍데기를 풀지 못했다" };
+			const inner = pushWorkdir(body, cwd, home);
+			if (inner.kind === "unknown") return inner;
+			dirs.add(inner.dir);
+			explicit ||= changed || inner.explicit;
+			continue;
+		}
+		let dir = cwd;
+		let viaC = false;
+		for (let i = gi + 1; i < w.length && w[i] !== "push"; i++) {
+			const a = w[i] ?? "";
+			if (
+				a === "--git-dir" ||
+				a === "--work-tree" ||
+				a.startsWith("--git-dir=") ||
+				a.startsWith("--work-tree=")
+			)
+				return {
+					kind: "unknown",
+					reason: `\`${a}\` 로 저장소를 바꾼 push 는 읽지 않는다`,
+				};
+			if (a === "-C") {
+				const next = resolveDir(dir, w[i + 1] ?? "", home);
+				if (next === null || (w[i + 1] ?? "") === "")
+					return {
+						kind: "unknown",
+						reason: "`git -C` 대상을 실행 전에 알 수 없다",
+					};
+				dir = next;
+				viaC = true;
+				i++;
+			} else if (GIT_OPT_WITH_ARG.has(a)) i++;
+		}
+		dirs.add(dir);
+		explicit ||= changed || viaC;
+	}
+	if (dirs.size > 1)
+		return {
+			kind: "unknown",
+			reason: `push 들이 서로 다른 곳에서 돈다: ${[...dirs].join(" · ")}`,
+		};
+	const only = [...dirs][0];
+	return only === undefined
+		? { kind: "dir", dir: base, explicit: false }
+		: { kind: "dir", dir: only, explicit };
 }

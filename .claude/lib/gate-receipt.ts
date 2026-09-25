@@ -77,17 +77,32 @@ export interface GateReceipt {
 	readonly stepCount: number;
 	/** 건너뛴 단계 — 침묵한 스킵은 「전부 검사됨」으로 읽힌다. */
 	readonly skipped: readonly string[];
+	/** 표시용 — 판정 축이 아니다. 못 읽으면 `unreadable`(같음 비교에 쓰지 않는다: 두 실패가 같은 값이다). */
 	readonly head: string;
-	/** 워킹트리 지문(제외 목록 반영). 트리가 깨끗하면 `clean`. 표시·진단용 — 판정 축이 아니다. */
+	/**
+	 * 워킹트리 지문(제외 목록 반영). 트리가 깨끗하면 `clean`, 못 읽으면 `unreadable`. 표시·진단용 — 판정 축이
+	 * 아니다(같음 비교에 쓰지 않는다: 두 실패가 같은 값이다).
+	 */
 	readonly dirty: string;
 	/** **판정 축** — 내용 트리 OID(`contentTree`). 옛 영수증(3.88.7 이전)엔 없다 → 인정하지 않는다. */
 	readonly tree?: string;
 	readonly at: string;
 }
 
-function git(root: string, args: string[]): string {
-	const r = spawnSync("git", args, { cwd: root, encoding: "utf8" });
-	return r.status === 0 ? r.stdout : "";
+/**
+ * git 읽기의 출력 상한. 기본값(1 MiB)이면 지문의 `git diff HEAD` 가 생성 색인 한 줄만으로 넘친다 — 실측 2026-09-23
+ * 1,244,417 B 에서 `ENOBUFS` · status null → 빈 문자열 → 지문 `clean`(작업 트리 13파일 수정 중이었다).
+ */
+const GIT_READ_MAX_BUFFER = 256 * 1024 * 1024;
+
+/** 읽기 실패는 `null` — 빈 결과(`''`)와 구분한다. */
+function gitRead(root: string, args: string[]): string | null {
+	const r = spawnSync("git", args, {
+		cwd: root,
+		encoding: "utf8",
+		maxBuffer: GIT_READ_MAX_BUFFER,
+	});
+	return r.status === 0 ? r.stdout : null;
 }
 
 /**
@@ -177,6 +192,42 @@ export function contentTree(root: string): string {
 }
 
 /**
+ * **커밋의** 내용 정체 — `contentTree` 와 같은 축(같은 제외 경로)을 작업 트리가 아니라 그 커밋에서 잰다.
+ *
+ * push 가드가 쓴다(2026-09-24 · 3.93.1 원장 후속). 작업 트리로 판정하면 «게이트 → 일부만 커밋 → push»
+ * 에서 **게이트가 본 것과 보내는 것이 다른데도** 작업 트리는 그대로라 통과한다 — 실측: 게이트가 도출값을
+ * 고쳐 쓴 채 그 파일 없이 push 했는데 가드가 통과했다. 보내는 것은 커밋이다.
+ * 커밋을 못 읽으면 빈 문자열(판정 불능 — `judgeReceipt` 가 «못 구했다» 로 거절한다).
+ */
+export function commitContentTree(root: string, rev: string): string {
+	const tmpIndex = join(
+		tmpdir(),
+		`gate-receipt-cindex-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+	);
+	const env = { ...process.env, GIT_INDEX_FILE: tmpIndex };
+	const g = (args: string[]) =>
+		spawnSync("git", args, { cwd: root, encoding: "utf8", env });
+	try {
+		if (g(["read-tree", `${rev}^{tree}`]).status !== 0) return "";
+		const rm = g([
+			"rm",
+			"-r",
+			"--cached",
+			"-q",
+			"--ignore-unmatch",
+			"--",
+			...excludePathspecs(),
+		]);
+		if (rm.status !== 0) return "";
+		const tree = g(["write-tree"]);
+		return tree.status === 0 ? tree.stdout.trim() : "";
+	} finally {
+		rmSync(tmpIndex, { force: true });
+		rmSync(`${tmpIndex}.lock`, { force: true });
+	}
+}
+
+/**
  * 지금 트리의 지문 — **경로가 아니라 내용**이다.
  *
  * ⚠ 초판은 `git status --porcelain` 의 **경로 목록만** 해싱했다. 그래서 **이미 dirty 이던
@@ -187,19 +238,22 @@ export function contentTree(root: string): string {
  *   · tracked: `git diff HEAD` (staged + unstaged 를 함께)
  *   · untracked: 파일 내용을 직접 읽어 해시
  *
- * 깨끗한 트리는 문자열 `clean` 이다 — 빈 해시와 «못 읽었다» 를 구분하기 위해서다.
+ * 깨끗한 트리는 문자열 `clean` 이다 — 빈 해시와 «못 읽었다» 를 구분하기 위해서다. 그리고 못 읽었으면
+ * `unreadable` 이다 — 읽기 실패를 «깨끗함» 으로 접으면 dirty 트리가 clean 으로 보고된다(위 `GIT_READ_MAX_BUFFER`).
  */
 export function treeFingerprint(root: string): string {
 	const excludeSpecs = FINGERPRINT_EXCLUDE.map(
 		(p) => `:(exclude)${p.endsWith("/") ? `${p}**` : p}`,
 	);
-	const diff = git(root, ["diff", "HEAD", "--", ".", ...excludeSpecs]);
-
-	const untracked = git(root, [
+	const diff = gitRead(root, ["diff", "HEAD", "--", ".", ...excludeSpecs]);
+	const status = gitRead(root, [
 		"status",
 		"--porcelain",
 		"--untracked-files=all",
-	])
+	]);
+	if (diff === null || status === null) return "unreadable";
+
+	const untracked = status
 		.split("\n")
 		.filter((l) => l.startsWith("?? "))
 		.map((l) => l.slice(3).trim())
@@ -222,7 +276,8 @@ export function treeFingerprint(root: string): string {
 }
 
 export function headSha(root: string): string {
-	return git(root, ["rev-parse", "HEAD"]).trim();
+	// 못 읽으면 빈 값이 아니라 `unreadable` — 표시 전용이어도 «못 쟀다» 를 값으로 접지 않는다(리뷰 A42).
+	return gitRead(root, ["rev-parse", "HEAD"])?.trim() ?? "unreadable";
 }
 
 /**

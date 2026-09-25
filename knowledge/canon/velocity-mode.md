@@ -1,7 +1,7 @@
 ---
 title: Velocity 모드 — fast-MVP hook 프로필 (lean 기본 / strict opt-in)
-version: 1.2.0
-last_updated: 2026-09-16
+version: 1.3.0
+last_updated: 2026-09-24
 source: [2026-06-18 v3.13 세션, 사용자 명시 결정 (fast-MVP ZERO 오버헤드)]
 sync_to_siblings: true
 applicability: conditional
@@ -16,7 +16,7 @@ consumers: [harness-pull, ops, release]
 > **훅 층이 실행되는 세션에 한한다.** 배선은 존재의 증거이지 실행의 증거가 아니다 — 세션 첫머리에
 > `true # hook-probe` 로 잰다(§«velocity 가 그대로 유지하는 것»). 허브 반례: SDK 호스팅 세션에서도 훅은 돈다.
 >
-> **v1.1.0 (2026-07-28, 오너 결정 "전부 제대로 작동하고 에러·워닝 없도록 정공법으로")** —
+> **v1.1.0 (2026-07-28, 오너 결정 — 모두 제대로 동작하고 에러·경고 0 · 정공법(원문 비공개 — _quotes.md#CN-26))** —
 > `stop-debrief-check` 가 velocity 기본에 편입됐다. 근거: opt-in(`autoDebrief:true`) 상태로
 > 7/7 repo 가 밤샘 판단을 카드 0장으로 끝냈고(Muse 코퍼스에 멤버 경험이 안 쌓임), 훅 자체는
 > velocity 비용 봉투 안에 있다 — 결정적·0토큰·Stop 1회, 그리고 **frontier 모델을 쓴 세션이
@@ -34,7 +34,8 @@ consumers: [harness-pull, ops, release]
 
 훅의 실제 비용은 **지연(wall-clock)** 이다:
 
-- `post-biome-check` 가 **편집마다** `bun run check` (2~10초) — fast-MVP 편집 루프의 최대 마찰.
+- `post-biome-check` 가 **편집마다** `bun run check` (2~10초) — fast-MVP 편집 루프의 최대 마찰이었다. 3.93.0 부터 편집한 파일만
+  보아 ~0.1초가 됐고, 3.93.1 에서 velocity 에도 배선한다(오너 2026-09-24).
 - SessionStart drift pickup (세션 열 때마다), `pre-push-guard` 의 `quality:all`.
   ⚠ **«push마다 5~60초» 는 허브 수치였다** (2026-09-15 정정). atelier-and-folio 실측은
   `quality:all` **~40분**인데 훅 예산이 **60초**라 매 `git push` 가 60초를 태우고
@@ -55,7 +56,7 @@ consumers: [harness-pull, ops, release]
 | `PreToolUse(mcp__.*)` | `pre-payment-guard` | `pre-payment-guard` |
 | `PreToolUse(Read\|WebFetch\|WebSearch)` | — | `pre-injection-detect` |
 | `PreToolUse(Edit\|Write)` | — | ui-edit / gha-workflow notice |
-| `PostToolUse` | — | `post-biome-check`·`post-contract-touch`·`post-secret-redact` |
+| `PostToolUse` | `post-biome-check`(편집한 파일만 · ~0.1초 · 3.93.1) | + `post-contract-touch`·`post-secret-redact` |
 | `PreCompact` / `Stop` / `SessionEnd` / `SubagentStop` | — | 결정적 telemetry/pattern hook |
 | `SessionStart` | — | drift pickup (advisory, `autoPull` opt-in) |
 

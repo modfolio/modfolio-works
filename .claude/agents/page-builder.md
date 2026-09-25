@@ -1,9 +1,9 @@
 ---
 name: page-builder
 description: 페이지 레이아웃 생성기. Brand Passport + 토큰 팔레트 기반. 에스컬레이션 — design-engineer
-model: claude-opus-5
-effort: xhigh
-_effort_change_note: "2026-05-13 max→xhigh (구조화된 layout 작업 — overthinking 회피). 2026-07-26 Opus 5 전환 시 xhigh 유지 + [1m] 접미사 제거(Opus 5 는 1M 이 기본). canon opus-4-7-effort-policy.md v2.0.0"
+model: claude-opus-5-5
+effort: high
+_effort_change_note: "xhigh → high. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - layout-patterns

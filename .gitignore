@@ -22,3 +22,5 @@ memory/dream-report*.md
 # @modfolio/harness runtime — regenerated/per-machine, do not commit
 .claude/gate-receipt.json
 .claude/gate-timings.json
+# @modfolio/harness runtime — regenerated/per-machine, do not commit
+.modfolio-nonstop-active

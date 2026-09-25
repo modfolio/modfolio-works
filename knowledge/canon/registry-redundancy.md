@@ -151,7 +151,7 @@ related_skills: [contracts]
 
 ## 왜 (오너 결정 2026-07-04)
 
-"NAS 랑 GH 동시에 dual-push 해서, GH 안 되더라도 NAS 통해 패키지든 레포든 동일하게 받아올 수 있게." infra 가 NAS 레지스트리·터널·dual-push 모델·파일럿을 완성 → 남은 건 **각 repo/앱의 이중화 소비 채택**(hub 표준 + pull-based 자율).
+오너 요구(원문 비공개 — _quotes.md#CN-03): NAS 와 GitHub 에 동시에 push 해서, GitHub 이 안 될 때도 NAS 로 패키지·레포를 똑같이 받을 수 있게. infra 가 NAS 레지스트리·터널·dual-push 모델·파일럿을 완성 → 남은 건 **각 repo/앱의 이중화 소비 채택**(hub 표준 + pull-based 자율).
 
 ## 두 층 — git vs npm 비대칭 (실측 backed)
 
@@ -230,7 +230,7 @@ dual-registry split + starvation 의 영구 해법 = **`@modfolio` 전부를 오
 
 - **URL≠호스트 (핵심)**: `pkg.modfolio.io` 는 **안정적 URL**(CF 관리). 뒤 호스트(현 NAS Forgejo)는 나중에 **클라우드 서버로 이전 가능** → DNS/터널만 재지정, **앱 무변경**. NAS 가용성 우려는 "호스트 교체"로 해결(프록시-DR 층 불필요). 오너 결정: 지금은 NAS, 나중에 필요 시 클라우드.
 - **프록시(`modfolio-registry-proxy`)**: 멀티-registry 라우터 목적은 소멸(디커미션) → **같은 날 §장기진화 Stage 1 캐시/DR 로 재활성**(2026-07-05). 라우터가 아닌 **엣지 캐시+DR 프론트**로 재작성해 `pkg-cache.modfolio.io` 라이브(topology B). "호스트 교체"(중기 Stage 2)와 "엣지 캐시/DR"(Stage 1)은 **상보적** — 캐시/DR 이 NAS-SPOF 를 즉시 완화하고, 호스트 클라우드 이전은 origin 상시성을 준다.
-- **fleet 이관 (순서 엄수, gradual·Hub-not-enforcer)** — 오너 2026-07-05 "할 수 있는 건 전부 다 pkg 이관, 최우선":
+- **fleet 이관 (순서 엄수, gradual·Hub-not-enforcer)** — 오너 2026-07-05(원문 비공개 — _quotes.md#CN-22 · 가능한 것은 전부 pkg 로 옮기는 것이 최우선):
   - **① connect-sdk pkg.modfolio.io 게시 = ✅**(`97920b2`)
   - **② `FORGEJO_NPM_TOKEN`(read) fleet athsra 배포 = ✅**(2026-07-05, 27 envelopes; hub·infra-nas·personal 제외; device-write, hub 봉투에서 파이프·미노출) + **end-to-end 검증 ✅**(hub·worthee 봉투로 `bun install` → connect-sdk 8.7.0·contracts 1.7.0·harness 3.17.6 전부 최신 200 — starvation 해소)
   - **③ hub `sync-npmrc.ts` `STANDARD_NPMRC` → pkg.modfolio.io flip = ✅**(+`always-auth=true`)
@@ -251,7 +251,7 @@ dual-registry split + starvation 의 영구 해법 = **`@modfolio` 전부를 오
 
 ## 장기 진화 — pkg.modfolio.io → CF-native registry (npm/gh 급, 2026-07-05)
 
-> 오너 질문: "pkg 를 장기적으로 npm/gh 같은 서비스로 발전시키려면 어떻게 구축?" + "프록시 도입이 장기적으로 좋은가?"
+> 오너 질문(원문 비공개 — _quotes.md#CN-04): pkg 를 장기적으로 npm·GitHub 같은 서비스로 키우려면 어떻게 짓는가 · 프록시 도입이 장기적으로 좋은가.
 
 **핵심 원리: URL ≠ 호스트.** `pkg.modfolio.io` 는 CF 가 잡은 안정 URL — 뒤 origin 을 자유롭게 진화(앱 무변경). 불변원칙 #3(**100% Cloudflare Edge Native**)이 종착지를 정한다: NAS/Forgejo 는 실용 **부트스트랩**, **CF-native registry** 가 원칙적 목적지(온-프렘 NAS 는 #3 위반이라 장기 유지 대상 아님).
 
@@ -274,7 +274,7 @@ dual-registry split + starvation 의 영구 해법 = **`@modfolio` 전부를 오
 
 **Stage 1 = ✅ 라이브(2026-07-05, topology A — ADR-012 Phase 2 실현)**. 프록시 Worker 를 캐시/DR 프론트로 재작성 → 먼저 `pkg-cache.modfolio.io`(topology B) → **같은 세션 topology A cutover**: infra `cloudflare/exposed.ts` 에 `pkg-origin.modfolio.io`(내부 origin, public-401) 추가·`cf:apply`, `pkg.modfolio.io/*` Worker route(infra CNAME 공존·가로챔), `ANON_READ` on, `git.modfolio.io/api/packages/modfolio/npm/*` fronting(pacote 가 git tarball 을 받으러 오므로), `pkg-monitor` → pkg-origin 재지정. 라이브 실측: 토큰형·**익명(무토큰) install 200**(npm+bun) · packument/tarball origin-down stale/hit(DR) · cold 503 · publish passthrough · git UI/clone 불변. 롤백=`pkg.modfolio.io/*` route 제거→터널. 상세 = `modfolio-registry-proxy/README.md`·ADR-012·journal `20260705-topology-a-cutover.md`.
 
-- **소유 경계 실행**: cutover 는 오너 건별 허가(2026-07-05 "ecosystem+infra 직접 수정 허가") 하 hub 가 infra `exposed.ts` 직접 편집·`cf:apply` 실행. 이는 Hub-not-enforcer 예외가 아니라 **명시 허가**(기본은 여전히 read-only + opinion).
+- **소유 경계 실행**: cutover 는 오너 건별 허가(2026-07-05 · ecosystem·infra 직접 수정 허가 — 원문 비공개 — _quotes.md#CN-23) 하 hub 가 infra `exposed.ts` 직접 편집·`cf:apply` 실행. 이는 Hub-not-enforcer 예외가 아니라 **명시 허가**(기본은 여전히 read-only + opinion).
 - **origin posture**: `pkg-origin` = public-401(Forgejo 자기 auth). anon-read 라 익명 표면은 Worker(pkg.modfolio.io)뿐 — pkg-origin 은 토큰 게이트 유지(추가 공개노출 0).
 - **DR 는 per-colo best-effort**(Cache API, evictable) — guaranteed/global DR(NAS 전손 생존)은 **Stage 3 R2**(durable). Cache API 를 guaranteed DR 로 과장 안 함.
 

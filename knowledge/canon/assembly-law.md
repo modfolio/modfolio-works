@@ -2,7 +2,7 @@
 title: Assembly Law — 조립은 복사가 아니다 (재사용 3표면 + provider 선언 의무)
 version: 1.1.0
 last_updated: 2026-09-21
-source: [2026-07-26 오너 세션 "이미 만들어진 그 기술을 그 프로젝트에서 복사 해오는게 아니라, 끌어다가 사용하는거지. api?같이", 실측 2026-07-26 (28/29 repo 가 platform-adapter.json 보유하나 provides/produces/exposes grep 0 hits · 26 event 중 선언된 구독 2건 = 24 갭 · capability 라는 이름이 서로 무관하게 3개), productization-roadmap.md §3.1]
+source: [2026-07-26 오너 세션(원문 비공개 — _quotes.md#CN-20 · 이미 만든 기술은 복사해 오지 않고 API 처럼 끌어다 쓴다), 실측 2026-07-26 (28/29 repo 가 platform-adapter.json 보유하나 provides/produces/exposes grep 0 hits · 26 event 중 선언된 구독 2건 = 24 갭 · capability 라는 이름이 서로 무관하게 3개), productization-roadmap.md §3.1]
 sync_to_siblings: true
 tier: law
 applicability: always

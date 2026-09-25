@@ -1,8 +1,9 @@
 ---
 name: security-hardener
 description: 보안 취약점 탐지 + 자동 수정. OWASP Web Top 10 + Agentic Top 10 2026 (ASI01-10)
-model: claude-opus-5
-effort: max
+model: claude-opus-5-5
+effort: xhigh
+_effort_change_note: "max → xhigh. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - security-scan

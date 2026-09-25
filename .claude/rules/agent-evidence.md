@@ -87,6 +87,9 @@ Agent가 사실을 주장할 때는 반드시 **명령 실행 결과**를 근거
   `;` · `tee` · `|| true` · `&& echo ok` 가 전부 같은 축이다.
   ⚙ 파이프 뒤의 `$?` 와 zsh 의 `${PIPESTATUS[…]}` 는 `pre-measurement-guard` 가 막는다
   (실측 91,630 명령의 1.4% 가 그 형태였다). 나머지 축(`tee`·`|| true`)은 **미집행**이다.
+  ⚠ 이 파일의 ⚙ 는 **그 훅이 배선된 곳**의 집행이다 — 허브는 배선, 멤버는 `harness-lock.json`
+  `extraHooks` opt-in(velocity 는 미배선 — 실측 2026-09-23 · `scripts/harness-pull/constants.ts`).
+  미배선 repo 에서 ⚙ 는 «막힌다» 가 아니라 «규칙뿐» 이다.
 - **문자열 판정에 파이프를 쓰지 않는다.** `pipefail` 아래 `grep -q` 는 첫 매치에서 끝나
   왼쪽을 SIGPIPE(141)로 죽인다 — 검사가 반대로 붙어 있으면 **진짜 결함이 초록이 된다.**
   셸 내장 `case "$OUT" in *"…"*)` 또는 `grep -c` 로 **값** 판정.

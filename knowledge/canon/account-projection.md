@@ -10,7 +10,7 @@ related_canon: [atlas, assembly-law, knowledge-sovereignty, modfolio-db, event-c
 related_rules: [agent-evidence, fundamentals-first, import-boundaries]
 source:
   [
-    2026-09-19 오너 결정 «다섯 번째 법» — 질문 원문 "account의 정보가 connect에 있고, 그럼 그 DB 원장은 connect가 하는 것을 모든 house of brands가 다 동일하게 써야하는거 아닌가?",
+    2026-09-19 오너 결정 «다섯 번째 법» — 질문(원문 비공개 — _quotes.md#CN-07): 계정 정보가 connect 에 있다면 그 DB 원장은 connect 가 갖고 모든 house of brands 가 같은 것을 써야 하지 않는가,
     2026-09-18 허브 신원 스윕(33 repo · 읽기 전용 · 핵심 4건 메인 재확인),
     OpenID Connect Core 1.0 §5.7,
     ADR-025,
@@ -96,7 +96,7 @@ hub 는 법칙을 진술하고 진단 도구를 배포한다. 일정을 잡지 �
 > **mfdb 를 모든 앱이 쓰는 것과 계정 원장이 하나인 것은 다른 문장이다. DB·role 은 앱마다 따로이고, 계정 축에서 앱 사이를 잇는 것은
 > `sub` 값과 이벤트뿐이다 — 외래 키가 아니다.**
 
-- **우리 실측** — 오너 결정 2026-09-16 «mfdb 를 메인이자 프로덕션으로, 모든 앱» + ADR-023 «DB-per-service 는 성장을 위한 선택이다». 둘은 충돌하지 않는다:
+- **우리 실측** — 오너 결정 2026-09-16(mfdb 가 모든 앱의 메인·프로덕션 DB · 원문 비공개 — _quotes.md#CN-25) + ADR-023 «DB-per-service 는 성장을 위한 선택이다». 둘은 충돌하지 않는다:
   공유되는 것은 **플랫폼**(substrate)이고 **표**가 아니다.
 - **선례** — Self-Contained Systems: *"a shared database with separate schemas or data models per SCS can be a valid alternative"* —
   단 *"the sovereignty of data by its owning system"* 이 지켜질 때.

@@ -1,8 +1,8 @@
 ---
 title: Model Escalation — task-class → effort/model 사다리 (권고)
-version: 2.2.0
-last_updated: 2026-09-06
-source: [opus-4-7-effort-policy.md v2.0.0 (effort precedence·agent 분포 baseline), platform.claude.com whats-new-opus-5 (effort 변환률·1M default·thinking 기본 ON), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1 — 에이전틱 코딩), code.claude.com model-config (effort 우선순위·모델 기본 high·ultracode), velocity-mode.md (semantic 판단은 결정적 hook 불가), ecosystem.json pricing.genai + distillation.frontierEquivalent (단가·티어 SoT), reasoning-playbooks.md (rung 사전 질의 + escalate→debrief, Inter-Cascade arXiv 2509.22984), platform.claude.com/docs/en/about-claude/pricing (2026-09-02 fetch — Fable 5.1·Mythos 5.1 cache read 0.025× · Sonnet 5 $2/$10 표준화), pdgd 제보 2026-09-02 (rule (e) 는 Fable 5 실측 · 5.1 미측정), 오너 결정 2026-09-06 (Fable 5.1 기본 + 주간 한도 여유 거버너 · API 키 지출 0 — `config/currency-budget.json`)]
+version: 2.3.1
+last_updated: 2026-09-23
+source: [opus-4-7-effort-policy.md v2.5.0 (effort precedence·agent 분포 baseline — 2026-09-23 한 칸 내림), platform.claude.com whats-new-opus-5 (effort 변환률·1M default·thinking 기본 ON), Frontier-Bench v0.1 (Opus 5 43.3 / Fable 5 33.7 / Opus 4.8 21.1 — 에이전틱 코딩), code.claude.com model-config (effort 우선순위·모델 기본 high·ultracode), velocity-mode.md (semantic 판단은 결정적 hook 불가), ecosystem.json pricing.genai + distillation.frontierEquivalent (단가·티어 SoT), reasoning-playbooks.md (rung 사전 질의 + escalate→debrief, Inter-Cascade arXiv 2509.22984), platform.claude.com/docs/en/about-claude/pricing (2026-09-02 fetch — Fable 5.1·Mythos 5.1 cache read 0.025× · Sonnet 5 $2/$10 표준화), pdgd 제보 2026-09-02 (rule (e) 는 Fable 5 실측 · 5.1 미측정), 오너 결정 2026-09-06 (Fable 5.1 기본 + 주간 한도 여유 거버너 · API 키 지출 0 — `config/currency-budget.json`), claude-api 스킬 번들 2.1.280 shared/model-migration.md §Migrating to Claude Opus 5.5 · Claude Code 2.1.280 CHANGELOG («now the default Opus model»), platform.claude.com pricing (2026-09-23 fetch — Opus 5.5 $4/$20 · cache read 0.05×), 오너 결정 2026-09-23 (하네스 Opus 고정 → claude-opus-5-5 「전부 전환」 · effort 「현 라벨 유지」)]
 sync_to_siblings: true
 applicability: always
 consumers: [plan, modfolio, generate-review]
@@ -20,20 +20,27 @@ consumers: [plan, modfolio, generate-review]
 
 **effort 가 이전보다 값을 한다.** Opus 5 는 "추가 effort → 더 나은 결과" 변환률이 역대 Opus 중 가장 높다(Anthropic 명시). 그래서 rung-2 가 `/model fable` 이 아니라 **`/effort max` on Opus 5** 다.
 
+## v2.3.0 에서 바뀐 것 (2026-09-23, Opus 5.5)
+
+**rung 1·2 의 모델이 Opus 5.5(`claude-opus-5-5`)가 됐다** — Claude Code 2.1.280 의 기본 Opus이고, 하네스의 Opus 고정(라우팅 6 항목 · agent 21편)을 오너가 「전부 전환」 했다. 사다리의 모양은 그대로다: 단가는 **더 싸졌고**($4/$20 · cache read 0.05×) Anthropic 평가상 코딩·코드 리뷰는 Opus 5 보다 낫다 — 「코딩은 Opus 안에서 effort 로」 의 방향이 강해질 뿐 뒤집히지 않는다. **effort 라벨은 모델 사이에서 같은 양이 아니다**(5.5 의 `medium` > 5 의 `high` · 같은 라벨에서 더 오래 생각) — 라벨은 처음에 오너 결정으로 유지했고 잠정이었다 → **2.3.1: 재측정 뒤 한 칸 내림**(`opus-4-7-effort-policy.md` §v2.5.0).
+
 ## 사다리 (task-class → effort / 모델)
 
 | rung | 태스크 클래스 | effort / 모델 | 근거 |
 |---|---|---|---|
-| **1 (기본)** | 구조화 코딩·리뷰 — 컴포넌트·API·스키마·contract·리뷰 | **`xhigh`** · Opus 5 (`claude-opus-5`) | 코딩·agentic sweet spot. **의심되면 여기 머문다.** |
-| **2 (상향)** | expensive-if-wrong — 보안 코드·결제/돈 이동·아키텍처 tradeoff·P0 장애 triage·비가역 마이그레이션 | **`/effort max`** · Opus 5 | Opus 5 는 max 를 실제 품질로 바꾼다. **추가 비용 0**(같은 단가, 토큰만 증가). **근거 명시 필수.** |
+| **1 (기본)** | 구조화 코딩·리뷰 — 컴포넌트·API·스키마·contract·리뷰 | **`xhigh`** · Opus 5.5 (`claude-opus-5-5`) | 코딩·agentic sweet spot. **의심되면 여기 머문다.** |
+| **2 (상향)** | expensive-if-wrong — 보안 코드·결제/돈 이동·아키텍처 tradeoff·P0 장애 triage·비가역 마이그레이션 | **`/effort max`** · Opus 5.5 | max 를 실제 품질로 바꾼다(⚠ Opus 5 발표 근거 — 5.5 로컬 실측(실사건 5 케이스)에서는 high 위 이득이 재현되지 않았다 · rule (b) 의 근거가 더 무겁다). **추가 단가 0**(같은 모델, 토큰만 증가 — 5.5 의 max 는 상한이 없어 턴이 더 길다). **근거 명시 필수.** |
 | **3 (프론티어)** | 추론형 최상단 — 신규 아키텍처 설계·미지 문제·GEPA reflection | `/model fable` (`claude-fable-5-1`, **2× 단가** · 단 cache read **0.025×** = Opus 의 절반) | **추론형 task-class 한정.** 코딩형은 rung-2 에서 끝낸다(Opus 5 가 Fable **5** 초과 — 5.1 은 미측정, rule (e)). |
 | **0 (하향)** | 기계적 fan-out — 포매팅·의존성 bump·대량 전파·검색/요약 | `high`/`medium` · 또는 Sonnet 5 / Haiku **서브에이전트** | **Opus lead + Sonnet subagent**: 비용↓·품질 유지. |
 
-> 단가는 `ecosystem.json` `pricing.genai` 가 SoT (Opus 5 $5/$25 · Fable 5.1 $10/$50 = **2×**, 단 cache read $0.25 는 Opus $0.50 의 **절반** · Sonnet 5 $2/$10 · Haiku $1/$5). 위 표는 사람용 미러 — 스크립트는 SoT 를 읽는다 (`cost-attribution.md`).
+> 단가는 `ecosystem.json` `pricing.genai` 가 SoT (Opus 5.5 $4/$20 · cache read $0.20 = 0.05× · Opus 5 $5/$25 · Fable 5.1 $10/$50 = Opus 5.5 의 **2.5×**, 단 cache read $0.25 · Sonnet 5 $2/$10 · Haiku $1/$5). 위 표는 사람용 미러 — 스크립트는 SoT 를 읽는다 (`cost-attribution.md`).
+
+> ⚠ **이 사다리는 대화 세션의 effort 다.** agent frontmatter 라벨은 2026-09-23 재측정 뒤 한 칸 내렸다(비가역·expensive-if-wrong 7 = `xhigh` · 빌더·리뷰 12 = `high` · frontmatter 에 `max` 없음 — `opus-4-7-effort-policy.md` §v2.5.0).
+> rung 2 의 `max` 는 세션 `/effort max` 와 라우팅 `escalation` opt-in 으로만 남는다.
 
 ## rung 상세
 
-**1. sweet spot (`xhigh`·Opus 5).** 메인 세션은 `.claude/settings.json` `effortLevel: xhigh`(Claude Code 의 모델 기본값은 `high` 라 xhigh 는 **명시 opt-in** 이어야 한다), subagent 는 보정된 frontmatter effort. 판단이 애매하면 escalate 하지 말고 **여기 머문다**.
+**1. sweet spot (`xhigh`·Opus 5).** 메인 세션은 `.claude/settings.json` `effortLevel: xhigh`(Opus 5.5 의 모델 기본값은 `medium` 이라 xhigh 는 **명시 opt-in** 이어야 한다 — Opus 5 는 `high`), subagent 는 보정된 frontmatter effort. 판단이 애매하면 escalate 하지 말고 **여기 머문다**.
 
 **2. escalate — `/effort max` on Opus 5.** "틀리면 비싼"이 트리거다: secret leak, 잘못된 돈 이동, 되돌리기 힘든 아키텍처 결정, production downtime. **올리기 전 사전 1스텝: 해당 task-class 의 reasoning playbook 을 먼저 질의한다**(`/playbooks` 또는 `knowledge_query` top-k 3-5) — 과거 카드가 답을 갖고 있으면 xhigh 로 끝나고 escalation 비용이 사라진다(Inter-Cascade 실측: strong 호출 −48%). rung-2 는 **단가가 오르지 않는다**(같은 모델, 토큰만 증가) → rung-3 보다 훨씬 싼 상향이므로 먼저 시도한다. **Haiku 는 `max`/`xhigh` 미지원.**
 
@@ -46,28 +53,34 @@ consumers: [plan, modfolio, generate-review]
 ## 규칙
 
 - **(a) 전역 env 로 강제하지 말 것.** `CLAUDE_CODE_EFFORT_LEVEL` 은 env > subagent frontmatter > session 우선순위라, 전역 값은 각 subagent 의 보정된 frontmatter effort 를 **전부 덮어써** fleet-wide overthinking 을 만든다. escalation 은 **메인 세션 `/effort` per-session 토글**로만. subagent 는 자기 frontmatter 를 존중받는다 (`opus-4-7-effort-policy.md` §환경변수 정책). — 이건 이론이 아니다: `.mise.toml` 의 env-max 가 2026-07-12~26 사이 24개 agent 의 보정을 실제로 무효화했다.
+  ⚠ **2026-09-23 — Claude Desktop 은 자기 effort 선택을 이 env 로 넣는다**(실행 인자 `--effort` 와 함께). 잔재가 아니라 오너의 UI 선택이지만 결과는 같다 — 그 세션의 subagent 는 전부 그 값으로 돈다(실측: frontmatter `high` 인 agent 가 `"effort":"max"`). `opus-4-7-effort-policy.md` §Opus 5.5.
 - **(b) escalation 은 근거를 남긴다.** `max`/Fable 로 올렸으면 **왜** 인지(어떤 실패 비용이 판단 비용을 정당화하나)를 응답·커밋 메시지·journal 에 1줄 명시. 근거 없는 상향은 비용만 태운다.
 - **(c) 의심되면 xhigh(sweet spot)에 머문다.** escalate 는 명시적 정당화가 있을 때의 예외지 기본이 아니다.
 - **(e) 코딩형에서 Fable 로 올리지 않는다.** rung-3 는 추론형 전용이다. 코딩형에서 Fable 은 Opus 5 보다 **비싸면서 성능이 낮다**(Frontier-Bench 33.7 vs 43.3). 코딩 상향은 rung-2(`/effort max`)에서 끝낸다.
   ⚠ **이 수치는 Fable 5 실측이다 — Fable 5.1(2026-09-01 출시)은 미측정.** 5.1 은 «agentic coding over long sessions» 가 공표된 첫째 강점이고 cache read 가 0.025×(Opus 0.1×)라 세션 비용 구조가 다르다. **재측정 전까지 규칙은 유지한다**(수치 없이 규칙을 뒤집지 않는다). 재측정: pdgd `metrics/fable-5-1-day0/`(2026-09-02 대조군) + 허브 `bun run scripts/budget/model-usage-report.ts --all-projects` 를 **2026-09-09** 에 대조. 메인 세션이 이미 5.1 이면 이 사다리는 «모델 상향» 이 아니라 «effort 상향 + 비용 레버는 하향(`model:"opus"` 서브에이전트)» 으로 읽는다 — `.claude/rules/fable-5-1-behavior.md` §1.
+  (2026-09-23) 비교 대상의 Opus 가 **Opus 5.5** 로 바뀌었다 — Anthropic 은 코딩·코드 리뷰에서 5.5 가 5 를 넘는다고 발표했고 단가는 Fable 5.1 의 0.4배다. 규칙의 방향은 그대로이고, **우리 환경의 5.5 대 Fable 5.1 코딩 실측은 없다.**
 - **(d) escalation 은 debrief 로 끝난다.** `max`/Fable/프론티어 모델을 썼으면 세션 종료 전 `/debrief` 로 `escalation` 블록(trigger = rule (b) 의 근거 1줄, `what_weaker_missed` = 하위 모델이 놓친 것) 포함 카드를 남긴다 — escalation 비용을 1회성 소비에서 영속 자산으로 바꾸는 단계다. 다음 유사 태스크가 이 카드 덕에 escalate 없이 풀리는 것이 목표 (`reasoning-playbooks.md` §capture). opt-in `harness-lock.json {"autoDebrief":true}` 시 Stop hook 이 누락을 1회 차단으로 상기.
 
 ## 사용량 거버너 — 사다리의 «하향» 은 예산이 정한다 (2026-09-06 · v2.2.0)
 
-오너 결정 원문(2026-09-06): *"Fable 5.1을 기본으로 하고 싶긴한데 사용량이 제한되어 있어서... 1주 사용
-한도에서 run out 하는 일이 없는 선상에서"* · *"subscription 사용량 이상으로 claude 에 한해서는 돈을 더
-쓰고싶지 않은데"*.
+오너 결정(2026-09-06 · 원문 비공개 — _quotes.md#CN-05): Fable 5.1 을 기본으로 두고 싶지만 주간 사용 한도를 넘기지 않는 선에서 —
+Claude 는 구독 한도 이상으로 돈을 더 쓰지 않는다.
 
-- **기본 = Fable 5.1** — Claude Code 가 2026-09-01 부터 기본으로 띄우는 모델이고 이 허브의 세션도 그렇다.
-  «모델 상향» 이 아니라 **이미 사실**이다. 이 사다리의 rung-3 는 그래서 «올라가는 곳» 이 아니라
-  **«내려오지 않아도 되는가»** 의 질문이 된다.
+- ~~**기본 = Fable 5.1**~~ — **superseded-by 2026-09-23 «Opus 5.5 메인»** (이력으로 남긴다). 당시 문장:
+  «Claude Code 가 2026-09-01 부터 기본으로 띄우는 모델이고 이 허브의 세션도 그렇다 — rung-3 는 «내려오지
+  않아도 되는가» 의 질문이 된다.»
+- **메인 = Opus 5.5 (2026-09-23 오너 결정)** — 요지: Opus 5.5 를 Claude Code 의 메인 개발 모델로
+  쓴다(원문 비공개 — _quotes.md#CN-06). Claude Code 2.1.280 의 기본 Opus 이고 하네스
+  Opus 고정도 전부 5.5 로 옮겼다(라우팅 · agent 21 · 스킬 3). Fable 5.1 은 다시 **rung-3(추론형 최상단
+  opt-in)** 이다. 아래 거버너의 하향 사다리 rung −1(`/model opus`)은 이제 메인 자체이므로 하향의 첫 칸은
+  effort 다(모델은 그대로).
 - **미터는 USD 가 아니라 구독 주간 한도의 여유**다. `bun run currency:budget`(`quality:all` 배선 · 0 네트워크)
   이 이 머신 **전 프로젝트**의 세션 원장에서 trailing 7일 실사용(입력+캐시생성+출력 · 캐시 읽기 제외)을
   세고, 잣대 `config/currency-budget.json weeklyAllowanceTokens`(= 관측된 «한도를 안 넘긴 가장 바쁜 주»,
   2026-07-18 주 460,830,563 tok) 대비 **여유**를 낸다. Anthropic 은 한도를 토큰으로 공개하지 않으므로
   오너가 `/usage` 를 보고 잣대를 조정한다.
 - **하향 사다리 = 거버너 권고** (`modelDownshiftAt: 0.80`): 주간 사용이 잣대의 80% 를 넘으면 rung −1
-  «코딩은 `/model opus`(Opus 5 · `.claude/rules/opus-5-behavior.md`)» · rung −2 «fan-out 은 `sonnet`».
+  «코딩은 `/model opus`(Claude Code 2.1.280 부터 `opus` = Opus 5.5 · `.claude/rules/opus-5-behavior.md` §6)» · rung −2 «fan-out 은 `sonnet`».
   권고이지 전환이 아니다 — **`PreModelSwitch` 훅은 원장(`.evolve-state/model-switch.jsonl`)에만 적고 절대
   deny 하지 않는다**(오너의 `/model fable` 을 막지 않는다).
 - **API 키 지출은 0.** 판단·리서치·서브에이전트 전부 오너 세션 안(subscription). `payment-safety.md` §5 —
@@ -100,7 +113,7 @@ task-class 판정("이건 보안 코드인가? 기계적 fan-out 인가?")은 **
 
 ## 관련
 
-- `opus-4-7-effort-policy.md` (v2.0.0) — effort 5단계·agent 분포(max=7·xhigh=12·high=2·medium=3)·env precedence **baseline SoT**
+- `opus-4-7-effort-policy.md` (v2.5.0) — effort 5단계·agent 분포(xhigh=7·high=14·medium=3 · max 0)·env precedence **baseline SoT**
 - `.claude/rules/opus-5-behavior.md` — Opus 5 행동 보정(자기검증 과잉·위임 과다·scope 확장·출력 길이)
 - `claude-code-2026h1-features.md` — Fable 5 = Adopt/opt-in(오너 세션 선택), 기계 fan-out 은 Opus/Sonnet 로
 - `velocity-mode.md` — semantic 판단은 결정적 hook 불가 → rule/canon 이 레버

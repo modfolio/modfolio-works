@@ -2,7 +2,7 @@
 title: Free-Tier Ledger — 무료 한도 원장 (한도·계량 축·측정 좌표)
 version: 1.0.0
 last_updated: 2026-08-23
-source: [ADR-022 (오너: "무료 한도 내에서 최대한 사용"), neon.com/docs/introduction/plans (2026-08-23 대조), 2026-08-23 Neon API 전수 실측]
+source: [ADR-022 (오너: 무료 한도 안에서 최대한 활용(원문 비공개 — _quotes.md#CN-30)), neon.com/docs/introduction/plans (2026-08-23 대조), 2026-08-23 Neon API 전수 실측]
 sync_to_siblings: true
 applicability: always
 consumers: [ops, dev, deploy, preflight]

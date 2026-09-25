@@ -9,6 +9,8 @@
  * ASI03 (OWASP Agentic 2026) — secret literal 노출 차단.
  */
 
+import { readFileSync } from "node:fs";
+
 export interface SecretPattern {
 	id: string;
 	re: RegExp;
@@ -247,8 +249,8 @@ export function scanSecretsDeep(
  * 통과했다: `napi_`(Neon, 4건) → `db-uri`(구조, 6건) → `ats_`(athsra service, 1건).
  * 마지막 것은 **전날 PAT 사고 직후 붙인 게이트가** 그대로 지나쳤다 — 목록에 없었으니까.
  *
- * 오너: *"뭔가 유출이 우려될만한 일이 생기면, **애초에 이런 일이 안 생기도록** 더 철저하게
- * 해줘야 하는 거 아니야?"* → 벤더를 하나씩 쫓는 것으로는 안 된다. **자격증명 대입의 모양**을
+ * 오너: 유출이 우려되는 일이 생기면 **발생 자체를 막을 만큼** 더 철저해야
+ * 한다(원문 비공개 — _quotes.md#CD-21) → 벤더를 하나씩 쫓는 것으로는 안 된다. **자격증명 대입의 모양**을
  * 잡는다: `이름처럼 생긴 키 = 엔트로피 높은 값`.
  *
  * ## ⚠ 어디에 쓰고 어디에 안 쓰나 — 이게 이 함수의 절반이다
@@ -318,4 +320,61 @@ export function hasCredentialEntropy(value: string): boolean {
 		h -= p * Math.log2(p);
 	}
 	return h >= 3.0;
+}
+
+// ── 선언(allowlist) — 파일 + 패턴 id 를 사유와 함께 ─────────────────────────────
+
+export interface AllowEntry {
+	/** repo 상대 경로 */
+	readonly file: string;
+	/** `SECRET_PATTERNS` 의 id (예: `aws-access-key`) */
+	readonly id: string;
+	/** 왜 이 자리에 시크릿 «모양» 이 있어야 하는가 */
+	readonly reason: string;
+}
+
+/**
+ * 시크릿 모양 선언 **본문**을 읽는다 — 전수 스윕(`scripts/ci/secret-sweep.ts`)과 `wip/*` push 판정(`_wip-push.ts`)이 같은 규칙을 쓴다.
+ * 손상되면 **던진다** — 「못 읽음」을 「없음」으로 접지 않는다. 사유 없는(10자 미만) 면제는 받지 않는다.
+ */
+export function parseSecretAllowlist(text: string): AllowEntry[] {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(text);
+	} catch (e) {
+		throw new Error(`선언 파일을 읽을 수 없습니다: ${(e as Error).message}`);
+	}
+	const entries = (parsed as { entries?: unknown }).entries;
+	if (!Array.isArray(entries))
+		throw new Error("선언 파일에 `entries` 배열이 없습니다");
+	return entries.map((raw, i) => {
+		const e = raw as Record<string, unknown>;
+		for (const f of ["file", "id", "reason"] as const) {
+			if (typeof e[f] !== "string" || (e[f] as string).trim() === "") {
+				throw new Error(`entries[${i}]: \`${f}\` 가 비어 있습니다`);
+			}
+		}
+		if ((e.reason as string).trim().length < 10) {
+			throw new Error(
+				`entries[${i}] (${e.file}): 사유가 너무 짧습니다 — 사유 없는 면제는 받지 않습니다`,
+			);
+		}
+		return {
+			file: e.file as string,
+			id: e.id as string,
+			reason: e.reason as string,
+		};
+	});
+}
+
+/** 선언 **파일**(`.claude/rules/secret-sweep-allowlist.json`). 없으면 **빈 목록**(전부 위반) · 손상되면 던진다. */
+export function loadSecretAllowlist(path: string): AllowEntry[] {
+	let text: string;
+	try {
+		text = readFileSync(path, "utf-8");
+	} catch (e) {
+		if ((e as NodeJS.ErrnoException).code === "ENOENT") return [];
+		throw new Error(`선언 파일을 읽을 수 없습니다: ${(e as Error).message}`);
+	}
+	return parseSecretAllowlist(text);
 }

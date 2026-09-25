@@ -1,7 +1,7 @@
 ---
 title: Atlas — 위치와 소유 (누가 무엇의 주인인가)
-version: 1.7.0
-last_updated: 2026-08-30
+version: 1.7.1
+last_updated: 2026-09-24
 tier: law
 applicability: always
 sync_to_siblings: true
@@ -10,10 +10,10 @@ related_canon: [assembly-law, evergreen-principle, fact-ownership, registry-redu
 related_rules: [import-boundaries, fundamentals-first, agent-evidence]
 source:
   [
-    2026-08-14~15 오너 세션 "이미 개발한건 더이상 개발할 필요가 없도록",
+    2026-08-14~15 오너 세션(원문 비공개 — _quotes.md#CN-27 · 이미 개발한 것을 다시 개발하지 않도록),
     실측 33 repo 스캔 (provides 8/32 · subscribesTo 1/32 · event 5 live/58 선언 · MCP 8도구 중 provides 조회 0),
     ADR-017,
-    2026-08-30 오너 결정 D23 "정공법으로 전부 다 잘 되도록" (횡단 3축이 법칙 2로 판정 불능),
+    2026-08-30 오너 결정 D23 정공법으로 전부 제대로 되게(원문 비공개 — _quotes.md#CN-34) (횡단 3축이 법칙 2로 판정 불능),
   ]
 related_adr: [ADR-014, ADR-015, ADR-017]
 ---
@@ -189,7 +189,7 @@ hub 는 법칙을 진술하고 진단 도구를 배포한다. 일정을 잡지 �
   법칙 2의 첫 항(압도적 최대)이 성립하지 않았다. 그래서 **미정으로 남겼고**, 오너가
   경계를 주었다(2026-08-15):
 
-  > **음원 그 자체의 가공은 umbracast, 그것을 활용해 평가·분석하는 것은 gistcore.**
+  > **음원 가공 자체는 umbracast, 음원을 써서 하는 평가·분석은 gistcore**(오너 경계 요지 · 원문 비공개 — _quotes.md#EC-04).
 
   이게 법칙 3이 요구하는 형태다 — 한 문장이고, 전문용어가 없고, **새 하위 도메인이
   나와도 어느 쪽인지 즉시 답한다**:
@@ -423,7 +423,7 @@ bun run harness-pull                  # 법칙 문서 수신 (report-only)
 | AI 추론 — **모델·전략** | **visualize** (오너 결정 2026-08-15 · 위치 substrate→owner) | (없음) — 부품화 대기 | 추론 SDK: visualize 28(최대) · gistcore 6 · dle-desk 4 · pay 3 |
 | AI 추론 — **호스팅 상자** | infra (바탕 유지) | infra `ai-inference` ✓ (`chat.modfolio.io` + NAS ai-stack) | — |
 | 이미지 최적화 | infra | infra `forge` ✓ (3표면 · 소비 3곳) | sharp 직접 **5곳** |
-| 이미지 생성 | 없음 | (없음) | **1곳** — 아무도 실제로 하지 않는다 |
+| 이미지 생성 | **infra** — 실행 코드·버전 고정·런북 `nodes/workstation/persona/`(ADR-014 §2 자체 GPU 미디어 런타임) · 합격 기준·장면 브리프 = modfolio-design `creative/persona/` (오너 결정 2026-09-24 — ADR 축으로 나눈다 · 원문 비공개 · design 편지 `feedback/modfolio-design/2026-09-24_image-generation-owner-is-infra-persona.md`) | (없음) — forge 표면으로 노출 전 · 부품 선언은 infra 몫 | 소비 **1곳**(오너 개인용) · 사진·가중치·LoRA 는 어느 저장소에도 없다(워크스테이션·NAS) |
 | 이메일 | notify | notify `transport` ✓ | 직접 발송 **2곳** (press 4 · muje 1) |
 
 재측정: `bun run atlas:scan` (`scripts/atlas/scan-duplication.ts`).

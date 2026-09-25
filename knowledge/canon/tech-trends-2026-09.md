@@ -1,7 +1,7 @@
 ---
 title: Tech Trends 2026-09 — 현행화 판단 (Claude Code 2.1.257~261 · 스택 실물 · 적응형 currency 루프)
-version: 1.2.0
-last_updated: 2026-09-06
+version: 1.3.0
+last_updated: 2026-09-24
 source: [code.claude.com/docs/en/settings (2.1.257 scope-aware defaultMode · modelSettings, 2026-09-06 실측), code.claude.com/docs/en/sub-agents + skills (frontmatter 필드 목록), registry.npmjs.org dist-tags 2026-09-06 (typescript 7.0.2 · biome 2.5.12 · wrangler 4.129.0 · vitest 5.0.0 · zod 4.5.4 · astro 7.3.1 · @astrojs/cloudflare 14.3.0 · drizzle-orm 0.45.2 / rc 1.0.0-rc.4 · @sveltejs/kit 2.70.3 / next 3.0.0-next.25), github.com/oven-sh/bun/releases (bun-v1.4.2 2026-09-05), github.com/colinhacks/zod/releases/tag/v4.5.0 (z.iso.datetime requires seconds · code-point length), docs.astro.build upgrade-to/v6·v7 + integrations-guide/cloudflare (locals.runtime 제거 · cloudflare:workers env · cfContext), github.com/better-auth/better-auth/releases (v1.7.0 Account.issuer · signIn.social), 허브 실측 (verify:stack-currency v3 fleet 179 위반 · currency:probe 2026-09-06), Writ lane 4건 (dle-desk 416f9be/82506db · naviaca 35ba881 · modfolio-admin 8d77a1c · muje 7895aa3)]
 sync_to_siblings: true
 applicability: always
@@ -14,9 +14,8 @@ consumers: [harness-evolve, preflight, modfolio, innovation-scout]
 > (`## Adopt P0` · `## Trial P1` 은 `### N. 항목`, `## Trial P2` · `## Skip` 은 표)이다 — 2026-04/06/07/08 이 이 규약을
 > 벗어나 넉 달간 0건으로 읽혔다(2026-09-06 파서 보강으로 104건 복구). 다음 달부터 **이 형식을 지킨다.**
 >
-> 오너 결정(2026-09-06 원문): *"Fable 5.1을 기본으로 하고 싶긴한데 사용량이 제한되어 있어서... 1주 사용 한도에서 run out
-> 하는 일이 없는 선상에서"* · *"subscription 사용량 이상으로 claude 에 한해서는 돈을 더 쓰고싶지 않은데"* · *"cron 같은
-> 거로 기계적으로 하는 게 아니라 스마트하게 알아서 판단해서"*.
+> 오너 결정(2026-09-06 · 원문 비공개 — _quotes.md#CN-11): Fable 5.1 을 기본으로 두고 싶지만 주간 사용 한도를 넘기지 않는
+> 선에서 · Claude 는 구독 한도 이상으로 돈을 더 쓰지 않는다 · cron 같은 기계적 실행이 아니라 상황을 보고 판단해서.
 
 ## Adopt P0
 
@@ -117,6 +116,36 @@ Vite 8 · Rust 컴파일러(HTML 검증 엄격) · `src/fetch.ts` 예약.
 URL/중복 필터). 결정: A 의 `--permission-prompts none` 은 로컬 버전 미달 → skip-registry #12(probe 트리거) · B 의 zod v3 직접 선언은
 위 Trial P1 #4 레시피 · C 2건은 레지스트리에서 이미 해소. 정찰자의 «허브 node_modules 가 뒤처짐» 후보는 `.bun/` 잔재를 읽은
 오독이라 제외(`verify:stack-currency:self` 0 이 반증). 정찰자에게 Write 도구가 없어 출력 파일을 메인이 대신 썼다 → 수정.
+
+## 판단 기록 — `currency:judge` 2026-09-23 (오너 승인 «Opus 5.5 작업 뒤»)
+
+`currency:budget --reserve` 통과(여유 41%) → Phase 1/2. ⚠ 첫 시도는 **17일 전 정찰 입력**(09-06)으로 Phase 4 를 자동 진행했다 —
+낡은 입력을 치우고 정찰자(Sonnet 5)를 새로 돌렸으며, 그 분기는 delta 보다 오래된 입력을 거부하도록 고쳤다(`staleScoutInput`).
+정찰자: A 11 · B 0(스택 90 은 오너 «다음 판» 보류) · C 3 · 2.1.263·2.1.265~2.1.268 은 원문 fetch 가 잘려 **미검사**. synthesize: Trial P2 4.
+
+결정:
+- **채택 — `TaskOutput` 제거에 맞춘다.** 원문(Claude Code CHANGELOG, **2.1.277** 절 — 정찰자는 2.1.280 으로 적었다):
+  *"Removed the deprecated TaskOutput tool; Claude reads a background task's output file with Read instead, and the
+  `taskOutputMaxChars` setting and `TASK_MAX_OUTPUT_LENGTH` no longer have any effect"*. `/loop` · `/modfolio-nonstop` 스킬 ·
+  원장 템플릿 · loop 엔진 주석의 안내를 «완료 알림 + 출력 파일 Read(+ `GATE_EXIT=` 마커)» 로 · 허브 settings 의 `taskOutputMaxChars`
+  제거 · `context-residency.md` 상한 문장 정정.
+- **채택 — `--permission-prompts none`**(skip #12 해소): 무인 헤드리스 세 곳. pod 는 대화형이라 제외(`--print` 전용).
+- better-auth issuer skip #13 해소(dle-desk 몫) · astro dev 빈 문서 #14 는 미확인 → Hold 유지.
+
+## Claude Code 2.1.281 — 적응 (2026-09-24 · 오너 직접 지시 «항상 최신» · judge 는 14일 간격 게이트로 보류 중이라 수동 판단)
+
+박스 2.1.280 → **2.1.281** (`claude update` · 네이티브 설치). Desktop 내장 CLI 는 Desktop 이 관리한다(별도).
+슬라이스 관련 81줄 중 하네스에 닿는 것만:
+
+| 변경 | 판정 |
+|---|---|
+| `"attribution": false` 추가 — *"older CLI versions skip a settings file that holds it"* | **멤버에 도는 settings 에 넣지 않는다.** 구버전 CLI 가 그 파일을 통째로 건너뛰면 가드 훅 전체가 꺼진다. 객체 형태를 유지 |
+| 위험한 `rm` 프롬프트가 2분 뒤 거부 · 명령치환만인 재귀 `rm` 은 allow 규칙이 있어도 묻는다 | 무인 경로(`overnight-*.sh` · `lib/grader.ts`)는 이미 `--permission-prompts none`(묻지 않고 거부) — 영향 없음 |
+| self-hosted runner 에서 `--append-system-prompt` → `--system-prompt-file` | `scripts/ops/pod.ts` 는 로컬 대화형 tmux 세션이라 해당 없음 |
+| launch env 가 이미 정한 settings `env` 변수를 무시했다고 debug 로그에 이름을 적는다 | Desktop effort 주입 실측(`verify:effort-env`)의 새 확인 수단 |
+| `mcp_tool` 훅이 MCP 연결 중에 건너뛰던 결함 수정 · `--setting-sources` 가 spawn 세션에 전달 | 하네스 조치 없음(상류 수정) |
+
+breaking 집계 2 중 1 은 오탐이었다(«error messages breaking onto a second line») — `isBreakingLine` 으로 좁혔다.
 
 ## 재평가 trigger
 

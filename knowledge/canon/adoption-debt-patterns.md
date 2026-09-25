@@ -10,7 +10,7 @@ source:
     v2.6 npm publish 경로,
     v2.9 biome musl glibc workaround,
     v2.10 exact-pin 주입의 함정,
-    v3.24.1 오너 요청 "harness pull 만 하면 되도록 세팅 다 해줘" — 카나리아(press·gistcore·connect) 실측,
+    v3.24.1 오너 요청(요지 — pull 한 번이면 설정이 끝나게 · 원문 비공개 _quotes.md#CL-24) — 카나리아(press·gistcore·connect) 실측,
   ]
 sync_to_siblings: true
 applicability: always
@@ -324,7 +324,7 @@ bun install
 
 ### 17. 하네스가 방금 쓴 파일이 member gate 를 빨갛게 만든다 — `--cleanup` 뒤에 숨기지 않는다 (v3.24.1)
 
-**증상** (2026-07-26, 오너 "harness pull 만 하면 되도록 세팅 다 해줘" 요청 실측):
+**증상** (2026-07-26, 오너 요청 — pull 한 번이면 설정이 끝나게 · _quotes.md#CL-24 — 을 실측):
 - `modfolio-press` 를 임시 클론해 **토큰 없이** `@modfolio/harness@latest` 설치 → `bunx modfolio-harness-pull --apply` → `bun run check` → **exit 1**.
 - 원인 둘 다 하네스가 그 세션에 쓴 파일:
   1. `biome.json` `files.includes` 에 하네스 exclude(`!.claude/app-registry.json` 등)가 없어 하네스가 **매 pull 마다 재생성하는** 파일을 biome 이 formats-check → 영구 red.

@@ -2,7 +2,7 @@
 title: Concurrency Safety — race·partial write·멱등의 어휘와 게이트
 version: 1.2.0
 last_updated: 2026-07-04
-source: [2026-07-04 오너 요청 "이런 거 하네스에 주의하라고 세팅 뭘 할 수 있나" (vibecoded 2대 버그 영상 분석), 같은 날 실측 사건 2건 — feedback 인박스 lost update(scripts/feedback-send.ts 날짜 파일명 덮어쓰기) + connect findings 세션 교차 재작성, modfolio-infra 20260703 저널 "동시성 사고", knowledge/canon/billing-architecture.md §4 결정적 멱등키 선례]
+source: [2026-07-04 오너 요청(원문 비공개 — _quotes.md#CN-24 · 이런 결함을 하네스가 주의하게 할 설정이 무엇인가) (vibecoded 2대 버그 영상 분석), 같은 날 실측 사건 2건 — feedback 인박스 lost update(scripts/feedback-send.ts 날짜 파일명 덮어쓰기) + connect findings 세션 교차 재작성, modfolio-infra 20260703 저널 "동시성 사고", knowledge/canon/billing-architecture.md §4 결정적 멱등키 선례]
 sync_to_siblings: true
 applicability: always
 consumers: [api, schema, multi-review, security-scan]

@@ -1,14 +1,91 @@
 {
 	"schemaVersion": 2,
 	"owner": "modfolio-ecosystem",
-	"revision": "2026-09-22.3",
+	"revision": "2026-09-25.2",
 	"maxConcurrentSessions": 1,
 	"maxHeavyChecks": 1,
 	"maxSnapshotAgeSeconds": 900,
 	"paidFallback": false,
+	"sessionEffort": "high",
 	"usagePolicy": {
 		"gate": "advisory",
 		"note": "owner 2026-09-22: 사용량은 오너가 보면서 가이드한다 — 하네스는 사용량을 보고만 하고 작업을 막거나 낮추지 않는다. 유료 API 전환·reset credit·업그레이드 금지와 동시 실행 상한은 유지."
+	},
+	"reviewPolicy": {
+		"note": "ADR-029 · voice WF-29 — 기본은 새 컨텍스트 Claude 워커 1회(L1). 다른 AI 는 트리거가 있을 때만: 공개 계약·교차 repo·큰 diff 는 second-opinion(L2), 인증·결제·데이터·비가역·보안은 critical-review(L3). 비정책 문서만 바뀌면 게이트로 끝(L0). L1 중 작은 코드 변경(gateOnly 문턱 · 정책 경로 미접촉 · 이 묶음에 리뷰 기록 없음)도 게이트로 끝(오너 2026-09-25). 라운드 = 전면 1회 + 수정분 확인 1회. 실행기 scripts/review/run.ts",
+		"l0Paths": [
+			"knowledge/HANDOFF.md",
+			"knowledge/handoff/",
+			"knowledge/journal/",
+			"knowledge/runs/",
+			"knowledge/SESSION-LEDGER.md",
+			"plans/",
+			"docs/handoff",
+			"HANDOFF.md",
+			"memory/debriefs/"
+		],
+		"l2": {
+			"maxChangedLines": 400,
+			"maxChangedFiles": 15,
+			"keywords": ["contracts", "openapi", "platform-adapter.json", "packages"]
+		},
+		"l3Keywords": [
+			"auth",
+			"sso",
+			"oauth",
+			"oidc",
+			"session-token",
+			"payment",
+			"payments",
+			"billing",
+			"checkout",
+			"migration",
+			"migrations",
+			"drizzle",
+			"secret",
+			"secrets",
+			"security",
+			"crypto",
+			"webhook",
+			"webhooks"
+		],
+		"gateOnly": {
+			"maxChangedLines": 150,
+			"maxChangedFiles": 5,
+			"policyPaths": [
+				"MODFOLIO.md",
+				"AGENTS.md",
+				"CLAUDE.md",
+				"GEMINI.md",
+				"CODEX.md",
+				".modfolio/",
+				".claude/",
+				".agents/",
+				".codex/",
+				".github/",
+				".husky/",
+				"config/",
+				"knowledge/canon/",
+				"knowledge/voice/",
+				"docs/adr/",
+				"templates/",
+				"scripts/hooks/",
+				"scripts/review/",
+				"scripts/ci/",
+				"package.json",
+				"bun.lock",
+				"bunfig.toml",
+				".npmrc",
+				"harness-lock.json",
+				"biome.json",
+				"tsconfig.json",
+				"wrangler.jsonc",
+				"wrangler.json",
+				"wrangler.toml"
+			]
+		},
+		"maxFullRounds": 1,
+		"maxDeltaRounds": 1
 	},
 	"providers": {
 		"claude": {
@@ -60,32 +137,32 @@
 			},
 			{
 				"provider": "codex",
-				"model": "gpt-5.6-luna",
+				"model": "gpt-6-luna",
 				"effort": "medium"
 			}
 		],
 		"implementation": [
 			{
 				"provider": "claude",
-				"model": "claude-opus-5",
-				"effort": "xhigh"
+				"model": "claude-opus-5-5",
+				"effort": "high"
 			},
 			{
 				"provider": "codex",
-				"model": "gpt-5.6-terra",
+				"model": "gpt-6-sol",
 				"effort": "high"
 			}
 		],
 		"review": [
 			{
-				"provider": "codex",
-				"model": "gpt-5.6-terra",
+				"provider": "claude",
+				"model": "claude-opus-5-5",
 				"effort": "high"
 			},
 			{
-				"provider": "claude",
-				"model": "claude-opus-5",
-				"effort": "xhigh"
+				"provider": "codex",
+				"model": "gpt-6-sol",
+				"effort": "medium"
 			},
 			{
 				"provider": "gemini",
@@ -95,50 +172,57 @@
 		],
 		"second-opinion": [
 			{
-				"provider": "gemini",
-				"model": "gemini-3.8-flash-medium",
+				"provider": "codex",
+				"model": "gpt-6-sol",
 				"effort": "medium"
 			},
 			{
-				"provider": "codex",
-				"model": "gpt-5.6-terra",
-				"effort": "high"
+				"provider": "gemini",
+				"model": "gemini-3.8-flash-medium",
+				"effort": "medium"
 			}
 		],
 		"critical-design": [
 			{
 				"provider": "codex",
-				"model": "gpt-6-astra",
+				"model": "gpt-6-sol",
 				"effort": "high"
 			},
 			{
 				"provider": "claude",
-				"model": "claude-opus-5",
+				"model": "claude-opus-5-5",
 				"effort": "xhigh"
 			}
 		],
 		"critical-implementation": [
 			{
 				"provider": "claude",
-				"model": "claude-opus-5",
+				"model": "claude-opus-5-5",
 				"effort": "xhigh"
 			},
 			{
 				"provider": "codex",
-				"model": "gpt-6-astra",
+				"model": "gpt-6-sol",
 				"effort": "high"
 			}
 		],
 		"critical-review": [
 			{
 				"provider": "codex",
-				"model": "gpt-6-astra",
+				"model": "gpt-6-sol",
 				"effort": "high"
 			},
 			{
 				"provider": "claude",
-				"model": "claude-opus-5",
-				"effort": "max"
+				"model": "claude-opus-5-5",
+				"effort": "xhigh"
+			}
+		],
+		"google-research": [
+			{
+				"provider": "gemini",
+				"model": "gemini-3.8-flash-medium",
+				"effort": "medium"
 			}
 		]
 	},
@@ -155,11 +239,82 @@
 		},
 		"codexOptIn": {
 			"model": "gpt-6-astra",
-			"effort": "xhigh"
+			"effort": "high"
 		},
 		"claudeOptIn": {
-			"model": "claude-opus-5",
+			"model": "claude-opus-5-5",
 			"effort": "max"
 		}
+	},
+	"suggest": {
+		"note": "오너 2026-09-24(#14·#16): 다른 AI 분배는 자동이 아니라 **제안**이다 — 이유와 함께 오너에게 묻고(Claude Desktop 질문 창 · Codex 대화) yes 면 제안한 명령, no 면 그 표면의 메인 AI 로 진행한다. 제안은 적극적으로 낸다(묻는 비용은 오너의 yes/no 한 번). review:run 은 이 제안과 무관하게 자동이다. 실행기 scripts/budget/suggest.ts",
+		"rules": [
+			{
+				"id": "google-research",
+				"role": "google-research",
+				"keywords": [
+					"google",
+					"youtube",
+					"구글",
+					"유튜브",
+					"gmail",
+					"google sheets",
+					"google drive",
+					"검색 트렌드",
+					"search console"
+				],
+				"reason": "Google 검색·YouTube·Google 서비스는 Gemini 가 검색 그라운딩으로 직접 닿는다 — 질문 문자열만 보내고 저장소 파일은 싣지 않는다",
+				"command": "bun run ai:google -- \"<질문>\""
+			},
+			{
+				"id": "design-choice",
+				"role": "second-opinion",
+				"keywords": [
+					"설계",
+					"아키텍처",
+					"architecture",
+					"계약",
+					"contract",
+					"보안",
+					"security",
+					"인증",
+					"결제",
+					"payment",
+					"마이그레이션",
+					"migration",
+					"선택지",
+					"트레이드오프",
+					"trade-off"
+				],
+				"pathKeywords": "reviewPolicy",
+				"reason": "설계·계약·보안처럼 선택지가 둘 이상인 결정은 다른 공급자가 다른 가정을 짚는다 — 구현 전에 한 번 묻는 것이 구현 뒤 리뷰보다 싸다",
+				"command": "설계 초안을 docs/proposals/ 에 커밋한 뒤 bun run review:run -- --level L2"
+			},
+			{
+				"id": "bulk-read",
+				"role": "triage",
+				"provider": "codex",
+				"keywords": [
+					"전수",
+					"대량",
+					"census",
+					"모든 repo",
+					"fleet 전체",
+					"전체를 훑"
+				],
+				"minFiles": 25,
+				"minBytes": 400000,
+				"reason": "많은 파일을 읽어 결론만 필요할 때는 Codex 가 자기 컨텍스트에서 읽고 요약만 돌려준다 — 메인 세션에 읽은 내용이 매 턴 상주하지 않는다(context-residency)",
+				"command": "codex exec --skip-git-repo-check -s read-only -m {model} -c model_reasoning_effort=\"{effort}\" \"<질문>\" < /dev/null"
+			},
+			{
+				"id": "two-failures",
+				"minFailures": 2,
+				"provider": "codex",
+				"escalation": "codexOptIn",
+				"reason": "같은 모델로 두 번 실패했다 — 다른 모델은 다른 가설을 낸다(escalation.triggers: two-failed-approaches · 실패 증거를 함께 넘긴다)",
+				"command": "codex exec --skip-git-repo-check -s read-only -m {model} -c model_reasoning_effort=\"{effort}\" \"<실패 증거 + 질문>\" < /dev/null"
+			}
+		]
 	}
 }

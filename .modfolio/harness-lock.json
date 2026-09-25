@@ -4,13 +4,23 @@
 		"CLAUDE.md",
 		"GEMINI.md",
 		"MODFOLIO.md",
-		".agents/rules/modfolio.md"
+		".agents/rules/modfolio.md",
+		".agents/skills/modfolio/SKILL.md",
+		".agents/skills/modfolio-sun/SKILL.md",
+		".agents/skills/modfolio-moon/SKILL.md",
+		".codex/hooks.json",
+		".agents/hooks.json"
 	],
 	"neutralManagedPaths": [
 		"AGENTS.md",
 		"CLAUDE.md",
 		"GEMINI.md",
 		"MODFOLIO.md",
-		".agents/rules/modfolio.md"
+		".agents/rules/modfolio.md",
+		".agents/skills/modfolio/SKILL.md",
+		".agents/skills/modfolio-sun/SKILL.md",
+		".agents/skills/modfolio-moon/SKILL.md",
+		".codex/hooks.json",
+		".agents/hooks.json"
 	]
 }

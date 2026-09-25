@@ -2,7 +2,7 @@
 title: Knowledge Sovereignty — 지식은 사용자 소유, consent 는 게이트다
 version: 1.1.0
 last_updated: 2026-08-30
-source: [2026-07-26 오너 세션 "통합된 지식, 커스터마이징된 개인의 말뭉치, 영역에 따른 지식을 쌓아나가는 기반", Modfolio_Universe_Architecture_Reference_v1.1 §5.2·§9 (의도 SoT), visualize-architecture.md P0 5원칙, contracts/events/user-knowledge.ts, 실측 2026-07-26 (RAG 인덱스 허브 단독·sibling knowledge 미색인·Connect 에 corpus consent scope 부재)]
+source: [2026-07-26 오너 세션(원문 비공개 — _quotes.md#CN-02 · 통합 지식·개인 맞춤 말뭉치·영역별 지식을 쌓는 기반), Modfolio_Universe_Architecture_Reference_v1.1 §5.2·§9 (의도 SoT), visualize-architecture.md P0 5원칙, contracts/events/user-knowledge.ts, 실측 2026-07-26 (RAG 인덱스 허브 단독·sibling knowledge 미색인·Connect 에 corpus consent scope 부재)]
 sync_to_siblings: true
 tier: law
 applicability: always
@@ -23,7 +23,7 @@ related_rules: [lethal-trifecta, secrets-policy]
 
 ### ⚠ 단 하나의 예외 — consent 축은 **when 도 고정된다** (오너 결정 2026-08-30)
 
-> *"consent 만 예외로 기한 고정"*
+> consent 축만 예외로 이행 기한을 고정한다(원문 비공개 — _quotes.md#CN-29)
 
 **왜 이 축만인가.** 다른 법칙은 늦게 지켜도 늦게 좋아진다 — 부품을 나중에 옮겨도
 그 사이에 잃는 것은 시간뿐이다. **consent 는 반대다.** 스코프 없이 들어온 데이터는

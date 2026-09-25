@@ -53,6 +53,7 @@ repo (ecosystem 포함) 가 이 분류를 참고해 "이 canon 을 지금 따라
 - [orbit.md](orbit.md) v1.0 (신설 2026-07-21) — **Orbit(궤도) 순회 캠페인 + Orbit Writ**. universe 한 바퀴(관측→판정→집행→전파→기록)를 세션·머신 넘어 재개하는 스테이지 머신. **cross-repo 쓰기는 순회 중·패킷 scope 안에서만** 열리고 자동 회수되며 `pre-orbit-writ-guard` 가 exit 2 로 집행(종전 🔒 는 프로즈뿐 = 실집행 0 이었다). 오너 호출 = `/orbit`. ADR-016. `applicability: always`.
 - [secrets-policy.md](../../.claude/rules/secrets-policy.md) (rule) — 하드코딩 금지, 로테이션 주기.
 - [lethal-trifecta.md](../../.claude/rules/lethal-trifecta.md) (rule) — private+untrusted+outward 동시 차단. payment-safety 의 자매 룰.
+- [session-coordination.md](session-coordination.md) v1.0 (신설 2026-09-23) — **다른 repo 의 일 · 형제 세션과의 대화.** 채널 셋(Loom 정본 · 편지 내구 · SendMessage 는 가속일 뿐) · 주인에게 요청하고 내 repo 에서 만들지 않는다 · 결정을 뒤집으면 정정 편지 · 식별자는 찾고 쓴다 · 남의 주장은 1차 출처로
 
 ## 개발 환경
 

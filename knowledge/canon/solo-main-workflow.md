@@ -16,9 +16,9 @@ consumers: [deploy, ops, release, session-handoff]
 
 `applicability: conditional` — 이 canon 은 **앱 상태가 무사용자(landing/scaffolded/내부 active 이나 외부 사용자 0)** 일 때만 활성. 실사용자 보유 앱은 표준 PR 흐름.
 
-## 결정 (2026-05-18, 사용자 원문)
+## 결정 (2026-05-18, 사용자 결정 · 요지)
 
-> "1인 개발이고 결국 다 커밋이 다 기록이 남는데 뭔가 잘못되면 그냥 되돌리면 되잖아? branch를 만들어서 작업할 필요가 있나? 정공법으로 항상 main에서 작업하고 main을 그냥 업데이트 하고 그러면 되는거 아닌가?"
+> 오너 질문(원문 비공개 — _quotes.md#CN-19): 1인 개발이고 커밋이 전부 기록으로 남으니 잘못되면 되돌리면 된다 — 브랜치를 두지 않고 늘 main 에서 정공법대로 작업해도 되지 않는가.
 
 정공법 정합: branch→PR→merge 는 코드 안전이 아니라 **다중 협업자 review 동기화** 장치다. 협업자 0·리뷰어 0 단계에서 그 가치는 0, 비용만 남는다 (per-PR Neon DB 브랜치 + PR-CI fan-out → GitHub Free org 2000분/월을 modfolio-pay 단독으로 소진시켜 org 전체 Actions 마비, 2026-05). git history 가 곧 안전망 — revert 가 근본 복구.
 

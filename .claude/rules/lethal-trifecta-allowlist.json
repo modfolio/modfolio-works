@@ -1,6 +1,6 @@
 {
 	"$schema": "https://modfolio.io/schemas/lethal-trifecta-allowlist.v1.json",
-	"_comment": "Lethal Trifecta 화이트리스트 — 명시 justification + 분기별 revisit. governance check 가 본 entry 와 매칭되면 finding skip. 신 entry 추가는 PR review 필수. 이 파일은 harness-synced(SYNCED) — sibling 의 repo-local 추가는 다음 pull 에서 baseline 으로 리셋된다(의도된 동작: trifecta 예외 curation 은 중앙 baseline 단일점, repo 자가-allowlist 로 governance 우회 불가). 예외 필요 sibling 은 본 baseline 에 entry 위임(connect 2026-06-18 finding). ⚠ 2026-09-15 — entry 에 `repo` 필드가 생겼다. **없으면 모든 repo 에 적용(레거시), 있으면 그 repo 에서만**이다. 이유: baseline 7건이 전부 허브 경로라 32 repo 가 남의 예외를 받고 있었고(pdgd 실측 «7/7 전부 이 repo 에 존재하지 않는다»), 그러면서 정작 자기 4건은 안 덮여 매 실행이 WARN 을 냈다. 게다가 «entries 6+ → 분기 review» 경고가 **남의 파일 개수 때문에** 떴다 — 세는 대상과 읽는 사람이 다르면 그 경고는 무시하도록 훈련시킨다. 중앙 curation 이라는 보안 성질은 그대로다: repo 가 자기를 스스로 allowlist 할 수 없고 예외는 여전히 허브 baseline 에 위임한다(connect 2026-06-18 · pdgd 2026-09-13).",
+	"_comment": "Lethal Trifecta 화이트리스트 — 허브 기준선(harness-synced · pull 이 허브 값으로 바꾼다). 명시 justification + 분기별 revisit. 이 파일에서 `repo` 가 없는 항목은 **모든 repo** 에 적용된다. **멤버 자신의 예외는 `.modfolio/trifecta-allowlist.json`(같은 형식 · 동기화 안 함)에 적는다** — 그 파일에서 `repo` 가 없으면 **그 repo** 의 것이고, 허브 허가 없이 바로 효력이 있다. governance 가 `member-local-exceptions` info 로 알리고, 여러 멤버에 쌓인 같은 예외는 허브가 모아 기준선·분류 규칙으로 올린다(오너 원칙 2026-09-25: 하네스는 eco 가 주는 정의이지 절대 규칙이 아니다).",
 	"entries": [
 		{
 			"file": "scripts/ops/m365-auth-init.ts",

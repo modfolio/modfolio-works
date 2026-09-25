@@ -115,8 +115,8 @@ Lead Planner = orchestration role. private data access (modfolio internal canon 
 ```yaml
 ---
 name: lead-planner
-model: claude-opus-5
-effort: max
+model: claude-opus-5-5
+effort: xhigh   # 2026-09-23 한 칸 내림 — frontmatter 에 max 없음(opus-4-7-effort-policy.md v2.5.0)
 # trifecta 회피 — untrusted input 직접 처리 금지
 trust_class: trusted-input-only
 allowedTools:
@@ -166,7 +166,13 @@ human_approval_required: true
 
 ### 옵션 C — Allowlist 등록 (justification 필수)
 
-`.claude/rules/lethal-trifecta-allowlist.json` 에 entry 추가:
+**어디에 적나** — 두 파일이다(오너 원칙 2026-09-25: 하네스는 eco 가 주는 정의이지 절대 규칙이 아니다):
+- 멤버 자신의 예외 → **`.modfolio/trifecta-allowlist.json`**(같은 형식 · 동기화 안 함 · 허브 허가 불필요 · 이 파일에서 `repo` 생략 = **이 repo**).
+  쓰이면 governance 가 `member-local-exceptions` info 로 알린다 — 허브가 fleet 에서 이 파일들을 모아 기준선으로 올릴 근거다.
+- 허브 기준선 → `.claude/rules/lethal-trifecta-allowlist.json`(pull 이 허브 값으로 바꾼다 · 이 파일에서 `repo` 생략 = **모든 repo**). 여러 멤버에 쌓인 같은 예외는 허브가 모아
+  기준선이나 분류 규칙으로 올린다 — 예: 허브 기준선과 정확히 같은 `.mcp.json` 서버는 예외 없이 경고 대상에서 빠진다.
+
+멤버면 `.modfolio/trifecta-allowlist.json`, 허브 기준선이면 `.claude/rules/lethal-trifecta-allowlist.json` 에 entry 추가:
 
 ```json
 {

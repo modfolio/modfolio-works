@@ -1,8 +1,8 @@
 ---
 title: Claude Code 2026 H1 Features — 권고 (Adopt/Trial/Watch)
-version: 1.4.0
-last_updated: 2026-09-06
-source: [Anthropic Claude Fable 5 announcement 2026-06-09, code.claude.com/docs/en/changelog, code.claude.com/docs/en/workflows, code.claude.com/docs/en/memory, code.claude.com/docs/en/model-config (fallback-model-chains, 2026-06-14 검증), claude-api skill (model ground truth)]
+version: 1.5.1
+last_updated: 2026-09-23
+source: [Anthropic Claude Fable 5 announcement 2026-06-09, code.claude.com/docs/en/changelog, code.claude.com/docs/en/workflows, code.claude.com/docs/en/memory, code.claude.com/docs/en/model-config (fallback-model-chains, 2026-06-14 검증), claude-api skill (model ground truth), Claude Code 2.1.280 CHANGELOG (Opus 5.5 기본 Opus), claude-api 번들 2.1.280 shared/model-migration.md §Migrating to Claude Opus 5.5, platform.claude.com pricing (2026-09-23 fetch)]
 sync_to_siblings: true
 applicability: always
 consumers: [preflight, harness-evolve, modfolio, claude-api]
@@ -16,7 +16,9 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 
 | 기능 | 분류 | 한 줄 | 영향 범위 |
 |------|------|-------|-----------|
-| **Fable 5.1** (`claude-fable-5-1`) | **Adopt / opt-in** (2026-09-02 갱신) | Mythos-class · $10/$50 · **cache read $0.25**(0.025× — Opus 5 $0.50 의 절반). 2026-09-01 출시. baseline=Opus 5 유지, 세션이 5.1 이면 `.claude/rules/fable-5-1-behavior.md`. Fable 5 는 legacy(동일 단가, cache read $1). | 모델 레지스트리 (`ecosystem.json`) |
+| **Opus 5.5** (`claude-opus-5-5`) | **Adopt / baseline** (2026-09-23) | Claude Code 2.1.280 의 기본 Opus · $4/$20 · **cache read $0.20**(0.05×) · 기본 effort `medium`(라벨이 Opus 5 와 1:1 대응 안 함). 하네스 Opus 고정 전환(라우팅 6 · agent 21 · 스킬 3) · effort 라벨은 같은 날 재측정 뒤 한 칸 내림(`opus-4-7-effort-policy.md` v2.5.0). 행동 = `opus-5-behavior.md` §6. 앱 코드 API 이관은 아래 절 — breaking 4건 | 모델 레지스트리 · `config/ai-routing.json` · `.claude/agents` |
+| **MCP `headersHelper`** | **Adopt-hub** (2026-09-23) · 멤버는 **채택 때 판정** — 실패 시 동작 실측은 아래 §MCP `headersHelper` | 연결마다(시작·재연결·401/403 뒤) 명령을 돌려 stdout JSON 을 헤더로 쓴다 · 같은 이름이면 정적 `headers` 보다 우선 · 10초 · 프로젝트 `.mcp.json` 은 TOKEN·KEY·AUTH 류 env 를 **벗긴 채** 실행 · 폴더 trust 필요(`claude -p` 포함). github·loom 토큰을 athsra 서비스 토큰 파일로 받아 Desktop 세션의 env 부재를 푼다 — 실측: env 를 전부 벗긴 helper 헤더로 github 200 · loom 200 / 빈 `Bearer` 400 · 401. 출처 code.claude.com/docs/en/mcp | `.mcp.json` · `scripts/mcp/headers-helper.ts` · mcp-merge baseline |
+| **Fable 5.1** (`claude-fable-5-1`) | **Adopt / opt-in** (2026-09-02 갱신) | Mythos-class · $10/$50 · **cache read $0.25**(0.025× — Opus 5 $0.50 의 절반). 2026-09-01 출시. baseline=Opus 5.5(2026-09-23 · 그 전 Opus 5), 세션이 5.1 이면 `.claude/rules/fable-5-1-behavior.md`. Fable 5 는 legacy(동일 단가, cache read $1). | 모델 레지스트리 (`ecosystem.json`) |
 | **Dynamic Workflows** (`Workflow` tool) | **Trial (2026-07-02 G15 실사용)** | 대규모 fan-out (100+ 파일 마이그레이션·전수 감사). 토큰 폭증 주의. per-agent `model`/`effort` 로 비용 조정. | 사용자 명시 호출 시 |
 | **`/goal`** | Trial | 완료조건 기반 자율 반복. long-running 작업. | 세션 운영 |
 | **Fallback models** | **Adopt** (ecosystem 적용 v3.7.0) | 과부하(429/529) 시 최대 3 모델 자동 폴백. 가용성·복원력↑. | `.claude/settings.json.fallbackModel` |
@@ -24,13 +26,38 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 | 3-layer memory / `/cd` / Agent View | Watch | 점진 개선. 기록만. | — |
 | **scope-aware `permissions.defaultMode`** (2.1.257) | **Adopt** (허브 v3.83.0 후보) | `bypassPermissions`·`auto` 는 project/local 스코프에서 **무시** → 운반체는 user 스코프 + `--permission-mode`. `settings-adapt` 가 멤버 잔재를 걷어낸다. | `permission-mode.md` v2.0.0 |
 | **`PreModelSwitch` / `PostCompact` 훅** (2.1.24x) | **Adopt-hub** | 허브 전용: 모델 전환 원장(deny 안 함) · 압축 뒤 런 로그 재정독 상기. 멤버엔 안 흘린다. | `.claude/settings.json` hooks |
-| **`bashOutputMaxChars` / `taskOutputMaxChars`** | **Adopt-hub** | 판정 출력 절단 상한 100,000(≤128K). «판정 출력을 자르지 않는다»(agent-evidence §C). | `.claude/settings.json` |
+| **`bashOutputMaxChars`** (~~`taskOutputMaxChars`~~) | **Adopt-hub** | 판정 출력 절단 상한(허브 30,000 · ≤128K). «판정 출력을 자르지 않는다»(agent-evidence §C). ⚠ **2.1.277 이 `TaskOutput` 도구를 제거하면서 `taskOutputMaxChars`·`TASK_MAX_OUTPUT_LENGTH` 는 효과가 없어졌다** — 배경 작업 출력은 파일로 남고 `Read` 로 필요한 부분만 읽는다(2026-09-23 설정에서 뺐다). | `.claude/settings.json` |
 | **`modelSettings`** (모델별 effort, 2.1.257) | Watch | `/effort` 가 쓰는 숫자 인코딩 · 미문서 → 손으로 쓰지 않는다. | `opus-4-7-effort-policy.md` §modelSettings |
 | `Setup(--maintenance)` · `StopFailure` · `SubagentStart/Stop` · 훅 `async/asyncRewake/if` | Trial | 적응형 currency 루프(Wave 5)에서 `Setup` + `SessionStart async` 를 쓴다. `asyncRewake` 는 기각(요청 없는 모델 턴). | 허브 전용 |
 | `skillListingBudgetFraction` · `skillOverrides` · `/skill-doctor` (2.1.252) | Trial | 스킬 정리(Wave 6) 의 계측·처방. `/context` Skills 행 실측 뒤에만. | `.claude/settings.local.json` |
 | `attribution` (`includeCoAuthoredBy` 폐기) · 제거 키 `disableArtifact`·`keybindingFlavor`·`permissionExplainerEnabled` | Adopt | 설정할 것 없음 — `verify:claude-code-currency` 가 폐기 키 사용을 잡는다. | 게이트 |
 
-> baseline: 모델 = `claude-opus-5`/`claude-haiku-4-5-*`, effort = max7/xhigh12/high2/medium3 (`opus-4-7-effort-policy.md` v2.0.0, 2026-07-26). ⚠ 이 각주는 2026-09-02 까지 낡은 값(`claude-opus-4-8`, max3/xhigh13/high5/medium3)을 적고 있었다. 이 canon 은 그 위에 **추가 가능성**을 기록할 뿐 기존 calibration 을 바꾸지 않는다.
+> baseline: 모델 = `claude-opus-5-5`(2026-09-23 전환 · 그 전 `claude-opus-5`)/`claude-haiku-4-5-*`, effort = xhigh7/high14/medium3 · max 0 (`opus-4-7-effort-policy.md` v2.5.0 — 2026-09-23 재측정 뒤 한 칸 내림). ⚠ 이 각주는 2026-09-02 까지 낡은 값(`claude-opus-4-8`, max3/xhigh13/high5/medium3)을 적고 있었다. 이 canon 은 그 위에 **추가 가능성**을 기록할 뿐 기존 calibration 을 바꾸지 않는다.
+
+## 모델 — Opus 5.5 (Adopt / baseline — 2026-09-23)
+
+- **ID** `claude-opus-5-5` — Claude Code 2.1.280 *"Added Claude Opus 5.5 (`claude-opus-5-5`), now the default Opus model"*. Opus 5 의 후속, 같은 1M context · 128K output · 토크나이저. **단가** $4/$20 · 5m write $5 · 1h write $8 · cache read **$0.20 = 0.05×** · batch $2/$10 · fast mode $8/$40(Claude API 전용). Opus 5 는 계속 제공된다(되돌림 경로). rate limit 풀이 Opus 5 와 같은지는 **미확인**.
+- **effort**: API 기본 `medium`(Opus 5 `high`). 5.5 의 `medium` 이 5 의 `high` 를 넘고, 같은 라벨에서 더 오래 생각한다(특히 `xhigh`·`max`). 하네스 라벨은 처음에 그대로 옮겼다가 재측정 뒤 오너 결정으로 한 칸 내렸다 — `opus-4-7-effort-policy.md` §v2.5.0. ⚠ Desktop 세션은 effort 를 env 로 넣어 agent 라벨을 덮는다(같은 절 실측 표).
+- **앱 코드(SDK·raw HTTP)로 부를 때의 breaking 4건** — Opus 5 코드를 그대로 옮기면 400:
+  1. **thinking 을 끌 수 없다** — `{type:"disabled"}`·`budget_tokens` 는 모든 effort 에서 400. `thinking` 을 빼고(=adaptive) effort 로 조절. `max_tokens` 는 thinking 몫까지 잡는다.
+  2. **강제 `tool_choice`(`any`/`tool`) 400** — `auto` + 프롬프트 지시 + `strict: true`(호출 여부를 확인하고 재시도), 또는 structured outputs.
+  3. **thinking 블록이 모델·대화에 묶인다**(preserved thinking) — 다른 모델로 폴백하면 5.5 의 추론 없이 이어진다. 2026-08-31 이후 생성 계정은 이력 편집 시 400 → 하네스는 append-only.
+  4. **computer use 는 `computer_toolset_20260801` 만** — `computer_20251124` 400.
+- **응답 모양**: 도구 호출 사이의 긴 메모가 `text` 가 아니라 progress-update `thinking` 블록으로 온다(기본 display 에선 빈 문자열) — 화면이 조용해지면 `display: "updates"`. 안전 분류기에 `bio`·`reasoning_extraction` 이 추가됐다 → `stop_reason: "refusal"` 을 먼저 확인하고 fallback opt-in.
+- **이관은 각 앱 repo 의 판단이다** — 하네스 전환은 agent·라우팅만이다. 절차는 `/claude-api migrate`(번들 `shared/model-migration.md` §Migrating to Claude Opus 5.5 체크리스트). 2026-09-23 멤버 실측: connect 는 SDK 호출 0 · pay 는 `claude-opus-4-8` · atelier 는 `claude-sonnet-5` — 셋 다 그 repo 가 따로 정한다.
+
+## MCP `headersHelper` (Adopt-hub · 멤버는 채택 때 판정 — 2026-09-23)
+
+실패 시 동작 **실측**(CC 2.1.280 · `--mcp-config` 범위 · 받은 `Authorization` 을 기록하는 127.0.0.1 서버 · 모든 요청 401 · 가짜 값):
+
+| 도우미 | 서버가 받은 헤더(초기 · 401 뒤 재시도) |
+|---|---|
+| 성공(`Bearer DYNAMIC`) | DYNAMIC · DYNAMIC |
+| exit 1 | **STATIC** · STATIC |
+| sleep 12s(10초 초과) | **STATIC** · STATIC |
+
+→ 도우미가 실패하거나 시간을 넘기면 정적 `headers` 로 연결한다 — env 에 유효 토큰이 있는 표면에서는 base 보다 나빠지지 않는다.
+⚠ 프로젝트 범위(`.mcp.json` · 폴더 신뢰·서버 승인 필요)는 **미측정**이다. 이 표를 프로젝트 범위의 사실로 옮기지 않는다.
 
 ## 모델 — Fable 5.1 / Fable 5 (Adopt / opt-in)
 
@@ -42,7 +69,7 @@ consumers: [preflight, harness-evolve, modfolio, claude-api]
 - **무료창 종료** 2026-06-22 (Pro/Max 무료 사용 창 종료 — 이제 유료). 출처: Anthropic 발표 2026-06-09.
 - **Claude Code 사용** `/model fable` (또는 `claude-fable-5`) 로 세션 선택. agent frontmatter `model: claude-fable-5` 도 유효.
 - **API surface** Opus 4.7/4.8 과 동일 (adaptive thinking only, `budget_tokens`/`temperature`/`top_p`/`top_k` 제거 = 400). **단 하나 차이**: explicit `thinking: {type: "disabled"}` 가 400 → `thinking` 파라미터를 **생략**해야 함.
-- **universe 정책 (2026-07-02 재평가 확정)**: baseline agent 기본 모델은 여전히 **Opus 4.8**(비용 효율·대량 fan-out 용). **Fable 5 = 오너 세션 opt-in**(`/model fable`) — 오너가 세션별로 명시 선택 시 그 세션의 심층 작업(설계·보안·auth-critical·복잡 리팩)에 사용. 2026-07-02 G15 세션이 첫 대규모 Fable 실사용(오너 "fable로 작업해줘 다 허락"). `ecosystem.json.harnessFableStatus: "available-optin"` 유지.
+- **universe 정책 (2026-07-02 재평가 확정 · ⚠ 2026-09-23 대체 — 현행 baseline 은 Opus 5.5, `model-escalation.md`)**: 당시 baseline agent 기본 모델은 **Opus 4.8**(비용 효율·대량 fan-out 용). **Fable 5 = 오너 세션 opt-in**(`/model fable`) — 오너가 세션별로 명시 선택 시 그 세션의 심층 작업(설계·보안·auth-critical·복잡 리팩)에 사용. 2026-07-02 G15 세션이 첫 대규모 Fable 실사용(오너 Fable 로 작업하고 필요한 것은 전부 허락(원문 비공개 — _quotes.md#CN-36)). `ecosystem.json.harnessFableStatus: "available-optin"` 유지.
 - **선택 기준(재평가 결론)**: Fable 값어치가 비용(2×)을 정당화하는 곳 = (a) auth/payment/secret 등 **틀리면 비싼** 코드의 설계·구현(connect eject·athsra E2EE·pay idempotency), (b) 다차원 트레이드오프 판단(아키텍처·마이그 경로). **기계적 fan-out**(TS6 전파·dep bump·포맷)은 Opus/Sonnet 로 내려 비용 절감 — Workflow 스테이지에서 `model`/`effort` per-agent 조정. cost-attribution.md 정합. task-class → effort/모델 사다리(sweet spot 유지·언제 max/Fable·fan-out 은 Sonnet subagent) = `model-escalation.md`.
 
 ## Dynamic Workflows (Trial)

@@ -10,8 +10,8 @@ related_canon: [model-escalation, opus-4-7-effort-policy, claude-code-2026h1-fea
 # Fable 5.1 행동 보정 — 메인 세션이 `claude-fable-5-1` 일 때
 
 **적용 범위**: 지금 실행 중인 모델이 `claude-fable-5-1` 이면 이 파일이 `opus-5-behavior.md`
-§1(자기검증)·§2(위임 상한)·§5(출력 길이)를 **대체**한다. `model: claude-opus-5` 로 고정된
-서브에이전트 안에서는 `opus-5-behavior.md` 가 정본이다. §3(범위)·§4(coverage-first)는 두 모델
+§1(자기검증)·§2(위임 상한)·§5(출력 길이)를 **대체**한다. `model: claude-opus-5-5` 로 고정된
+서브에이전트 안에서는 `opus-5-behavior.md`(§6 포함)가 정본이다. §3(범위)·§4(coverage-first)는 두 모델
 공통 — 그대로 지킨다. Claude Code 자체 시스템 프롬프트가 이미 주입하는 일반 지침은 반복하지 않는다.
 
 근거(Anthropic Fable 5.1 가이드 — `claude-api` 스킬 번들 `shared/model-migration.md`

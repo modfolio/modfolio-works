@@ -37,11 +37,19 @@
 		"feedback-send": "bun node_modules/@modfolio/harness/scripts/feedback-send.ts",
 		"debrief:curate": "bun node_modules/@modfolio/harness/scripts/debrief/curate.ts",
 		"handoff:prepare:apply": "bash node_modules/@modfolio/harness/scripts/ops/handoff-prepare.sh --apply-commit-push",
-		"handoff:restore": "bash node_modules/@modfolio/harness/scripts/ops/handoff-restore.sh"
+		"handoff:restore": "bash node_modules/@modfolio/harness/scripts/ops/handoff-restore.sh",
+		"review:packet": "bun node_modules/@modfolio/harness/scripts/review/packet.ts",
+		"modfolio:sun": "bun node_modules/@modfolio/harness/scripts/modfolio/sun.ts",
+		"modfolio:moon": "bun node_modules/@modfolio/harness/scripts/modfolio/moon.ts",
+		"modfolio:effort": "bun node_modules/@modfolio/harness/scripts/modfolio/effort.ts",
+		"review:run": "bun node_modules/@modfolio/harness/scripts/review/run.ts",
+		"ai:google": "bun node_modules/@modfolio/harness/scripts/review/google.ts",
+		"ai:suggest": "bun node_modules/@modfolio/harness/scripts/budget/suggest.ts",
+		"modfolio:install-guards": "bun node_modules/@modfolio/harness/scripts/modfolio/install-guards.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.12",
-		"@modfolio/harness": "^3.91.7",
+		"@modfolio/harness": "^3.94.3",
 		"typescript": "^6.0.3",
 		"wrangler": "^4.131.2"
 	},

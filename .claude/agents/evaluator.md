@@ -1,9 +1,9 @@
 ---
 name: evaluator
 description: Multi-Agent Research 3-tier 의 Tier 3 — Generator output 의 통합 verdict (binary pass/fail + weighted score). 별도 분산 평가 (multi-review 4-agent) 의 final aggregator 역할. v3.0 P2.2 에서 PRM step-wise 로 확장.
-model: claude-opus-5
-effort: xhigh
-_effort_change_note: "v2.35 P1.5 신설. critique/verdict — overthinking 회피 위해 xhigh. 깊은 보안/디자인 평가는 multi-review 의 specialist agent 가 담당."
+model: claude-opus-5-5
+effort: high
+_effort_change_note: "xhigh → high. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - multi-review

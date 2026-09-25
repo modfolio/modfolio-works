@@ -1,8 +1,8 @@
 ---
 title: 권한 모드 — bypassPermissions 표준 (zero-prompt, fleet)
-version: 2.0.0
-last_updated: 2026-09-06
-source: [2026-05-18 속도회복 세션, claude-code-guide 권위 확인 + 실측; 2026-09-06 Claude Code 2.1.257 settings-reference 실측 — project/local 스코프의 bypassPermissions·auto 무시]
+version: 2.1.0
+last_updated: 2026-09-25
+source: [2026-05-18 속도회복 세션, claude-code-guide 권위 확인 + 실측; 2026-09-06 Claude Code 2.1.257 settings-reference 실측 — project/local 스코프의 bypassPermissions·auto 무시; 2026-09-25 code.claude.com permission-modes — 계획 모드의 bypass 승계는 대화형 터미널만]
 sync_to_siblings: true
 applicability: always
 consumers: [ops, preflight, harness-pull]
@@ -57,6 +57,19 @@ consumers: [ops, preflight, harness-pull]
 { "claudeCode.allowDangerouslySkipPermissions": true,
   "claudeCode.initialPermissionMode": "bypassPermissions" }
 ```
+
+## bypass 인데도 창이 뜨는 자리 (2026-09-25 · 오너 지적 — 계획 모드의 반복 승인)
+
+bypass 는 **모든** 창을 없애지 않는다. 남는 자리는 넷이고 처방이 다르다(code.claude.com `permission-modes`·`permissions` · 2026-09-25 확인):
+
+| 자리 | 왜 | 처방 |
+|---|---|---|
+| **계획 모드 안의 비읽기 명령** | 계획 모드가 권한 모드를 바꾼다. bypass 승계는 **대화형 터미널(CLI)만** 문서화 — Agent SDK·`-p`·VS Code 채팅 패널은 계획 모드 차단을 유지하고, Desktop Code 탭은 문서에 없다(실측상 묻는다) | 명령(`ai:suggest`·`compass --intent`)은 **계획 모드 밖에서 먼저** 돌리고 안에서는 Read·검색만(`/modfolio-sun` 2·3단계) |
+| 명시 `ask` 규칙 | bypass 보다 우선 | 전역 `permissions.ask` 를 비운다(파괴 방어는 결정적 훅이 맡는다 — §안전망) |
+| 너무 넓은 `deny` 글롭 | `Bash(rm -rf /*)` 는 **모든 절대경로** 삭제를 막는다 | 진짜 루트만 막는 것은 훅이 한다 — 글롭을 지운다 |
+| `ExitPlanMode`·`AskUserQuestion` | 설계상 사람의 답을 받는 도구 | 계획 승인은 원래 창이다. 무인(`/modfolio-nonstop`)에서는 계획 모드를 쓰지 않고 원장에 계획한다 |
+
+⚠ 2.1.212~2.1.217 은 비-bypass 세션에서 계획 모드의 비읽기 명령마다 묻는 회귀가 있었다(그 뒤 수정) — «예전엔 안 그랬다» 의 한 갈래일 수 있으나 이 머신의 판정은 위 표다.
 
 ## 적용 절차
 

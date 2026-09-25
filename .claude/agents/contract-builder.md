@@ -1,9 +1,9 @@
 ---
 name: contract-builder
 description: Zod 이벤트 스키마 계약 생성기. 버전 관리 + union 등록 + 영향 분석
-model: claude-opus-5
-effort: xhigh
-_effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. Zod contracts 정형 — overthinking 회피. breaking 변경 감지는 schema-impact script 가 별도 보장. quality regression 시 revert."
+model: claude-opus-5-5
+effort: high
+_effort_change_note: "xhigh → high. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - contracts

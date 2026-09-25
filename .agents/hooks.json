@@ -1,0 +1,16 @@
+{
+	"modfolio-guards": {
+		"PreToolUse": [
+			{
+				"matcher": "*",
+				"hooks": [
+					{
+						"type": "command",
+						"command": "sh -c 'R=$(git rev-parse --show-toplevel 2>/dev/null) || R=\"$PWD\"; A=\"$R/scripts/hooks/guard-dispatch.ts\"; B=\"$R/node_modules/@modfolio/harness/scripts/hooks/guard-dispatch.ts\"; G=\"\"; [ -f \"$A\" ] && G=\"$A\"; [ -z \"$G\" ] && [ -f \"$B\" ] && G=\"$B\"; [ -z \"$G\" ] && exit 0; BUN=$(command -v bun 2>/dev/null); [ -z \"$BUN\" ] && [ -x \"$HOME/.bun/bin/bun\" ] && BUN=\"$HOME/.bun/bin/bun\"; [ -z \"$BUN\" ] && { echo \"[modfolio] bun 없음 — 이 호출은 미검사\" >&2; exit 0; }; exec \"$BUN\" \"$G\"'",
+						"timeout": 20
+					}
+				]
+			}
+		]
+	}
+}

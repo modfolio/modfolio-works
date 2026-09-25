@@ -57,11 +57,15 @@ A must then pass its real integration test before the parent goal is complete.
 ## Execution and integration
 
 One writer per task workspace; one integration operation per repository.
-Use managed isolated workspaces. Never overwrite another session's checkout or WIP.
+Give each writer its own isolated workspace (a worktree). Never overwrite another session's checkout or WIP.
+The checkout the owner opens stays on the default branch; branch work lives in worktrees.
+A branch ends in integration or an explicit discard: `/modfolio-sun` lists branches not yet in
+the default branch and asks for an integration plan, and `/modfolio-moon` records them.
 Worker credentials cannot update main, publish packages, deploy, or change policy.
-An independent reviewer and clean verification must approve the exact candidate.
+Clean verification and the review level `review:run` assigns must approve the exact candidate.
 Changing the candidate, base or policy invalidates previous integration evidence.
-Loom leases are renewable and fenced; an expired execution cannot submit results.
+Loom coordinates and nothing more: tasks, leases, conflict checks and events. It does not assign
+or launch workers (owner 2026-09-24). Leases are renewable and fenced; an expired lease cannot submit results.
 Use Forgejo as integration authority only after that repository's verified cutover.
 During rollout, the recorded current remote remains authoritative; never dual-write main.
 
@@ -108,18 +112,24 @@ is the binding limit; per-provider `maxConcurrent` never exceeds it.
 Before implementation, resolve the workspace and baseline, current owner decisions,
 policy digest, capability owner, relevant project knowledge and acceptance checks.
 Questions and planning alone do not create implementation jobs. Reuse an existing goal
-for follow-up requests. Use the routing policy for separate worker executions; a routing
-suggestion is not a running worker. When managed dispatch is unavailable, report the
-missing readiness evidence rather than claiming delegation or silently bypassing isolation.
-Do not run a duplicate writer in the conversation workspace while a managed writer runs.
+for follow-up requests. Never run two writers in one workspace.
+
+Handing work to another AI is a proposal, never automatic (owner 2026-09-24). Run
+`bun run ai:suggest -- "<work>" [--paths …] [--failures <n>]` when a task starts and again
+after a second failed approach, and propose readily: the owner's answer costs one yes/no.
+When it recommends another AI, ask the owner and give its reason (Claude: the question
+dialog; Codex: the conversation). Yes runs the printed command; no continues with this
+surface's conversation model. A suggestion is not a running worker — never claim delegation
+that did not run. `review:run` stays automatic and needs no question.
 
 Desktop, CLI, SSH and cloud are execution surfaces, not authorities. Any supported
 surface may start the same Loom goal. Return bounded results to its initiating task;
 when native background delivery is unavailable, retrieve pending results on the next
-interaction. Closing a UI must not discard the durable job. An owner stop request stops
-new dispatch; do not create a new goal or wakeup to circumvent that stop.
-Existing interactive settings remain owner-controlled. Managed executions use separate
-isolated workspaces and credentials. A provider reset does not grant extra permissions.
+interaction. Closing a UI must not discard the durable task. An owner stop request stops
+new work; do not create a new goal or wakeup to circumvent that stop.
+Existing interactive settings remain owner-controlled. Delegated executions (review workers,
+accepted suggestions) use separate workspaces and scrubbed credentials. A provider reset
+does not grant extra permissions.
 
 ## Verification and evidence
 
@@ -133,6 +143,35 @@ Do not bypass failures with `--no-verify`, force pushes, suppressions or fabrica
 Never include credentials in source, prompts, logs or artifacts; use scoped runtime injection.
 Report implemented, verified, integrated, published and deployed as separate states.
 
+Iterate with the quick gate. Run the full gate once, on its own, right before a push, and
+branch on its exit code: 0 → push; otherwise fix and rerun, or record it in the handoff. Push
+per unit of work, not per edit. A push that changes only L0 documents (handoff, journal, plans,
+runs) after a full-gate receipt carries that receipt: the push guard checks just that delta for
+secrets and NUL bytes — plus the owner-quote test when a handoff file changed — instead of
+rerunning the full gate. A `wip/*` branch is not an integration candidate: pushing it
+needs only a secret sweep of the pushed commits, so unfinished work reaches the remote instead of
+staying on one machine — `bun run modfolio:moon -- --wip` makes one without switching the
+branch, then clears those changes from the working tree so the full gate measures what is pushed.
+Integration rules for main do not change.
+
+Review is proportional (ADR-029) and `bun run review:run` assigns the level from the diff:
+L0 — only non-policy documents changed (handoffs, journals, plans, run logs): gates alone.
+Gate-only — a small L1 code change (`reviewPolicy.gateOnly` thresholds, no policy, config,
+dependency or gate-machinery path, no earlier review in the series): gates alone, no worker.
+L1 — the default: one fresh-context reviewer over a bounded packet, never the whole repository.
+L2 — public contracts, cross-repository APIs, a large diff, an L1 P0/P1 or an owner request:
+add a second opinion from another provider. L3 — authentication, payments, data migrations,
+security or irreversible changes: the critical route. Each candidate gets one full round and
+one delta round that checks only the fixes and what they touched; P2/P3 and wording go to a
+follow-up list. A third round needs `--escalate "<reason>"` and a different model. The
+approval evidence is that chain: the full review of the first candidate plus the delta review
+covering the whole change from it to the final candidate, while the base and the policy stay the
+same. A new base or policy starts a new full round (`review:run` groups rounds by branch and
+merge-base).
+A member tunes these thresholds for its own direction in `.modfolio/project.json` `review.policy`
+(pull preserves it; `review:run` reads it from the base tree): the gate-only and L2 sizes and
+`maxDeltaRounds` change freely, the critical keywords and policy paths can only be extended.
+
 ## Task-specific knowledge loading
 
 For authentication or secrets, read `.claude/rules/secrets-policy.md` and
@@ -143,8 +182,10 @@ not Claude-only authority. Resolve them locally or under `node_modules/@modfolio
 Old Hub-not-enforcer wording does not prohibit an owner-authorized compatible extension
 under the Cross-project delivery rules above. Tool-specific permissions never become
 permissions for another provider. Do not load historical evidence collections wholesale.
-`config/context-carriers.json` records migration sources, triggers, revisions and evidence;
-a mapped path is not a verified native loading scenario.
+The hub's own `config/context-carriers.json` records migration sources, triggers, revisions and
+evidence; a mapped path is not a verified native loading scenario. That ledger is **not shipped to
+members** — `files` carries only `config/ai-routing.json` — so do not look for it here; it is the
+hub's record about this repository, not a file this repository reads.
 
 Before changing TypeScript, read `.claude/rules/typescript-strict.md`; before adding
 cross-project imports, read `.claude/rules/import-boundaries.md`. Contract changes
@@ -159,11 +200,59 @@ For task procedures, query the existing shared `knowledge/codex/ROUTER.md` and
 `bun run codex:search -- "<task>"`. Here Codex names the knowledge catalog, not an
 exclusive AI provider. Relevant `.claude/skills/` procedures and `.claude/agents/`
 role playbooks are shared knowledge; their model, tool and permission frontmatter
-is adapter configuration, not authority for a managed worker. Apply the current
+is adapter configuration, not authority for a delegated worker. Apply the current
 role preset and task contract. Legacy direct-main, automatic-wakeup and vendor-role
 instructions cannot override this constitution or the owner's current stop/exclusions.
 Hooks listed in Claude settings are not installed in other tools merely by reading them;
 require equivalent runtime/gate evidence before claiming the same enforcement.
+
+## Commands — one effect, three surfaces
+
+Every Modfolio command is a **script**, not a prompt. The effect lives in
+`package.json`; a skill file is only an adapter that points at it. That is what makes
+the same command mean the same thing in Claude Code, Antigravity and Codex.
+
+| command | script | what it does |
+|---|---|---|
+| `/modfolio-sun` | `bun run modfolio:sun` | **Open the session.** Fetch (pull only when the tree is clean and fast-forward), then one brief: readiness and drift, other live sessions and Loom leases on this repo, the latest handoff entry, sibling letters, things to adopt dated to today, an active autonomous run, and **decisions to put to the owner**. Then plan in planning mode and get approval. Exit 0 brief produced, 2 undecidable. |
+| `/modfolio-moon` | `bun run modfolio:moon` | **Wrap up, at any point.** Measure the state, write `knowledge/handoff/<YYYYMMDD-HHMM>-<slug>.md` with the facts filled in, fill its four narrative slots, then `-- --finish` commits it; full gate, push. Maintenance is reported for the owner to choose. |
+| `/modfolio` | `bun run modfolio:compass` | **Identity and law check, at any point.** The compass card, then the five laws, effort policy versus the effective value, the compaction window, the review policy and command parity across surfaces; what this tree cannot measure is printed as «미검사». Exit 0 compliant, 1 violation, 2 undecidable. |
+| `/modfolio --card` | `bun run modfolio:compass -- --card` | The card alone, no network, under a second — the mid-conversation reminder. |
+| `/modfolio --intent "<work>"` | `bun run modfolio:compass -- --intent "<work>"` | Card plus `plan:build`: who owns this capability and which parts already exist. |
+| `/modfolio --deep` | `bun run modfolio -- --deep` | Fourteen-track diagnosis. |
+| `/modfolio-nonstop` | `bun run modfolio:nonstop` | Pursue the owner's goal to completion — not a loop. Development continues while gates and reviews run beside it (background, another worktree); a failure is the next task, not a stop. Ends only when the goal's acceptance checks pass; `-- close` then. |
+| review | `bun run review:run` | Proportional independent review of the current candidate (levels and rounds above). Exit 0 approved, 1 P0/P1, 2 undecidable. |
+| suggest | `bun run ai:suggest -- "<work>"` | Whether another AI should take this work, with the reason and the command to run. Ask the owner; yes runs it, no stays with this surface's model. Exit 0 suggestion made («main AI» included), 2 undecidable. |
+| Google research | `bun run ai:google -- "<question>"` | Google-domain research through Gemini: web search, YouTube, Google services. No repository files are sent. |
+| effort | `bun run modfolio:effort` | Session effort policy versus the injected value; `--apply` restores the policy, `--set <level>` is an owner-requested exception. |
+| `/harness-pull` | `bun run harness-pull` | Pull shared harness files. Report only; `--apply` writes. |
+| gates | `bun run gate:quick` · `gate:full` · `gate:release` | The verdict is the exit code, never the printed text. |
+
+Members that do not declare a script run the harness copy directly, for example
+`bun node_modules/@modfolio/harness/scripts/modfolio/compass.ts`.
+
+**`/modfolio-sun` opens every session, on any of the three surfaces.** A script cannot ask a
+question, so it ends with a numbered list under `결정 질문`. Put those to the owner and wait
+for an answer — including when the answer is «not now», which is recorded as a deferral
+rather than left silent. Deferring without asking is the defect this briefing exists to fix.
+Record each answer verbatim with `-- --answer <key> "<words>"`; a question already answered
+for the same fact is shown as applied, not asked again. While planning, run `ai:suggest` per task
+and put any proposal to use another AI to the owner as a yes/no question with its reason.
+Then plan before implementing; in an unattended or autonomous run, record the questions as
+owner-pending in the run ledger instead of waiting. **`/modfolio-moon`** closes a session whenever
+the owner asks or the context grows long (not during an autonomous run — use `/compact` there);
+the next session, on any machine, starts from its handoff. On a remote surface where a new
+session is inconvenient, `/compact` continues the same session.
+
+**How each surface reaches these.** Claude Code loads `.claude/skills/<name>/SKILL.md`
+and Antigravity loads `.agents/skills/<name>/SKILL.md`; both expand `/<name>`.
+Codex has **no skill loader** — a leading slash is ordinary text to it, so this table
+is how Codex learns the commands, and it runs the script directly. A skill file that
+carries procedure the script does not perform breaks that equality; put the behaviour
+in the script and keep the skill thin.
+
+The fuller catalogue of procedures lives in `.claude/skills/`. Those are shared
+documents in a legacy path, readable by any agent; read the one the task names.
 
 ## Context map
 
@@ -172,9 +261,20 @@ require equivalent runtime/gate evidence before claiming the same enforcement.
 - `docs/adr/`, `docs/specs/`: accepted architecture and specifications, when present.
 - `knowledge/HANDOFF.md`: continuation context, when present; verify against actual code.
 - `.modfolio/project.json`: machine-readable local harness profile and readiness requirements.
-- `.modfolio/context/`: preserved provider-era documents; historical context, not authority
-  for permissions, vendor roles, direct-main writes or superseded integration policy.
-- Loom: authoritative live tasks, dependencies, execution ownership and events.
+- `.modfolio/context/`: preserved provider-era documents. The **policy** in them is retired and
+  is not authority for permissions, vendor roles, direct-main writes or superseded integration
+  policy. What sits beside that policy is **not** retired: this repository's role, stack,
+  commands and domain concepts are still its own, and nothing imports them, so they are dormant
+  rather than deliberately dropped. If such content is still in there, move it yourself into
+  `.claude/rules/<repo>-domain.md` (no frontmatter, so it always loads) and declare that path in
+  `lockedPaths` — in **both** lock copies. Splitting retired policy from live domain knowledge is
+  this repository's judgement; the hub does not do it for you.
+- `harness-lock.json` exists in **two copies** — `.modfolio/` (neutral, authoritative) and
+  `.claude/` (the compatibility mirror ADR-027 keeps during the transition). The generator
+  writes both from one value, so they only drift when a person edits one. Edit **both**, or the
+  next `harness-pull` stops with `neutral and legacy harness locks diverged`. `gate:quick`
+  compares them structurally, so key order and formatting do not matter.
+- Loom: authoritative live tasks, dependencies, leases and events — coordination only, no worker assignment.
 
 The harness enforces measurable permissions and integration conditions. Semantic reuse
 also requires an explicit ownership decision and independent review; prose is not a sandbox.

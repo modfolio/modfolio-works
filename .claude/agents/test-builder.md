@@ -1,9 +1,9 @@
 ---
 name: test-builder
 description: Vitest 테스트 스위트 생성기. 단위/통합/스키마 테스트 커버리지 확보
-model: claude-opus-5
-effort: xhigh
-_effort_change_note: "high → xhigh. 2026-07-26 Opus 5 전환 — effort 상향(재작업 비용 > 토큰 비용, 오너 결정). canon opus-4-7-effort-policy.md v2.0.0"
+model: claude-opus-5-5
+effort: high
+_effort_change_note: "xhigh → high. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - test

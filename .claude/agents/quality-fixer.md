@@ -1,9 +1,9 @@
 ---
 name: quality-fixer
 description: 품질 위반 자동수정기. 리뷰 보고서 기반 P0/P1 기계적 수정. 정공법 원칙
-model: claude-opus-5
-effort: xhigh
-_effort_change_note: "2026-05-13 max→xhigh per Anthropic policy. 기계 수정 정형 (정공법) — overthinking 회피. quality regression 시 revert."
+model: claude-opus-5-5
+effort: high
+_effort_change_note: "xhigh → high. 2026-09-23 Opus 5.5 재측정(실사건 5 케이스 × 2회 — high 10/10 · xhigh 10/10 · max 시간 초과 4/10 · 시간 최대 7배) 뒤 오너 결정으로 한 칸 내림. canon opus-4-7-effort-policy.md v2.5.0"
 governance: owasp-agentic-2026
 skills:
   - fix

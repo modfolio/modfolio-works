@@ -1,7 +1,7 @@
 ---
 name: ecosystem-auditor
 description: ecosystem.json vs 실제 상태 검증. 읽기 전용
-model: claude-opus-5
+model: claude-opus-5-5
 effort: high
 governance: owasp-agentic-2026
 disallowedTools:
